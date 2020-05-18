@@ -28,9 +28,27 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
+* [`arjan deploy`](#arjan-deploy)
 * [`arjan hello`](#arjan-hello)
 * [`arjan help [COMMAND]`](#arjan-help-command)
-* [`arjan translate`](#arjan-translate)
+
+## `arjan deploy`
+
+Describe the command here
+
+```
+USAGE
+  $ arjan deploy
+
+OPTIONS
+  -n, --name=name  name to print
+
+DESCRIPTION
+  ...
+  Extra documentation goes here
+```
+
+_See code: [src/commands/deploy.js](https://github.com/arjan-tools/cli/blob/v0.0.0/src/commands/deploy.js)_
 
 ## `arjan hello`
 
@@ -66,22 +84,4 @@ OPTIONS
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.0.0/src/commands/help.ts)_
-
-## `arjan translate`
-
-Describe the command here
-
-```
-USAGE
-  $ arjan translate
-
-OPTIONS
-  -n, --name=name  name to print
-
-DESCRIPTION
-  ...
-  Extra documentation goes here
-```
-
-_See code: [src/commands/translate.js](https://github.com/arjan-tools/cli/blob/v0.0.0/src/commands/translate.js)_
 <!-- commandsstop -->
