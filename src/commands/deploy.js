@@ -1,6 +1,9 @@
 const {Command, flags} = require('@oclif/command');
-import cli from 'cli-ux';
+const {cli} = require('cli-ux');
 const Deploy = require('arjan-deploy');
+const AWS = require('aws-sdk');
+const cloudformation = new AWS.CloudFormation({apiVersion: '2010-05-15'});
+const acm = new AWS.ACM({apiVersion: '2015-12-08'});
 
 function delay(ms){
   return new Promise((resolve) => {
@@ -16,7 +19,7 @@ class DeployCommand extends Command {
         flags.www = true;
         flags.route53 = true;
       }
-      else if(arg.setup === 'prod'){
+      else if(args.setup === 'prod'){
         flags.www = true;
         flags.route53 = true;
         flags.cdn = true;
@@ -24,19 +27,23 @@ class DeployCommand extends Command {
       }
     }
     if(args.action === 'create' || args.action === 'update'){
+      cli.action.start('Setting up...')
       let newTemplate = await Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, flags.https)
       let temp = {TemplateBody:{}};
       let stackName = args.site.split('.').join('') + 'Stack'
       let stackId = await Deploy.stackExists(stackName)
-      if(stackId) temp = await cloudformation.getTemplate({StackName: stackId}).promise()
-      if(temp.TemplateBody === JSON.stringify(newTemplate.template)) console.log('No changes detected...')
+      if(stackId) temp = await cloudformation.getTemplate({StackName: stackId}).promise().catch(err => console.log(err))
+      if(temp.TemplateBody === JSON.stringify(newTemplate.template)) cli.action.stop('No changes detected...')
       else {
+        cli.action.stop()
+        cli.action.start('Generating template')
         let template = await Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, false, flags.route53, false)
         let wait = false;
+        if(template) cli.action.stop()
         if(temp.TemplateBody === JSON.stringify(template.template)) wait = true;
         else {
           cli.action.start('Deploying your stack')
-          let stack = await Deploy.deployStack(args.site, template.template, template.existingResources, false, false, false, flags.route53)
+          let stack = await Deploy.deployStack(args.site, template.template, template.existingResources, false)
           let waitAction = 'stackCreateComplete'
           if(stack.action === 'UPDATE') waitAction = 'stackUpdateComplete';
           else if(stack.action === 'IMPORT') waitAction = 'stackImportComplete';
@@ -51,7 +58,7 @@ class DeployCommand extends Command {
           }
           if(wait && stack.action === 'CREATE') {
             if(flags.route53){
-              newHostedZone(stackName).then(data => console.log(data)).catch(err => console.log(err))
+              Deploy.newHostedZone(stackName).then(data => console.log(data)).catch(err => console.log(err))
               wait = await delay(5000)
               console.log('I assume you have finished updating your nameservers...')
               //const answer = await cli.prompt('Have you finished updating all your nameservers?')
@@ -64,7 +71,7 @@ class DeployCommand extends Command {
         if(wait && flags.https){
           //check that the certificate doesnt exist
           cli.action.start('Creating your digital certificate')
-          let certArn = await Deploy.createCertificate(args.site, stackName, flags.route53)
+          let certArn = await Deploy.createCertificate(args.site, stackName, flags.route53).catch((err) => console.log(err))
           if(certArn) {
             cli.action.stop()
             cli.action.start('validating your certificate')
@@ -74,8 +81,8 @@ class DeployCommand extends Command {
           if(certwait && flags.cdn){
             //check that the cdn doesnt exist
             cli.action.start('Deploying the cloudfront distribution')
-            let data = await Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, arn).catch((err) => console.log(err))
-            await Deploy.deployStack(args.site, data.template, data.existingResources, false, false, false, flags.route53)
+            let data = await Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, certArn).catch((err) => console.log(err))
+            await Deploy.deployStack(args.site, data.template, data.existingResources, false)
             .then(() => {
               cli.action.stop()
               console.log('Cloudfront distribution in progress. It may take while until you notice the https on your url...')
@@ -87,7 +94,7 @@ class DeployCommand extends Command {
           //check that the cdn doesnt exist
           cli.action.start('Deploying the cloudfront distribution')
           Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, flags.https)
-          .then((data)=> Deploy.deployStack(args.site, data.template, data.existingResources, false, false, false, flags.route53))
+          .then((data)=> Deploy.deployStack(args.site, data.template, data.existingResources, false))
           .then(() => {
             cli.action.stop()
             console.log('Cloudfront distribution in progress.. It might take while...')
@@ -95,6 +102,16 @@ class DeployCommand extends Command {
           }).catch((err) => console.log(err));
         }
       }
+    }
+    else if(args.action === 'delete'){
+      let stackName = args.site.split('.').join('') + 'Stack';
+      cli.action.start('Deleting your stack')
+      console.log('If any, please delete all additional route53 records you may have created and not attached to your cloudformation stack')
+      cloudformation.deleteStack({StackName: stackName}).promise()
+      .then(()=> {
+        cli.action.stop('Success')
+        console.log('Your cloudformation stack is being deleted')
+      }).catch(err => console.log(err))
     }
   }
 }
@@ -105,7 +122,7 @@ Extra documentation goes here
 `
 DeployCommand.args = [
   {
-    name: 'sitename',
+    name: 'site',
     required: true,
     description: 'name of the site i.e. yoursite.com'
   },
@@ -113,7 +130,7 @@ DeployCommand.args = [
     name: 'action',
     required: true,
     description: 'choose an action to perform. you can create, update, import your stack or upload files to your bucket.',
-    options: ['create', 'update', 'import', 'upload']
+    options: ['create', 'update', 'import', 'delete', 'upload']
   },
   {
     name: 'setup',
