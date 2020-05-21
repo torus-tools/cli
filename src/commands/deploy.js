@@ -1,4 +1,5 @@
 const {Command, flags} = require('@oclif/command');
+import cli from 'cli-ux';
 const Deploy = require('arjan-deploy');
 
 function delay(ms){
@@ -23,32 +24,38 @@ class DeployCommand extends Command {
       }
     }
     if(args.action === 'create' || args.action === 'update'){
-      let newTemplate = await generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, flags.https)
+      let newTemplate = await Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, flags.https)
       let temp = {TemplateBody:{}};
       let stackName = args.site.split('.').join('') + 'Stack'
-      let stackId = await stackExists(stackName)
+      let stackId = await Deploy.stackExists(stackName)
       if(stackId) temp = await cloudformation.getTemplate({StackName: stackId}).promise()
       if(temp.TemplateBody === JSON.stringify(newTemplate.template)) console.log('No changes detected...')
       else {
-        let template = await generateTemplate(args.site, flags.index, flags.error, flags.www, false, flags.route53, false)
+        let template = await Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, false, flags.route53, false)
         let wait = false;
         if(temp.TemplateBody === JSON.stringify(template.template)) wait = true;
         else {
           cli.action.start('Deploying your stack')
-          let stack = await deployStack(args.site, template.template, template.existingResources, false, false, false, flags.route53)
+          let stack = await Deploy.deployStack(args.site, template.template, template.existingResources, false, false, false, flags.route53)
           let waitAction = 'stackCreateComplete'
           if(stack.action === 'UPDATE') waitAction = 'stackUpdateComplete';
           else if(stack.action === 'IMPORT') waitAction = 'stackImportComplete';
           wait = await cloudformation.waitFor(waitAction, {StackName: stack.name}).promise()
           if(wait) {
             cli.action.stop()
-            
-            console.log('uploading Dir', 'uploadDir()')
+            if(flags.upload){
+              cli.action.start('Uploading files to your s3 bucket')
+              console.log('uploading Dir', 'uploadDir()')
+              cli.action.stop()
+            }
           }
           if(wait && stack.action === 'CREATE') {
             if(flags.route53){
               newHostedZone(stackName).then(data => console.log(data)).catch(err => console.log(err))
-              wait = await delay(3000)
+              wait = await delay(5000)
+              console.log('I assume you have finished updating your nameservers...')
+              //const answer = await cli.prompt('Have you finished updating all your nameservers?')
+              //if(answer === 'y' || answer === 'Y' || answer === 'yes'|| answer === 'Yes')
             }
             else console.log('you can access your test site at the following url ...')
             //need to write a function to get the propper url of the s3 bucket
@@ -56,28 +63,38 @@ class DeployCommand extends Command {
         }
         if(wait && flags.https){
           //check that the certificate doesnt exist
-          let certArn = await createCertificate(args.site, stackName, flags.route53)
-          let wait = await acm.waitFor('certificateValidated', {CertificateArn:certArn}).promise().catch((err) => console.log(err))
-          if(wait && flags.cdn){
+          cli.action.start('Creating your digital certificate')
+          let certArn = await Deploy.createCertificate(args.site, stackName, flags.route53)
+          if(certArn) {
+            cli.action.stop()
+            cli.action.start('validating your certificate')
+          }
+          let certwait = await acm.waitFor('certificateValidated', {CertificateArn:certArn}).promise().catch((err) => console.log(err))
+          if(certwait) cli.action.stop('validated')
+          if(certwait && flags.cdn){
             //check that the cdn doesnt exist
-            let data = await generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, arn).catch((err) => console.log(err))
-            await deployStack(args.site, data.template, data.existingResources, false, false, false, flags.route53)
-            .then(() => console.log('Creating your cloudfront distribution. It might take while for your url to become https... In the meantime your site is fully functional :)'))
-            .catch((err) => console.log(err));
+            cli.action.start('Deploying the cloudfront distribution')
+            let data = await Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, arn).catch((err) => console.log(err))
+            await Deploy.deployStack(args.site, data.template, data.existingResources, false, false, false, flags.route53)
+            .then(() => {
+              cli.action.stop()
+              console.log('Cloudfront distribution in progress. It may take while until you notice the https on your url...')
+              console.log('In the meantime your site is fully functional :)')
+            }).catch((err) => console.log(err));
           }
         }
         else if(wait && flags.cdn && !flags.https){
           //check that the cdn doesnt exist
-          generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, flags.https)
-          .then((data)=> deployStack(args.site, data.template, data.existingResources, false, false, false, flags.route53))
-          .then(() => console.log('Creating your cloudfront distribution. It might take while... In the meantime your site is fully functional :)'))
-          .catch((err) => console.log(err));
+          cli.action.start('Deploying the cloudfront distribution')
+          Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, flags.https)
+          .then((data)=> Deploy.deployStack(args.site, data.template, data.existingResources, false, false, false, flags.route53))
+          .then(() => {
+            cli.action.stop()
+            console.log('Cloudfront distribution in progress.. It might take while...')
+            console.log('In the meantime your site is fully functional :)')
+          }).catch((err) => console.log(err));
         }
       }
-    }
-    else if(args.action === 'upload'){
-      if(flags.filename) Deploy.uploadFile(args.sitename, flags.filename, flags.cdn)
-      else Deploy.uploadSite(args.sitename, flags.filename, flags.cdn)
     }
   }
 }
@@ -134,9 +151,9 @@ DeployCommand.flags = {
     description: 'name of the error document',
     default: 'error.html', 
   }),
-  filename: flags.string({
+  upload: flags.string({
     char: 'f',
-    description: 'name of a specific file you want to upload to your site',
+    description: 'name of a specific file you want to upload to your site. all uploads all of the files'
   })
 }
 
