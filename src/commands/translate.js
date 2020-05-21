@@ -75,7 +75,8 @@ async function localizeTranslateFile(flags, args){
     }).catch(err => console.log(err)) 
   }
   else if(flags.import){
-    let obj = await Localize.importCsv(args.from, fileContent).catch(err => console.log(err))
+    let csv = await fs.promises.readFile(`exports/csv/${args.from}/${localename}.csv`, 'utf8')
+    let obj = await Localize.importCsv(args.from, csv).catch(err => console.log(err))
     await fs.promises.writeFile(`./locales/${args.from}/${localename}.json`, obj)
     .then(()=>{
       wait = true;
