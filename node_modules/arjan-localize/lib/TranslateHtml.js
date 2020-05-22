@@ -1,18 +1,15 @@
 //var fs = require("fs");
 const elements = require('./HtmlElements');
 
-module.exports = function TranslateHtml(filename, html, translation, translations, to, callback){
-  //read the translated locale
-  /* let rawdata = fs.readFileSync(`locales/${to}/${filename}.json`, 'utf8'); 
-  var translations = JSON.parse(rawdata); */ 
-  //var html = fs.readFileSync(`${filename}.html`, 'utf8')
-  var body = html.split('</head>')[1]
-  let html2 = html
-  for(key of elements){
-    let elem = `<${key}`
-    if(body.includes(elem)){
-      let arr = body.split(elem)
-      for(i = 1; i<arr.length; i++){
+module.exports = function TranslateHtml(html, json){
+  return new Promise((resolve, reject) => {
+    var body = html.split('</head>')[1]
+    let html2 = html
+    for(key of elements){
+      let elem = `<${key}`
+      if(body.includes(elem)){
+        let arr = body.split(elem)
+        for(i = 1; i<arr.length; i++){
           let fragment = arr[i];
           let prepiece = fragment.split(`</${key}>`)[0];
           let piece = prepiece;
@@ -22,7 +19,6 @@ module.exports = function TranslateHtml(filename, html, translation, translation
           let frag = `<${key}` + prepiece + `</${key}>`
           //if(key === a) insert the translated link url href
           //else if(key === img) insert the translated image src
-          
           if(text.replace(/\s/g, '').length){
             if(text.includes("<")){
               if(text.split("<")[0].replace(/\s/g, '').length){
@@ -30,7 +26,7 @@ module.exports = function TranslateHtml(filename, html, translation, translation
                 if(attributes.includes('id="')){
                   let preid = attributes.split('id="')[1];
                   id = preid.split('"')[0]
-                  let translatedpiece = piece.replace(`>${text}`, `>${translations[id]}`)
+                  let translatedpiece = piece.replace(`>${text}`, `>${json[id]}`)
                   let newfrag = `<${key}` + translatedpiece + `</${key}>`
                   html2 = html2.replace(frag, newfrag);
                 }
@@ -40,16 +36,17 @@ module.exports = function TranslateHtml(filename, html, translation, translation
               if(attributes.includes('id="')){
                 let preid = attributes.split('id="')[1];
                 id = preid.split('"')[0]
-                let translatedpiece = piece.replace(`>${text}`, `>${translations[id]}`)
+                let translatedpiece = piece.replace(`>${text}`, `>${json[id]}`)
                 let newfrag = `<${key}` + translatedpiece + `</${key}>`
                 html2 = html2.replace(frag, newfrag);
               }
             }       
-        } 
+          } 
+        }
+        
       }
-      
     }
-  }
-  //fs.writeFileSync(translation, html2);
-  callback(null, html2)
+    //fs.writeFileSync(translation, html2);
+    resolve(html2)
+  });
 }

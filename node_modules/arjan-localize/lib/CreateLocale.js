@@ -1,19 +1,17 @@
-//var fs = require("fs");
 const elements = require('./HtmlElements');
-//var {addVar} = require('./Build')
 
-module.exports = function CreateLocale(html, filename, from, to, callback){
+module.exports = function CreateLocale(html){
   //read file
   var body = html.split('</head>')[1]
   var size = 0
   let html1 = html
   let locale = {}
-  //let html2 = html
-  for(key of elements){
-    let elem = `<${key}`
-    if(body.includes(elem)){
-      let arr = body.split(elem)
-      for(i = 1; i<arr.length; i++){
+  return new Promise((resolve, reject) => {
+    for(key of elements){
+      let elem = `<${key}`
+      if(body.includes(elem)){
+        let arr = body.split(elem)
+        for(i = 1; i<arr.length; i++){
           let fragment = arr[i];
           let piece = fragment.split(`</${key}>`)[0];
           let attributes = piece.split('>')[0];
@@ -26,7 +24,6 @@ module.exports = function CreateLocale(html, filename, from, to, callback){
           //else if(key === img) save the src attribute url in the images object
           //check if the element has text
           if(text.replace(/\s/g, '').length){
-
             //check if theres additional tags
             if(text.includes("<")){
               if(text.split("<")[0].replace(/\s/g, '').length){
@@ -67,10 +64,10 @@ module.exports = function CreateLocale(html, filename, from, to, callback){
                 size += 1
               }
             }       
-        } 
+          } 
+        }
       }
     }
-  }
-  //fs.writeFileSync(`${filename}.html`, html1);
-  callback(null, {size:size, locale:locale, html:html1})
+   resolve({size:size, locale:locale, html:html1})
+  })
 }

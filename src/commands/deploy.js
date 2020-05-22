@@ -185,7 +185,7 @@ DeployCommand.flags = {
     default: 'error.html', 
   }),
   upload: flags.string({
-    char: 'f',
+    char: 'u',
     description: 'name of a specific file you want to upload to your site. all uploads all of the files'
   })
 }

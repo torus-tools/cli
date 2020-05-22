@@ -28,22 +28,30 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
-* [`arjan build`](#arjan-build)
-* [`arjan deploy`](#arjan-deploy)
+* [`arjan build [REGION] [PROFILE]`](#arjan-build-region-profile)
+* [`arjan deploy SITE ACTION [SETUP]`](#arjan-deploy-site-action-setup)
 * [`arjan hello`](#arjan-hello)
 * [`arjan help [COMMAND]`](#arjan-help-command)
+* [`arjan optimize`](#arjan-optimize)
 * [`arjan translate FILENAME FROM [TO]`](#arjan-translate-filename-from-to)
 
-## `arjan build`
+## `arjan build [REGION] [PROFILE]`
 
 Describe the command here
 
 ```
 USAGE
-  $ arjan build
+  $ arjan build [REGION] [PROFILE]
+
+ARGUMENTS
+  REGION   [default: us-east-1] AWS Region
+  PROFILE  [default: default] AWS Profile
 
 OPTIONS
-  -n, --name=name  name to print
+  -a, --audit     builds required files/dirs for arjan audit
+  -d, --deploy    builds required files/dirs for arjan deploy
+  -l, --localize  builds required files/dirs for arjan localize
+  -o, --optimize  builds required files/dirs for arjan optimize
 
 DESCRIPTION
   ...
@@ -52,16 +60,36 @@ DESCRIPTION
 
 _See code: [src/commands/build.js](https://github.com/arjan-tools/cli/blob/v0.0.0/src/commands/build.js)_
 
-## `arjan deploy`
+## `arjan deploy SITE ACTION [SETUP]`
 
 Describe the command here
 
 ```
 USAGE
-  $ arjan deploy
+  $ arjan deploy SITE ACTION [SETUP]
+
+ARGUMENTS
+  SITE    name of the site i.e. yoursite.com
+
+  ACTION  (create|update|import|delete|upload) choose an action to perform. you can create, update, import your stack or
+          upload files to your bucket.
+
+  SETUP   (dev|test|prod|custom) [default: dev] setup for the site - dev, test, production or custom
 
 OPTIONS
-  -n, --name=name  name to print
+  -c, --cdn            creates a CloudFront distribution for your site.
+  -e, --error=error    [default: error.html] name of the error document
+  -f, --upload=upload  name of a specific file you want to upload to your site. all uploads all of the files
+
+  -h, --https          creates and validates a TLS certificate for your site. If you arent using a route53 DNS you must
+                       create a CNAME record manually in your DNS.
+
+  -i, --index=index    [default: index.html] name of the index document. default is index.html
+
+  -r, --route53        creates a Hosted Zone in route 53. Have your current DNS provider page open and ready to add a
+                       custom DNS.
+
+  -w, --www            creates a www s3 bucket that reroutes requests to the index.
 
 DESCRIPTION
   ...
@@ -104,6 +132,24 @@ OPTIONS
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.0.0/src/commands/help.ts)_
+
+## `arjan optimize`
+
+Describe the command here
+
+```
+USAGE
+  $ arjan optimize
+
+OPTIONS
+  -n, --name=name  name to print
+
+DESCRIPTION
+  ...
+  Extra documentation goes here
+```
+
+_See code: [src/commands/optimize.js](https://github.com/arjan-tools/cli/blob/v0.0.0/src/commands/optimize.js)_
 
 ## `arjan translate FILENAME FROM [TO]`
 

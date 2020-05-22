@@ -26,43 +26,26 @@ let regionSet = [
   "us-gov-west-1"
 ];
 
-function createFile(file, contents, callback) {
-  if(fs.existsSync(file)){
-    let err = `file ${file} already exists`
-    console.log(err)
-    let excontent = fs.readFileSync(file, 'utf8')
-    if(callback && typeof callback === 'function') callback(null, excontent)
-    else return excontent;
-  }
-  else {
-    fs.writeFile(file, contents, (err) => {
-      if (err) optionError(err, callback)
-      else {
-        let data = `Created the ${file} file`
-        console.log(data)
-        if(callback && typeof callback === 'function') callback(null, contents)
-        else return contents;
-      }
-    })
-  }
+function createFile(file, contents){
+  return new Promise((resolve, reject) => {
+    if(fs.existsSync(file)) fs.promises.readFile(file, 'utf8').then(data => resolve(data)).catch(err => reject(err))
+    else {
+      fs.promises.writeFile(file, contents)
+      .then(() => resolve(contents))
+      .catch(err => reject(err))
+    }
+  })
 }
 
-function createDir(dir, callback){
-  if (fs.existsSync(dir)){
-    let err = (`directory ${dir} already exists`)
-    if(callback && typeof callback === 'function') callback(null, err)
-    else return err
-  }
-  else {
-    fs.mkdir(dir, (err) => {
-      if (err) optionError(err, callback)
-      else {
-        let data = `Created the ${dir} directory`
-        if(callback && typeof callback === 'function') callback(null, data)
-        else return data;
-      }
-    });
-  }
+function createDir(dir){
+  return new Promise((resolve, reject) => {
+    if (fs.existsSync(dir)) resolve(false)
+    else {
+      fs.promises.mkdir(dir)
+      .then(resolve(true))
+      .catch(err => reject(err))
+    }
+  })
 }
 
 function addVar(file, variable, value, callback){
@@ -81,8 +64,25 @@ function optionError(err, callback){
 }
 
 function initBuild(region, profile, callback){
-  let env_file = "";
-  try {
+  return new Promise((resolve, reject) => {
+    let env_file = "";
+    createDir('locales').catch(err => reject(err))
+    createDir('exports').then(()=> createDir('exports/csv')).catch(err => reject(err))
+    if(profile){
+      if(/^[a-zA-Z0-9]*$/.test(profile)) env_file += `\nAWS_PROFILE=${profile}`
+      else reject("AWS Profile invalid. Only alphanumeric characters accepted. No spaces.");
+    }
+    if(region){
+      if(regionSet.includes(region)) env_file += `\nAWS_REGION=${region}`
+      else reject("Invalid AWS region code")
+    }
+    createFile('./.env', env_file).catch(err => reject(err))
+    createFile('./.gitignore', '.env').catch(err => reject(err))
+    resolve('Built')
+  })
+}
+
+ /*  try {
     createDir('locales', function(err, data){
     if(err) console.log(err)
     else console.log(data)
@@ -121,8 +121,8 @@ function initBuild(region, profile, callback){
   }
   catch(err){
     optionError(err, callback)
-  }
-}
+  } */
+
 
 module.exports = {
   initBuild,
