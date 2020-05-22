@@ -48,6 +48,7 @@ class DeployCommand extends Command {
           if(stack.action === 'UPDATE') waitAction = 'stackUpdateComplete';
           else if(stack.action === 'IMPORT') waitAction = 'stackImportComplete';
           wait = await cloudformation.waitFor(waitAction, {StackName: stack.name}).promise()
+          //optional file upload
           if(wait) {
             cli.action.stop()
             if(flags.upload){
@@ -58,26 +59,36 @@ class DeployCommand extends Command {
           }
           if(wait && stack.action === 'CREATE') {
             if(flags.route53){
-              Deploy.newHostedZone(stackName).then(data => console.log(data)).catch(err => console.log(err))
-              wait = await delay(5000)
-              console.log('I assume you have finished updating your nameservers...')
-              //const answer = await cli.prompt('Have you finished updating all your nameservers?')
-              //if(answer === 'y' || answer === 'Y' || answer === 'yes'|| answer === 'Yes')
+              wait = false;
+              let nameservers = await Deploy.newHostedZone(stackName).catch(err => console.log(err))
+              if(nameservers){
+                console.log('\nIn your Domain name registrar, please change your DNS settings to custom DNS and add the following Nameservers: \n')
+                for(let ns of nameservers) console.log("\x1b[32m", ns+'.','\n', "\x1b[0m")
+                await delay(10000)
+                let answer = await cli.prompt('Have you finished updating your nameservers?')
+                if(answer === 'y' || answer === 'Y' || answer === 'yes'|| answer === 'Yes') wait = true;
+                else console.log('Exiting.') //exit the cli
+              }
             }
             else console.log('you can access your test site at the following url ...')
             //need to write a function to get the propper url of the s3 bucket
           }
         }
         if(wait && flags.https){
-          //check that the certificate doesnt exist
-          cli.action.start('Creating your digital certificate')
-          let certArn = await Deploy.createCertificate(args.site, stackName, flags.route53).catch((err) => console.log(err))
-          if(certArn) {
-            cli.action.stop()
-            cli.action.start('validating your certificate')
+          let certExists = await Deploy.certificateExists()
+          let certwait = false;
+          let certArn = null;
+          if(!certExists){
+            cli.action.start('Creating your digital certificate')
+            certArn = await Deploy.createCertificate(args.site, stackName, flags.route53).catch((err) => console.log(err))
+            if(certArn) {
+              cli.action.stop()
+              cli.action.start('validating your certificate')
+            }
+            certwait = await acm.waitFor('certificateValidated', {CertificateArn:certArn}).promise().catch((err) => console.log(err))
+            if(certwait) cli.action.stop('validated')
           }
-          let certwait = await acm.waitFor('certificateValidated', {CertificateArn:certArn}).promise().catch((err) => console.log(err))
-          if(certwait) cli.action.stop('validated')
+          else certwait = true
           if(certwait && flags.cdn){
             //check that the cdn doesnt exist
             cli.action.start('Deploying the cloudfront distribution')
@@ -85,7 +96,7 @@ class DeployCommand extends Command {
             await Deploy.deployStack(args.site, data.template, data.existingResources, false)
             .then(() => {
               cli.action.stop()
-              console.log('Cloudfront distribution in progress. It may take while until you notice the https on your url...')
+              console.log('Cloudfront distribution in progress. It may take while until the https is reflected in your url...')
               console.log('In the meantime your site is fully functional :)')
             }).catch((err) => console.log(err));
           }
@@ -97,7 +108,7 @@ class DeployCommand extends Command {
           .then((data)=> Deploy.deployStack(args.site, data.template, data.existingResources, false))
           .then(() => {
             cli.action.stop()
-            console.log('Cloudfront distribution in progress.. It might take while...')
+            console.log('Cloudfront distribution in progress.. It may take while...')
             console.log('In the meantime your site is fully functional :)')
           }).catch((err) => console.log(err));
         }
@@ -105,14 +116,19 @@ class DeployCommand extends Command {
     }
     else if(args.action === 'delete'){
       let stackName = args.site.split('.').join('') + 'Stack';
-      cli.action.start('Deleting your stack')
-      console.log('If any, please delete all additional route53 records you may have created and not attached to your cloudformation stack')
-      cloudformation.deleteStack({StackName: stackName}).promise()
-      .then(()=> {
-        cli.action.stop('Success')
-        console.log('Your cloudformation stack is being deleted')
+      cli.action.start('Removing any digital certificates associated to the domain')
+      Deploy.deleteCertificate(args.site).then(data => {
+        cli.action.stop();
+        console.log("\x1b[33mIf any, please delete all additional route53 records you may have created and not attached to your cloudformation stack", "\x1b[0m");
+        cli.action.start('Deleting your stack')
+        cloudformation.deleteStack({StackName: stackName}).promise()
+        .then(()=> {
+          cli.action.stop('Success')
+          console.log('Your cloudformation stack is being deleted')
+        }).catch(err => console.log(err))
       }).catch(err => console.log(err))
     }
+    //else if(args.action === upload)
   }
 }
 
