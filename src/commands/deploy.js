@@ -48,6 +48,7 @@ class DeployCommand extends Command {
           if(stack.action === 'UPDATE') waitAction = 'stackUpdateComplete';
           else if(stack.action === 'IMPORT') waitAction = 'stackImportComplete';
           wait = await cloudformation.waitFor(waitAction, {StackName: stack.name}).promise()
+          //optional file upload
           if(wait) {
             cli.action.stop()
             if(flags.upload){
@@ -58,26 +59,32 @@ class DeployCommand extends Command {
           }
           if(wait && stack.action === 'CREATE') {
             if(flags.route53){
+              wait = false;
               Deploy.newHostedZone(stackName).then(data => console.log(data)).catch(err => console.log(err))
-              wait = await delay(5000)
-              console.log('I assume you have finished updating your nameservers...')
-              //const answer = await cli.prompt('Have you finished updating all your nameservers?')
-              //if(answer === 'y' || answer === 'Y' || answer === 'yes'|| answer === 'Yes')
+              //log the nameservers in a pretty way
+              let delay = await delay(10000)
+              if(delay) let answer = await cli.prompt('Have you finished updating your nameservers?')
+              if(answer === 'y' || answer === 'Y' || answer === 'yes'|| answer === 'Yes') wait = true;
+              else console.log('Exiting.') //exit the cli
             }
             else console.log('you can access your test site at the following url ...')
             //need to write a function to get the propper url of the s3 bucket
           }
         }
         if(wait && flags.https){
-          //check that the certificate doesnt exist
-          cli.action.start('Creating your digital certificate')
-          let certArn = await Deploy.createCertificate(args.site, stackName, flags.route53).catch((err) => console.log(err))
-          if(certArn) {
-            cli.action.stop()
-            cli.action.start('validating your certificate')
+          let certExists = await Deploy.certificateExists()
+          let certwait = false;
+          if(!certExists){
+            cli.action.start('Creating your digital certificate')
+            let certArn = await Deploy.createCertificate(args.site, stackName, flags.route53).catch((err) => console.log(err))
+            if(certArn) {
+              cli.action.stop()
+              cli.action.start('validating your certificate')
+            }
+            certwait = await acm.waitFor('certificateValidated', {CertificateArn:certArn}).promise().catch((err) => console.log(err))
+            if(certwait) cli.action.stop('validated')
           }
-          let certwait = await acm.waitFor('certificateValidated', {CertificateArn:certArn}).promise().catch((err) => console.log(err))
-          if(certwait) cli.action.stop('validated')
+          else certwait = true
           if(certwait && flags.cdn){
             //check that the cdn doesnt exist
             cli.action.start('Deploying the cloudfront distribution')
@@ -85,7 +92,7 @@ class DeployCommand extends Command {
             await Deploy.deployStack(args.site, data.template, data.existingResources, false)
             .then(() => {
               cli.action.stop()
-              console.log('Cloudfront distribution in progress. It may take while until you notice the https on your url...')
+              console.log('Cloudfront distribution in progress. It may take while until the https is reflected in your url...')
               console.log('In the meantime your site is fully functional :)')
             }).catch((err) => console.log(err));
           }
@@ -97,7 +104,7 @@ class DeployCommand extends Command {
           .then((data)=> Deploy.deployStack(args.site, data.template, data.existingResources, false))
           .then(() => {
             cli.action.stop()
-            console.log('Cloudfront distribution in progress.. It might take while...')
+            console.log('Cloudfront distribution in progress.. It may take while...')
             console.log('In the meantime your site is fully functional :)')
           }).catch((err) => console.log(err));
         }
