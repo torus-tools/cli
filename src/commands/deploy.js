@@ -60,15 +60,15 @@ class DeployCommand extends Command {
           if(wait && stack.action === 'CREATE') {
             if(flags.route53){
               wait = false;
-              Deploy.newHostedZone(stackName).then(data => {
+              let nameservers = await Deploy.newHostedZone(stackName).catch(err => console.log(err))
+              if(nameservers){
                 console.log('\nIn your Domain name registrar, please change your DNS settings to custom DNS and add the following Nameservers: \n')
-                for(let ns of data) console.log("\x1b[32m", ns,'\n', "\x1b[0m")
-              }).catch(err => console.log(err))
-              //log the nameservers in a pretty way
-              await delay(10000)
-              let answer = await cli.prompt('Have you finished updating your nameservers?')
-              if(answer === 'y' || answer === 'Y' || answer === 'yes'|| answer === 'Yes') wait = true;
-              else console.log('Exiting.') //exit the cli
+                for(let ns of nameservers) console.log("\x1b[32m", ns+'.','\n', "\x1b[0m")
+                await delay(10000)
+                let answer = await cli.prompt('Have you finished updating your nameservers?')
+                if(answer === 'y' || answer === 'Y' || answer === 'yes'|| answer === 'Yes') wait = true;
+                else console.log('Exiting.') //exit the cli
+              }
             }
             else console.log('you can access your test site at the following url ...')
             //need to write a function to get the propper url of the s3 bucket
@@ -77,9 +77,10 @@ class DeployCommand extends Command {
         if(wait && flags.https){
           let certExists = await Deploy.certificateExists()
           let certwait = false;
+          let certArn = null;
           if(!certExists){
             cli.action.start('Creating your digital certificate')
-            let certArn = await Deploy.createCertificate(args.site, stackName, flags.route53).catch((err) => console.log(err))
+            certArn = await Deploy.createCertificate(args.site, stackName, flags.route53).catch((err) => console.log(err))
             if(certArn) {
               cli.action.stop()
               cli.action.start('validating your certificate')
