@@ -1,5 +1,5 @@
 const {Command, flags} = require('@oclif/command')
-const Translate = require('arjan-localize')
+const Localize = require('arjan-localize')
 const fs = require('fs')
 const ignorePaths = {
   "node_modules":true,
@@ -30,16 +30,16 @@ function scanFolder(currentDirPath, callback) {
 
 function localizeAndTranslate(html, filePath, from, to){
   return new Promise(async (resolve, reject) => {
-    let data = await Translate.CreateLocale(html).catch(err => reject(err))
+    let data = await Localize.CreateLocale(html).catch(err => reject(err))
     var origin_html = data.html
     let destname = to+'/'+filePath;
-    let localename = filePath.substr(filePath.lastIndexOf("."), filePath.length).replace('/', '_')
-    await fs.promises.writeFile(`locales/${from}/${localename}.json`, JSON.stringify(data.locale)).catch(err => reject(err));
+    let localename = filePath.substr(0, filePath.lastIndexOf(".")).replace('/', '_')
+    await fs.promises.writeFile(`./locales/${from}/${localename}.json`, JSON.stringify(data.locale)).catch(err => reject(err));
     await fs.promises.writeFile(filePath, origin_html).catch(err => reject(err));
     if(to){
-      let translatedLocale = await Translate.TranslateLocale(data.locale, from, to, data.size).catch(err => reject(err));
-      await fs.promises.writeFile(`locales/${to}/${localename}.json`, JSON.stringify(translatedLocale)).catch(err => reject(err))
-      let translatedHtml = await TranslateHtml(origin_html, translatedLocale).catch(err => reject(err))
+      let translatedLocale = await Localize.TranslateLocale(data.locale, from, to, data.size).catch(err => reject(err));
+      await fs.promises.writeFile(`./locales/${to}/${localename}.json`, JSON.stringify(translatedLocale)).catch(err => reject(err))
+      let translatedHtml = await Localize.TranslateHtml(origin_html, translatedLocale).catch(err => reject(err))
       if(localename === from) destname = to+'.html'
       else if(filePath.split('/')[0] === from) destname = to+filePath.split('/', 2)[1]  
       await fs.promises.writeFile(destname, translatedHtml).then(resolve(true)).catch(err => reject(err))
@@ -50,20 +50,62 @@ function localizeAndTranslate(html, filePath, from, to){
 
 async function localizeTranslateFile(flags, args){
   let fileContent = await fs.promises.readFile(args.filename, 'utf8')
-  let json = await fs.promises.readFile(`./locales/${args.from}/${args.filename}`, 'utf8')
+  let localename = args.filename.substr(0, args.filename.lastIndexOf(".")).replace('/', '_')
+  let wait = false;
   if(flags.create) await localizeAndTranslate(fileContent, args.filename, args.from, args.to)
-  else if(flags.update && flags.backwards) await Translate.CreateLocale(fileContent)
-  else if(flags.update) await Translate.TranslateHtml(fileContent, json)
-  else if(flags.import) Translate.importCsv(args.from, fileContent)
-  if(flags.export) {
-    Translate.exportCsv(args.from, json)
-    if(args.to) Translate.exportCsv(args.to, json)
+  .then(()=> {
+    wait = true;
+    console.log(`Localized and translated your file ${args.filename}`)
+  }).catch(err => console.log(err))
+  else if(flags.update && flags.backwards){
+    let locale = await Localize.CreateLocale(fileContent).catch(err => console.log(err))
+    await fs.promises.writeFile(`./locales/${args.from}/${localename}.json`, locale)
+    .then(()=> {
+      wait = true;
+      console.log(`Updated contents of locales/${args.from}/${localename}.json according to changes in ${args.filename}`)
+    }).catch(err => console.log(err)) 
+  } 
+  else if(flags.update) {
+    let json = await fs.promises.readFile(`./locales/${args.from}/${args.filename}`, 'utf8').catch(err => console.log(err))
+    let html = await Localize.TranslateHtml(fileContent, json).catch(err => console.log(err))
+    await fs.promises.writeFile(args.filename, html)
+    .then(()=>{
+      wait = true;
+      console.log(`Updated contents of ${filename} according to changes in the JSON locale`)
+    }).catch(err => console.log(err)) 
+  }
+  else if(flags.import){
+    let csv = await fs.promises.readFile(`exports/csv/${args.from}/${localename}.csv`, 'utf8')
+    let obj = await Localize.importCsv(args.from, csv).catch(err => console.log(err))
+    await fs.promises.writeFile(`./locales/${args.from}/${localename}.json`, obj)
+    .then(()=>{
+      wait = true;
+      console.log(`Updated contents of locales/${args.from}/${localename}.json according to changes in the CSV file`)
+    }).catch(err => console.log(err))
+  }
+  else wait = true;
+  if(flags.export && wait) {
+    let fromjson = await fs.promises.readFile(`./locales/${args.from}/${localename}.json`).catch(err => console.log(err))
+    let fromcsv = await Localize.exportCsv(args.from, fromjson).catch(err => console.log(err))
+    await fs.promises.writeFile(`exports/csv/${args.from}/${localename}.csv`, fromcsv).then(()=>console.log(`Exported CSV file with the contet of ./locales/${args.from}/${localename}.json`)).catch(err => console.log(err))
+    if(args.to) {
+      let tojson = await fs.promises.readFile(`./locales/${args.to}/${localename}.json`).catch(err => console.log(err))
+      let tocsv = await Localize.exportCsv(args.to, tojson).catch(err => console.log(err))
+      await fs.promises.writeFile(`exports/csv/${args.to}/${localename}.csv`, tocsv).then(()=>console.log(`Exported CSV file with the contet of ./locales/${args.to}/${localename}.json`)).catch(err => console.log(err))
+    }
   }
 }
 
 class TranslateCommand extends Command {
   async run() {
     const {args, flags} = this.parse(TranslateCommand)
+    await Localize.CreateDir(`locales/${args.from}`)
+    if(args.to) await Localize.CreateDir(`locales/${args.to}`)
+    if(flags.export) {
+      await Localize.CreateDir(`exports/csv/${args.from}`)
+      if(args.to) await Localize.CreateDir(`exports/csv/${args.to}`)
+    }
+    if(args.filename !== `${args.from}.html`) await Localize.CreateDir(args.to)
     if(args.filename === 'all'){
       scanFolder('./', (filePath, stat)=> {
         args.filename = filePath
