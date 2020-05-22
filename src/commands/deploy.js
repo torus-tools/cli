@@ -62,11 +62,11 @@ class DeployCommand extends Command {
               wait = false;
               Deploy.newHostedZone(stackName).then(data => {
                 console.log('\nIn your Domain name registrar, please change your DNS settings to custom DNS and add the following Nameservers: \n')
-                for(nameserv of data) console.log("\x1b[32m", nameserv,'\n', "\x1b[0m")
+                for(let ns of data) console.log("\x1b[32m", ns,'\n', "\x1b[0m")
               }).catch(err => console.log(err))
               //log the nameservers in a pretty way
-              let delay = await delay(10000)
-              if(delay) let answer = await cli.prompt('Have you finished updating your nameservers?')
+              await delay(10000)
+              let answer = await cli.prompt('Have you finished updating your nameservers?')
               if(answer === 'y' || answer === 'Y' || answer === 'yes'|| answer === 'Yes') wait = true;
               else console.log('Exiting.') //exit the cli
             }
@@ -115,12 +115,16 @@ class DeployCommand extends Command {
     }
     else if(args.action === 'delete'){
       let stackName = args.site.split('.').join('') + 'Stack';
-      cli.action.start('Deleting your stack')
-      console.log('If any, please delete all additional route53 records you may have created and not attached to your cloudformation stack')
-      cloudformation.deleteStack({StackName: stackName}).promise()
-      .then(()=> {
-        cli.action.stop('Success')
-        console.log('Your cloudformation stack is being deleted')
+      cli.action.start('Removing any digital certificates associated to the domain')
+      Deploy.deleteCertificate(args.site).then(data => {
+        cli.action.stop();
+        console.log("\x1b[33mIf any, please delete all additional route53 records you may have created and not attached to your cloudformation stack", "\x1b[0m");
+        cli.action.start('Deleting your stack')
+        cloudformation.deleteStack({StackName: stackName}).promise()
+        .then(()=> {
+          cli.action.stop('Success')
+          console.log('Your cloudformation stack is being deleted')
+        }).catch(err => console.log(err))
       }).catch(err => console.log(err))
     }
     //else if(args.action === upload)
