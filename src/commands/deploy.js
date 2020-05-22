@@ -60,7 +60,10 @@ class DeployCommand extends Command {
           if(wait && stack.action === 'CREATE') {
             if(flags.route53){
               wait = false;
-              Deploy.newHostedZone(stackName).then(data => console.log(data)).catch(err => console.log(err))
+              Deploy.newHostedZone(stackName).then(data => {
+                console.log('\nIn your Domain name registrar, please change your DNS settings to custom DNS and add the following Nameservers: \n')
+                for(nameserv of data) console.log("\x1b[32m", nameserv,'\n', "\x1b[0m")
+              }).catch(err => console.log(err))
               //log the nameservers in a pretty way
               let delay = await delay(10000)
               if(delay) let answer = await cli.prompt('Have you finished updating your nameservers?')
@@ -120,6 +123,7 @@ class DeployCommand extends Command {
         console.log('Your cloudformation stack is being deleted')
       }).catch(err => console.log(err))
     }
+    //else if(args.action === upload)
   }
 }
 
