@@ -1,81 +1,80 @@
 const {Command, flags} = require('@oclif/command')
 const Optimize = require('arjan-optimize')
 const Localize = require('arjan-localize')
+const {cli} = require('cli-ux');
+const HtmlMinifier = require('html-minifier');
+const UglifyJS = require("uglify-js");
 const fs = require('fs')
+const postcss = require('postcss')
+const cssnano = require('cssnano')
+/* ({
+  preset: ['default', {
+      discardComments: {
+          removeAll: true,
+      },
+  }]
+}); */
 
 class OptimizeCommand extends Command {
   async run() {
     const {flags, args} = this.parse(OptimizeCommand)
     await Localize.CreateDir('./dep_pack')
-    await Localize.createFile('./optimize_config.json')
-    let res = await main(args, flags).catch((err) => {console.log(err)})
+    let config = await Localize.createFile('./optimize_config.json', Optimize.optimizeConfig.toString())
+    let config_json = JSON.parse(config)
+    cli.action.start('optimizing static assets')
+    let res = await main(args, flags, config_json).catch((err) => {console.log(err)})
+    if(res) cli.action.stop()
     if(flags.webp) {
       //console.log('FILES ', res.htmlfiles)
+      cli.action.start('replacing imgs for pictures')
       for(file of res.htmlfiles){
         let html = await fs.promises.readFile(file, 'utf8')
-        for(img of res.images) html = await webP.replace(img, html, file)
+        for(img of res.images) html = await Optimize.replaceWebp(img, html, file)
         //console.log('HTML \n', html)
         if(flags.html){
-          var result = minify(html, {
-          removeAttributeQuotes: false,
-          removeComments: false,
-          html5: true,
-          minifyJS: false,
-          collapseWhitespace: true,
-          removeEmptyAttributes: true,
-          removeEmptyElements: true
-        });
-        let fileSubPath = file.split('input/', 2)[1];
-        await fs.promises.writeFile(`output/${fileSubPath}`, result)
+          var result = HtmlMinifier.minify(html, config_json.html_minifier);
+          await fs.promises.writeFile(`./dep_pack/${file}`, result)
+          .then(() => console.log(`Minfied ${filepath} using html-minifier`))
         }
       }
+      cli.action.stop()
     }
     else console.log('All Done!');
   }
 }
 
-function main(args, flags){
+function main(args, flags, options){
   return new Promise((resolve, reject) => {
     let classes = {};
     let stylesheets = [];
     let imageArr = [];
     let htmlArr = [];
-    if(args.filename) optimizeFile(args.filename, args, flags)
+    if(args.filename) optimizeFile(args.filename, flags, options)
     else {
-      scanFolder("input/", (filePath, stat) => {
+      scanFolder("./", (filePath, stat) => {
         //let fileName = filePath.substring(filePath.lastIndexOf('/') + 1)
-        optimizeFile(filePath, args, flags)
+        optimizeFile(filePath, args, options)
       })
     }
     resolve({stylesheets:stylesheets, classes:classes, htmlfiles:htmlArr, images:imageArr})
   })
 }
 
-function optimizeFile(filePath, args, flags){
-  let fileSubPath = filePath.split('input/', 2)[1];
+function optimizeFile(filePath, flags, options){
   let fileExtension = filePath.substring(filePath.lastIndexOf('.') + 1);
   return new Promise((resolve, reject) => {
     if(fileExtension =='html'){
       htmlArr.push(filePath);
       var html = await fs.promises.readFile(filePath, 'utf8').catch((err)=>reject(err))
       /* if(cleanCss){
-        console.log('saving classes used in '+fileSubPath)
+        console.log('saving classes used in '+filePath)
         classes = await unusedCss.createClassList(html, classes)
         //console.log("CLASS LIST", classes)
       } */
       if(flags.html && !flags.webp){
-        var result = minify(html, {
-          removeAttributeQuotes: false,
-          removeComments: false,
-          html5: true,
-          minifyJS: false,
-          collapseWhitespace: true,
-          removeEmptyAttributes: true,
-          removeEmptyElements: true
-        });
-        await fs.promises.writeFile(`output/${fileSubPath}`, result).then(() => resolve('minified '+ filePath))
+        var result = HtmlMinifier.minify(html, options.html_minifier);
+        await fs.promises.writeFile(`./dep_pack/${filePath}`, result).then(() => console.log(`Minfied ${filepath} using html-minifier`))
       }
-      else resolve("")
     }
     else if(fileExtension =='css'){
       //save the css file in stylesheets array
@@ -83,36 +82,37 @@ function optimizeFile(filePath, args, flags){
       /* if(!cleanCss){
         //minify CSS   
       } */
-      fs.readFile(filePath, (err, css) => {
+      fs.promises.readFile(filePath).then(css =>{
         postcss([cssnano])
-          .process(css, { from: filePath, to: `output/${fileSubPath}` })
+          .process(css, { from: filePath, to: `./dep_pack/${filePath}` })
           .then(result => {
-            fs.writeFile(`output/${fileSubPath}`, result.css, () => true)
-            if ( result.map ) {
-              fs.writeFile(`output/${fileSubPath}.map`, result.map, () => true)
-            }
-          })
-      })
+            fs.promises.writeFile(`./dep_pack/${filePath}`, result.css)
+            .then(() => console.log(`Minfied ${filepath} using cssnano`))
+            /* if ( result.map ) {
+              fs.promises.writeFile(`./dep_pack/${filePath}.map`, result.map)
+            } */
+          }).catch(err=>reject(err))
+      }).catch(err=>reject(err))
     }
     else if(fileExtension =='js'){
-      console.log(`compressing ${fileSubPath} . . .`)
+      console.log(`compressing ${filePath} . . .`)
       var code = await fs.promises.readFile(filePath, 'utf8')
-      var result = UglifyJS.minify(code);
+      var result = UglifyJS.minify(code, options.uglify_options);
       if (result.error) reject(result.error);
-      else fs.promises.writeFile(`output/${fileSubPath}`, result.code)
-      .then(console.log('compressed the js file'))
+      else fs.promises.writeFile(`./dep_pack/${filePath}`, result.code)
+      .then(console.log(`Minified ${filepath} using UglifyJS`))
       .catch((err)=>console.log(err))
     }
     else {
-      await compressImage(filePath, imageArr)
+      await Optimize.compressImage(filePath, "dep_pack", imageArr, options.svgo)
       .then((img) => {
         if(img) {
           imageArr.push(filePath);
-          if(webp) webP.compress(filePath);
+          if(webp) Optimize.compressWebp(filePath);
         }
         else {
           console.log(`file format ${fileExtension} not recognized by Arjan. Copying file as is.`)
-          copyFile(fileSubPath)
+          Optimize.copyFile(filePath, "dep_pack")
         }
       }).catch((err) => console.log(err))   
     }
