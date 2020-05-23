@@ -41,17 +41,17 @@ class OptimizeCommand extends Command {
     await Localize.CreateDir('./dep_pack')
     let config = await Localize.createFile('./optimize_config.json', JSON.stringify(Optimize.optimizeConfig))
     let config_json = JSON.parse(config)
+    //console.log(config_json)
     let res = await main(args, flags, config_json).catch((err) => {console.log(err)})
     if(res) cli.action.stop()
     if(flags.webp) {
       //console.log('FILES ', res.htmlfiles)
       cli.action.start('replacing imgs for pictures')
       for(let file of res.htmlfiles){
-        console.log('REPLACING WEBP')
         let html = await fs.promises.readFile(file, 'utf8')
         for(let img of res.images) html = await Optimize.replaceWebp(img, html, file)
-        //console.log('HTML \n', html)
         if(flags.html){
+          console.log("\x1b[31m", config_json.html_minifier,"\x1b[0m")
           var result = HtmlMinifier.minify(html, config_json.html_minifier);
           await fs.promises.writeFile(`./dep_pack/${file}`, result)
           .then(() => console.log(`Minfied ${file} using html-minifier`))
@@ -70,7 +70,7 @@ function main(args, flags, options){
     else {
       scanFolder("./", "./dep_pack", (filePath, stat) => {
         //let fileName = filePath.substring(filePath.lastIndexOf('/') + 1)
-        optimizeFile(filePath, args, options, arrs).then(data => arrs = data)
+        optimizeFile(filePath, flags, options, arrs).then(data => arrs = data)
       })
     }
     resolve(arrs)
@@ -79,21 +79,18 @@ function main(args, flags, options){
 
 //below we create a function called recurseFolder that takes in two parameters, the current folder and a callback function
 function scanFolder(currentDirPath, output, callback) {
-  fs.readdirSync(currentDirPath).forEach((name)=>{
+    fs.readdirSync(currentDirPath).forEach((name)=>{
       var filePath = path.join(currentDirPath, name);
       var stat = fs.statSync(filePath);
-      if (stat.isFile()) callback(filePath, stat);
-      else if (stat.isDirectory()) {
-          let fileSubPath = filePath;
-          if(ignorePaths[fileSubPath]) console.log("ignoring ", fileSubPath)
-          else {
-              if(!fs.existsSync(`${output}/${fileSubPath}`)){
-                  fs.mkdirSync(`${output}/${fileSubPath}`)
-              }
-              scanFolder(filePath, output, callback);
-          }
+      if(ignorePaths[filePath]) console.log("ignoring ", filePath)
+      else {
+        if (stat.isFile()) callback(filePath, stat);
+        else if (stat.isDirectory()) {
+          if(!fs.existsSync(`${output}/${filePath}`)) fs.mkdirSync(`${output}/${filePath}`)
+          scanFolder(filePath, output, callback)
+        }
       }
-  });
+    });
 }
 
 async function optimizeFile(filePath, flags, options, arrs){
@@ -121,7 +118,6 @@ async function optimizeFile(filePath, flags, options, arrs){
       }).catch(err=>console.log(err))
     }
     else if(fileExtension =='js'){
-      console.log(`compressing ${filePath} . . .`)
       var code = await fs.promises.readFile(filePath, 'utf8')
       var result = UglifyJS.minify(code);
       if (result.error) console.log("\x1b[31m", `Error ${filePath} not copied. UglifyJS: ${result.error.message}`, "\x1b[0m")
@@ -134,11 +130,13 @@ async function optimizeFile(filePath, flags, options, arrs){
       .then((img) => {
         if(img) {
           arrs.images.push(filePath);
-          if(flags.webp) Optimize.compressWebp(filePath);
+          if(flags.webp){
+            Optimize.compressWebp(filePath, "./dep_pack");
+          }
         }
         else {
           console.log(`file format ${fileExtension} not recognized by Arjan. Copying file as is.`)
-          Optimize.copyFile(filePath, "dep_pack")
+          Optimize.copyFile(filePath, "./dep_pack")
         }
       }).catch((err) => console.log(err))   
     }
