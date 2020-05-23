@@ -3,7 +3,7 @@ const Optimize = require('arjan-optimize')
 const Localize = require('arjan-localize')
 const {cli} = require('cli-ux');
 const HtmlMinifier = require('html-minifier');
-const UglifyJS = require("uglify-js");
+var UglifyJS = require("uglify-js");
 const fs = require('fs')
 const postcss = require('postcss')
 const cssnano = require('cssnano')
@@ -14,27 +14,47 @@ const cssnano = require('cssnano')
       },
   }]
 }); */
+const path = require("path");
+
+const ignorePaths = {
+  "dep_pack":true,
+  "node_modules":true,
+  "package.json":true,
+  "package_lock.json":true,
+  ".env":true,
+  ".git":true,
+  ".gitignore":true,
+  "README.md":true,
+  "forms":true,
+  "locales":true,
+  "exports":true,
+  ".yo-repository":true,
+  "bin":true,
+  "src":true,
+  "test":true
+}
 
 class OptimizeCommand extends Command {
   async run() {
     const {flags, args} = this.parse(OptimizeCommand)
-    await Localize.CreateDir('./dep_pack')
-    let config = await Localize.createFile('./optimize_config.json', Optimize.optimizeConfig.toString())
-    let config_json = JSON.parse(config)
     cli.action.start('optimizing static assets')
+    await Localize.CreateDir('./dep_pack')
+    let config = await Localize.createFile('./optimize_config.json', JSON.stringify(Optimize.optimizeConfig))
+    let config_json = JSON.parse(config)
     let res = await main(args, flags, config_json).catch((err) => {console.log(err)})
     if(res) cli.action.stop()
     if(flags.webp) {
       //console.log('FILES ', res.htmlfiles)
       cli.action.start('replacing imgs for pictures')
-      for(file of res.htmlfiles){
+      for(let file of res.htmlfiles){
+        console.log('REPLACING WEBP')
         let html = await fs.promises.readFile(file, 'utf8')
-        for(img of res.images) html = await Optimize.replaceWebp(img, html, file)
+        for(let img of res.images) html = await Optimize.replaceWebp(img, html, file)
         //console.log('HTML \n', html)
         if(flags.html){
           var result = HtmlMinifier.minify(html, config_json.html_minifier);
           await fs.promises.writeFile(`./dep_pack/${file}`, result)
-          .then(() => console.log(`Minfied ${filepath} using html-minifier`))
+          .then(() => console.log(`Minfied ${file} using html-minifier`))
         }
       }
       cli.action.stop()
@@ -44,33 +64,43 @@ class OptimizeCommand extends Command {
 }
 
 function main(args, flags, options){
+  let arrs = {stylesheets:[], classes:{}, htmlfiles:[], images:[]}
   return new Promise((resolve, reject) => {
-    let classes = {};
-    let stylesheets = [];
-    let imageArr = [];
-    let htmlArr = [];
-    if(args.filename) optimizeFile(args.filename, flags, options)
+    if(args.filename) optimizeFile(args.filename, flags, options, imageArr)
     else {
-      scanFolder("./", (filePath, stat) => {
+      scanFolder("./", "./dep_pack", (filePath, stat) => {
         //let fileName = filePath.substring(filePath.lastIndexOf('/') + 1)
-        optimizeFile(filePath, args, options)
+        optimizeFile(filePath, args, options, arrs).then(data => arrs = data)
       })
     }
-    resolve({stylesheets:stylesheets, classes:classes, htmlfiles:htmlArr, images:imageArr})
+    resolve(arrs)
   })
 }
 
-function optimizeFile(filePath, flags, options){
-  let fileExtension = filePath.substring(filePath.lastIndexOf('.') + 1);
-  return new Promise((resolve, reject) => {
+//below we create a function called recurseFolder that takes in two parameters, the current folder and a callback function
+function scanFolder(currentDirPath, output, callback) {
+  fs.readdirSync(currentDirPath).forEach((name)=>{
+      var filePath = path.join(currentDirPath, name);
+      var stat = fs.statSync(filePath);
+      if (stat.isFile()) callback(filePath, stat);
+      else if (stat.isDirectory()) {
+          let fileSubPath = filePath;
+          if(ignorePaths[fileSubPath]) console.log("ignoring ", fileSubPath)
+          else {
+              if(!fs.existsSync(`${output}/${fileSubPath}`)){
+                  fs.mkdirSync(`${output}/${fileSubPath}`)
+              }
+              scanFolder(filePath, output, callback);
+          }
+      }
+  });
+}
+
+async function optimizeFile(filePath, flags, options, arrs){
+    let fileExtension = filePath.substring(filePath.lastIndexOf('.') + 1);
     if(fileExtension =='html'){
-      htmlArr.push(filePath);
-      var html = await fs.promises.readFile(filePath, 'utf8').catch((err)=>reject(err))
-      /* if(cleanCss){
-        console.log('saving classes used in '+filePath)
-        classes = await unusedCss.createClassList(html, classes)
-        //console.log("CLASS LIST", classes)
-      } */
+      arrs.htmlfiles.push(filePath);
+      var html = await fs.promises.readFile(filePath, 'utf8').catch((err)=>console.log(err))
       if(flags.html && !flags.webp){
         var result = HtmlMinifier.minify(html, options.html_minifier);
         await fs.promises.writeFile(`./dep_pack/${filePath}`, result).then(() => console.log(`Minfied ${filepath} using html-minifier`))
@@ -78,37 +108,33 @@ function optimizeFile(filePath, flags, options){
     }
     else if(fileExtension =='css'){
       //save the css file in stylesheets array
-      stylesheets.push(filePath)
-      /* if(!cleanCss){
-        //minify CSS   
-      } */
+      arrs.stylesheets.push(filePath)
+
       fs.promises.readFile(filePath).then(css =>{
         postcss([cssnano])
           .process(css, { from: filePath, to: `./dep_pack/${filePath}` })
           .then(result => {
             fs.promises.writeFile(`./dep_pack/${filePath}`, result.css)
-            .then(() => console.log(`Minfied ${filepath} using cssnano`))
-            /* if ( result.map ) {
-              fs.promises.writeFile(`./dep_pack/${filePath}.map`, result.map)
-            } */
-          }).catch(err=>reject(err))
-      }).catch(err=>reject(err))
+            .then(() => console.log(`Minfied ${filePath} using cssnano`))
+
+          }).catch(err=>console.log(err))
+      }).catch(err=>console.log(err))
     }
     else if(fileExtension =='js'){
       console.log(`compressing ${filePath} . . .`)
       var code = await fs.promises.readFile(filePath, 'utf8')
-      var result = UglifyJS.minify(code, options.uglify_options);
-      if (result.error) reject(result.error);
+      var result = UglifyJS.minify(code);
+      if (result.error) console.log("\x1b[31m", `Error ${filePath} not copied. UglifyJS: ${result.error.message}`, "\x1b[0m")
       else fs.promises.writeFile(`./dep_pack/${filePath}`, result.code)
-      .then(console.log(`Minified ${filepath} using UglifyJS`))
+      .then(console.log(`Minified ${filePath} using UglifyJS`))
       .catch((err)=>console.log(err))
     }
     else {
-      await Optimize.compressImage(filePath, "dep_pack", imageArr, options.svgo)
+      await Optimize.compressImages(filePath, "dep_pack", arrs.images, options.svgo)
       .then((img) => {
         if(img) {
-          imageArr.push(filePath);
-          if(webp) Optimize.compressWebp(filePath);
+          arrs.images.push(filePath);
+          if(flags.webp) Optimize.compressWebp(filePath);
         }
         else {
           console.log(`file format ${fileExtension} not recognized by Arjan. Copying file as is.`)
@@ -116,7 +142,7 @@ function optimizeFile(filePath, flags, options){
         }
       }).catch((err) => console.log(err))   
     }
-  })
+    return arrs
 }
 
 OptimizeCommand.description = `Describe the command here
@@ -124,11 +150,6 @@ OptimizeCommand.description = `Describe the command here
 Extra documentation goes here
 `
 OptimizeCommand.args = [
-  {
-    name: 'sitename',
-    required: true,
-    description: 'name of the site i.e. yoursite.com'
-  },
   {
     name: 'filename',
     required: false,
@@ -153,15 +174,15 @@ OptimizeCommand.flags = {
     char: 'h',                    
     description: 'compress html using html-minifier',        
   }),
-  css: flags.string({
+  css: flags.boolean({
     char: 'c',
     description: 'minifiy css using cssnano',
   }),
-  /* unusedcss: flags.string({
+  /* unusedcss: flags.boolean({
     char: 'u',
     description: 'remove unused css classes',
   }), */
-  js: flags.string({
+  js: flags.boolean({
     char: 'j',
     description: 'minify js using uglify js'
   })

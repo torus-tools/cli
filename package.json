@@ -11,8 +11,13 @@
     "@oclif/command": "^1.6.1",
     "@oclif/config": "^1.15.1",
     "@oclif/plugin-help": "^3.0.0",
+    "arjan-deploy": "^0.6.0",
     "arjan-localize": "^1.1.2",
-    "cli-ux": "^5.4.6"
+    "cli-ux": "^5.4.6",
+    "cssnano": "^4.1.10",
+    "html-minifier": "^4.0.0",
+    "postcss": "^7.0.30",
+    "uglify-js": "^3.9.3"
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1.22.2",
