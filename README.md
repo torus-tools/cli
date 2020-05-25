@@ -31,9 +31,9 @@ USAGE
 * [`arjan audit`](#arjan-audit)
 * [`arjan build [REGION] [PROFILE]`](#arjan-build-region-profile)
 * [`arjan deploy SITE ACTION [SETUP]`](#arjan-deploy-site-action-setup)
-* [`arjan hello`](#arjan-hello)
 * [`arjan help [COMMAND]`](#arjan-help-command)
 * [`arjan optimize [FILENAME]`](#arjan-optimize-filename)
+* [`arjan serve`](#arjan-serve)
 * [`arjan translate FILENAME FROM [TO]`](#arjan-translate-filename-from-to)
 
 ## `arjan audit`
@@ -45,7 +45,16 @@ USAGE
   $ arjan audit
 
 OPTIONS
-  -n, --name=name  name to print
+  -d, --dir=dir              Directory path to serve. default is root (relative to the path in which you run the
+                             command)
+
+  -f, --file=file            Path of the page you want to audit. default is index.html
+
+  -p, --port=port            Port used for the test server. Default is 8080.
+
+  -t, --threshold=threshold  Integer value from 0 to 1 that represents what you consider to be an acceptable lighthouse
+                             score for your site. Its very similar to what you would consider an acceptable school test
+                             grade.
 
 DESCRIPTION
   ...
@@ -118,24 +127,6 @@ DESCRIPTION
 
 _See code: [src/commands/deploy.js](https://github.com/arjan-tools/cli/blob/v0.0.0/src/commands/deploy.js)_
 
-## `arjan hello`
-
-Describe the command here
-
-```
-USAGE
-  $ arjan hello
-
-OPTIONS
-  -n, --name=name  name to print
-
-DESCRIPTION
-  ...
-  Extra documentation goes here
-```
-
-_See code: [src/commands/hello.js](https://github.com/arjan-tools/cli/blob/v0.0.0/src/commands/hello.js)_
-
 ## `arjan help [COMMAND]`
 
 display help for arjan
@@ -179,6 +170,24 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/optimize.js](https://github.com/arjan-tools/cli/blob/v0.0.0/src/commands/optimize.js)_
+
+## `arjan serve`
+
+Describe the command here
+
+```
+USAGE
+  $ arjan serve
+
+OPTIONS
+  -n, --name=name  name to print
+
+DESCRIPTION
+  ...
+  Extra documentation goes here
+```
+
+_See code: [src/commands/serve.js](https://github.com/arjan-tools/cli/blob/v0.0.0/src/commands/serve.js)_
 
 ## `arjan translate FILENAME FROM [TO]`
 
