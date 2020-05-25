@@ -13,6 +13,7 @@
     "@oclif/plugin-help": "^3.0.0",
     "arjan-deploy": "^0.6.0",
     "arjan-localize": "^1.1.2",
+    "arjan-optimize": "^0.6.0",
     "cli-ux": "^5.4.6",
     "cssnano": "^4.1.10",
     "html-minifier": "^4.0.0",
