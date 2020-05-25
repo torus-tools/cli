@@ -28,12 +28,31 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
+* [`arjan audit`](#arjan-audit)
 * [`arjan build [REGION] [PROFILE]`](#arjan-build-region-profile)
 * [`arjan deploy SITE ACTION [SETUP]`](#arjan-deploy-site-action-setup)
 * [`arjan hello`](#arjan-hello)
 * [`arjan help [COMMAND]`](#arjan-help-command)
-* [`arjan optimize`](#arjan-optimize)
+* [`arjan optimize [FILENAME]`](#arjan-optimize-filename)
 * [`arjan translate FILENAME FROM [TO]`](#arjan-translate-filename-from-to)
+
+## `arjan audit`
+
+Describe the command here
+
+```
+USAGE
+  $ arjan audit
+
+OPTIONS
+  -n, --name=name  name to print
+
+DESCRIPTION
+  ...
+  Extra documentation goes here
+```
+
+_See code: [src/commands/audit.js](https://github.com/arjan-tools/cli/blob/v0.0.0/src/commands/audit.js)_
 
 ## `arjan build [REGION] [PROFILE]`
 
@@ -79,7 +98,6 @@ ARGUMENTS
 OPTIONS
   -c, --cdn            creates a CloudFront distribution for your site.
   -e, --error=error    [default: error.html] name of the error document
-  -f, --upload=upload  name of a specific file you want to upload to your site. all uploads all of the files
 
   -h, --https          creates and validates a TLS certificate for your site. If you arent using a route53 DNS you must
                        create a CNAME record manually in your DNS.
@@ -88,6 +106,8 @@ OPTIONS
 
   -r, --route53        creates a Hosted Zone in route 53. Have your current DNS provider page open and ready to add a
                        custom DNS.
+
+  -u, --upload=upload  name of a specific file you want to upload to your site. all uploads all of the files
 
   -w, --www            creates a www s3 bucket that reroutes requests to the index.
 
@@ -133,16 +153,25 @@ OPTIONS
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.0.0/src/commands/help.ts)_
 
-## `arjan optimize`
+## `arjan optimize [FILENAME]`
 
 Describe the command here
 
 ```
 USAGE
-  $ arjan optimize
+  $ arjan optimize [FILENAME]
+
+ARGUMENTS
+  FILENAME  name of the file i.e. index.html
 
 OPTIONS
-  -n, --name=name  name to print
+  -c, --css     minifiy css using cssnano
+  -h, --html    compress html using html-minifier
+  -i, --images  compress images and if possible maintain the format. otherwise its converted to png.
+  -j, --js      minify js using uglify js
+
+  -w, --webp    saves a webp version of each image, then replaces each image instance in the html files with a picture
+                tag.
 
 DESCRIPTION
   ...
