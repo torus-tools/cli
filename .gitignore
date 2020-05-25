@@ -1,0 +1,10 @@
+.env
+css/
+dep_pack/
+en/
+exports/
+img/
+index.html
+js/
+locales/
+optimize_config.json

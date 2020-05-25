@@ -76,13 +76,12 @@ function translateFile(html, file, translation, name, from, to){
         if(err) console.log(err)
         else{
           fs.promises.writeFile(`locales/${to}/${to}.json`, JSON.stringify(data));
-          TranslateHtml(name, origin_html, translation, data, to, function(err, data){
-            if(err) console.log(err)
-            else {
-              fs.promises.writeFile(translation, data)
-              console.log('All Done!')
-            }
+          TranslateHtml(origin_html, data)
+          .then((data)=> {
+            fs.promises.writeFile(translation, data)
+            console.log('All Done!')
           })
+          .catch(err => console.log(err))
         }
       })
     }
