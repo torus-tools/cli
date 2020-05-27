@@ -9,6 +9,49 @@ const defaults = {
   "threshold":0.8
 }
 
+
+function getScoreColor(score){
+  let color = "\x1b[31m";    //red by default
+  if(score > .9) color = "\x1b[32m"    //green
+  else if(score > .8) color = "\x1b[33m";    //yellow
+  return color;
+}
+function getReportItem(caps, i, item, score){
+  score = Number((score).toFixed(2));
+  let colorReset = "\x1b[0m";
+  if(caps) item = item.toUpperCase();
+  let remainder = i - 8 - item.length - score.toString().length;
+  let scoreColor = getScoreColor(score)+score+colorReset;
+  let line = "|"+ " ".repeat(6) + item +": "+ scoreColor + " ".repeat(remainder) + "|\n";
+  return line;
+}
+function getRecommendation(item){
+  let colorReset = "\x1b[0m";
+  let recommendation = getScoreColor(item.score) + item.title + colorReset+ ": " +item.description;
+  return recommendation;
+}
+function getHeading(title){
+  let heading = "|" + " ".repeat((40-title.length)/2) + title.toUpperCase() + " ".repeat((40-title.length)/2) + "|\n";
+  return heading;
+}
+function formatReport(audit){
+  let i = 40;
+  let count = 1;
+  let blankLine = "|" + " ".repeat(i) + "|\n";
+  let sepparator = "|" + "-".repeat(i) + "|\n";
+  let header = sepparator + blankLine + getHeading("audit report") + blankLine;
+  let scores = sepparator + blankLine + getReportItem(true, i, 'lighthouse 6 score', audit.lh6_score) + getReportItem(true, i, 'lighthouse 6 score', audit.lh5_score) + blankLine;
+  let mainMetrics = sepparator + getHeading("main metrics") + blankLine;
+  for(let m in audit.main_metrics) mainMetrics += getReportItem(false, i, audit.main_metrics[m].title, audit.main_metrics[m].score);
+  let recommendations = '\nRECOMMENDATIONS\n\n';
+  for(let r in audit.improvements){
+    recommendations += count+". "+getRecommendation(audit.improvements[r])+'\n\n';
+    count += 1;
+  }
+  let report = recommendations+'\n'+header+scores+mainMetrics+sepparator;
+  return report;
+}
+
 class AuditCommand extends Command {
   async run() {
     //create the config.json file
@@ -21,7 +64,8 @@ class AuditCommand extends Command {
     }
     cli.action.start('Running Lighthouse Audit')
     Audit(flags.dir, flags.file, flags.port, flags.threshold).then(data => {
-      console.log(data)
+      //console.log(data)
+      console.log(formatReport(data))
       cli.action.stop()
     })
   }
