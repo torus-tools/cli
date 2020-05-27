@@ -5,6 +5,7 @@ const Localize = require('arjan-localize')
 const {cli} = require('cli-ux');
 const HtmlMinifier = require('html-minifier');
 const csso = require('csso');
+var Terser = require("terser");
 
 /* ({
   preset: ['default', {
@@ -50,7 +51,7 @@ class OptimizeCommand extends Command {
         let html = await fs.promises.readFile(file, 'utf8')
         for(let img of res.images) html = await Optimize.replaceWebp(img, html, file)
         if(flags.html){
-          console.log("\x1b[31m", config_json.html_minifier,"\x1b[0m")
+          //console.log("\x1b[31m", config_json.html_minifier,"\x1b[0m")
           var result = HtmlMinifier.minify(html, config_json.html_minifier);
           await fs.promises.writeFile(`./dep_pack/${file}`, result)
           .then(() => console.log(`Minfied ${file} using html-minifier`))
@@ -107,15 +108,14 @@ async function optimizeFile(filePath, flags, options, arrs){
       arrs.stylesheets.push(filePath)
       let css = await fs.promises.readFile(filePath, 'utf8').catch(err=>console.log(err))
       var result = await csso.minify(css, {});
-      console.log(result)
       fs.promises.writeFile(`./dep_pack/${filePath}`, result.css).catch(err=>console.log(err))
     }
     else if(fileExtension =='js' && flags.js){
       var code = await fs.promises.readFile(filePath, 'utf8')
-      var result = UglifyJS.minify(code);
+      var result = await Terser.minify(code);
       if (result.error) console.log("\x1b[31m", `Error ${filePath} not copied. UglifyJS: ${result.error.message}`, "\x1b[0m")
       else fs.promises.writeFile(`./dep_pack/${filePath}`, result.code)
-      .then(console.log(`Minified ${filePath} using UglifyJS`))
+      .then(console.log(`Minified ${filePath} using Terser`))
       .catch((err)=>console.log(err))
     }
     else if(flags.images) {
