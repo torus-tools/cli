@@ -1,12 +1,11 @@
 const {Command, flags} = require('@oclif/command')
+const fs = require('fs')
 const Optimize = require('arjan-optimize')
 const Localize = require('arjan-localize')
 const {cli} = require('cli-ux');
 const HtmlMinifier = require('html-minifier');
-var UglifyJS = require("uglify-js");
-const fs = require('fs')
-const postcss = require('postcss')
-const cssnano = require('cssnano')
+const csso = require('csso');
+
 /* ({
   preset: ['default', {
       discardComments: {
@@ -103,21 +102,15 @@ async function optimizeFile(filePath, flags, options, arrs){
         await fs.promises.writeFile(`./dep_pack/${filePath}`, result).then(() => console.log(`Minfied ${filepath} using html-minifier`))
       }
     }
-    else if(fileExtension =='css'){
+    else if(fileExtension =='css' && flags.css){
       //save the css file in stylesheets array
       arrs.stylesheets.push(filePath)
-
-      fs.promises.readFile(filePath).then(css =>{
-        postcss([cssnano])
-          .process(css, { from: filePath, to: `./dep_pack/${filePath}` })
-          .then(result => {
-            fs.promises.writeFile(`./dep_pack/${filePath}`, result.css)
-            .then(() => console.log(`Minfied ${filePath} using cssnano`))
-
-          }).catch(err=>console.log(err))
-      }).catch(err=>console.log(err))
+      let css = await fs.promises.readFile(filePath, 'utf8').catch(err=>console.log(err))
+      var result = await csso.minify(css, {});
+      console.log(result)
+      fs.promises.writeFile(`./dep_pack/${filePath}`, result.css).catch(err=>console.log(err))
     }
-    else if(fileExtension =='js'){
+    else if(fileExtension =='js' && flags.js){
       var code = await fs.promises.readFile(filePath, 'utf8')
       var result = UglifyJS.minify(code);
       if (result.error) console.log("\x1b[31m", `Error ${filePath} not copied. UglifyJS: ${result.error.message}`, "\x1b[0m")
@@ -125,7 +118,7 @@ async function optimizeFile(filePath, flags, options, arrs){
       .then(console.log(`Minified ${filePath} using UglifyJS`))
       .catch((err)=>console.log(err))
     }
-    else {
+    else if(flags.images) {
       await Optimize.compressImages(filePath, "dep_pack", arrs.images, options.svgo)
       .then((img) => {
         if(img) {
@@ -139,6 +132,10 @@ async function optimizeFile(filePath, flags, options, arrs){
           Optimize.copyFile(filePath, "./dep_pack")
         }
       }).catch((err) => console.log(err))   
+    }
+    else {
+      console.log(`file format ${fileExtension} not recognized by Arjan. Copying file as is.`)
+      Optimize.copyFile(filePath, "./dep_pack")
     }
     return arrs
 }

@@ -17,6 +17,7 @@
     "arjan-optimize": "^0.6.0",
     "cli-ux": "^5.4.6",
     "cssnano": "^4.1.10",
+    "csso": "^4.0.3",
     "html-minifier": "^4.0.0",
     "postcss": "^7.0.30",
     "uglify-js": "^3.9.3"
