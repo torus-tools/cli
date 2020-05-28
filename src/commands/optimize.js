@@ -64,7 +64,7 @@ class OptimizeCommand extends Command {
 }
 
 function main(args, flags, options){
-  let arrs = {stylesheets:[], classes:{}, htmlfiles:[], images:[]}
+  let arrs = {stylesheets:[], classes:{}, htmlfiles:[], images:[], file_sizes: {}}
   return new Promise((resolve, reject) => {
     if(args.filename) optimizeFile(args.filename, flags, options, imageArr)
     else {
@@ -95,12 +95,16 @@ function scanFolder(currentDirPath, output, callback) {
 
 async function optimizeFile(filePath, flags, options, arrs){
     let fileExtension = filePath.substring(filePath.lastIndexOf('.') + 1);
+    let fileStats = await fs.promises.stat(filePath)
     if(fileExtension =='html'){
       arrs.htmlfiles.push(filePath);
       var html = await fs.promises.readFile(filePath, 'utf8').catch((err)=>console.log(err))
       if(flags.html && !flags.webp){
         var result = HtmlMinifier.minify(html, options.html_minifier);
-        await fs.promises.writeFile(`./dep_pack/${filePath}`, result).then(() => console.log(`Minfied ${filepath} using html-minifier`))
+        await fs.promises.writeFile(`./dep_pack/${filePath}`, result).then(() => {
+          let newStat = fs.statSync(`./dep_pack/${filePath}`);
+          arrs.file_sizes[filePath] = {original:fileStats.size, compressed:newStat.size}
+        }).catch(err=>console.log(err))
       }
     }
     else if(fileExtension =='css' && flags.css){
@@ -108,23 +112,32 @@ async function optimizeFile(filePath, flags, options, arrs){
       arrs.stylesheets.push(filePath)
       let css = await fs.promises.readFile(filePath, 'utf8').catch(err=>console.log(err))
       var result = await csso.minify(css, {});
-      fs.promises.writeFile(`./dep_pack/${filePath}`, result.css).catch(err=>console.log(err))
+      fs.promises.writeFile(`./dep_pack/${filePath}`, result.css)
+      .then(() => {
+        let newStat = fs.statSync(`./dep_pack/${filePath}`);
+        arrs.file_sizes[filePath] = {original:fileStats.size, compressed:newStat.size}
+      }).catch(err=>console.log(err))
     }
     else if(fileExtension =='js' && flags.js){
       var code = await fs.promises.readFile(filePath, 'utf8')
       var result = await Terser.minify(code);
       if (result.error) console.log("\x1b[31m", `Error ${filePath} not copied. UglifyJS: ${result.error.message}`, "\x1b[0m")
       else fs.promises.writeFile(`./dep_pack/${filePath}`, result.code)
-      .then(console.log(`Minified ${filePath} using Terser`))
-      .catch((err)=>console.log(err))
+      .then(() => {
+        let newStat = fs.statSync(`./dep_pack/${filePath}`);
+        arrs.file_sizes[filePath] = {original:fileStats.size, compressed:newStat.size}
+      }).catch((err)=>console.log(err))
     }
     else if(flags.images) {
       await Optimize.compressImages(filePath, "dep_pack", arrs.images, options.svgo)
       .then((img) => {
         if(img) {
           arrs.images.push(filePath);
+          arrs.file_sizes[filePath] = {original:img.original_size, compressed:img.compressed_size}
           if(flags.webp){
-            Optimize.compressWebp(filePath, "./dep_pack");
+            Optimize.compressWebp(filePath, "./dep_pack")
+            .then(data => arrs.file_sizes[filePath].compressed = data.compressed_size)
+            .catch(err => console.log(err))
           }
         }
         else {
