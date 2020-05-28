@@ -44,6 +44,8 @@ class OptimizeCommand extends Command {
     //console.log(config_json)
     let res = await main(args, flags, config_json).catch((err) => {console.log(err)})
     if(res) cli.action.stop()
+    console.log('RESPONSEEE', res)
+    console.log(res.file_sizes.toString())
     if(flags.webp) {
       //console.log('FILES ', res.htmlfiles)
       cli.action.start('replacing imgs for pictures')
@@ -97,6 +99,7 @@ async function optimizeFile(filePath, flags, options, arrs){
     let fileExtension = filePath.substring(filePath.lastIndexOf('.') + 1);
     let fileStats = await fs.promises.stat(filePath)
     if(fileExtension =='html'){
+      console.log('HTMLL ', filePath)
       arrs.htmlfiles.push(filePath);
       var html = await fs.promises.readFile(filePath, 'utf8').catch((err)=>console.log(err))
       if(flags.html && !flags.webp){
