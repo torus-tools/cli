@@ -19,7 +19,7 @@ $ npm install -g arjancli
 $ arjan COMMAND
 running command...
 $ arjan (-v|--version|version)
-arjancli/0.0.0 linux-x64 node-v12.13.1
+arjancli/0.1.0 linux-x64 node-v12.13.1
 $ arjan --help [COMMAND]
 USAGE
   $ arjan COMMAND
@@ -31,10 +31,9 @@ USAGE
 * [`arjan audit`](#arjan-audit)
 * [`arjan build [REGION] [PROFILE]`](#arjan-build-region-profile)
 * [`arjan deploy SITE ACTION [SETUP]`](#arjan-deploy-site-action-setup)
-* [`arjan hello`](#arjan-hello)
 * [`arjan help [COMMAND]`](#arjan-help-command)
+* [`arjan localize FILENAME FROM [TO]`](#arjan-localize-filename-from-to)
 * [`arjan optimize [FILENAME]`](#arjan-optimize-filename)
-* [`arjan translate FILENAME FROM [TO]`](#arjan-translate-filename-from-to)
 
 ## `arjan audit`
 
@@ -45,14 +44,23 @@ USAGE
   $ arjan audit
 
 OPTIONS
-  -n, --name=name  name to print
+  -d, --dir=dir              Directory path to serve. default is root (relative to the path in which you run the
+                             command)
+
+  -f, --file=file            Path of the page you want to audit. default is index.html
+
+  -p, --port=port            Port used for the test server. Default is 8080.
+
+  -t, --threshold=threshold  Integer value from 0 to 1 that represents what you consider to be an acceptable lighthouse
+                             score for your site. Its very similar to what you would consider an acceptable school test
+                             grade.
 
 DESCRIPTION
   ...
   Extra documentation goes here
 ```
 
-_See code: [src/commands/audit.js](https://github.com/arjan-tools/cli/blob/v0.0.0/src/commands/audit.js)_
+_See code: [src/commands/audit.js](https://github.com/arjan-tools/cli/blob/v0.1.0/src/commands/audit.js)_
 
 ## `arjan build [REGION] [PROFILE]`
 
@@ -77,7 +85,7 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/build.js](https://github.com/arjan-tools/cli/blob/v0.0.0/src/commands/build.js)_
+_See code: [src/commands/build.js](https://github.com/arjan-tools/cli/blob/v0.1.0/src/commands/build.js)_
 
 ## `arjan deploy SITE ACTION [SETUP]`
 
@@ -116,25 +124,7 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/deploy.js](https://github.com/arjan-tools/cli/blob/v0.0.0/src/commands/deploy.js)_
-
-## `arjan hello`
-
-Describe the command here
-
-```
-USAGE
-  $ arjan hello
-
-OPTIONS
-  -n, --name=name  name to print
-
-DESCRIPTION
-  ...
-  Extra documentation goes here
-```
-
-_See code: [src/commands/hello.js](https://github.com/arjan-tools/cli/blob/v0.0.0/src/commands/hello.js)_
+_See code: [src/commands/deploy.js](https://github.com/arjan-tools/cli/blob/v0.1.0/src/commands/deploy.js)_
 
 ## `arjan help [COMMAND]`
 
@@ -151,42 +141,15 @@ OPTIONS
   --all  see all commands in CLI
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.0.0/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.0.1/src/commands/help.ts)_
 
-## `arjan optimize [FILENAME]`
-
-Describe the command here
-
-```
-USAGE
-  $ arjan optimize [FILENAME]
-
-ARGUMENTS
-  FILENAME  name of the file i.e. index.html
-
-OPTIONS
-  -c, --css     minifiy css using cssnano
-  -h, --html    compress html using html-minifier
-  -i, --images  compress images and if possible maintain the format. otherwise its converted to png.
-  -j, --js      minify js using uglify js
-
-  -w, --webp    saves a webp version of each image, then replaces each image instance in the html files with a picture
-                tag.
-
-DESCRIPTION
-  ...
-  Extra documentation goes here
-```
-
-_See code: [src/commands/optimize.js](https://github.com/arjan-tools/cli/blob/v0.0.0/src/commands/optimize.js)_
-
-## `arjan translate FILENAME FROM [TO]`
+## `arjan localize FILENAME FROM [TO]`
 
 Describe the command here
 
 ```
 USAGE
-  $ arjan translate FILENAME FROM [TO]
+  $ arjan localize FILENAME FROM [TO]
 
 ARGUMENTS
   FILENAME  [default: all] name of the file you want to translate -only html files accepted. Use all to translate all of
@@ -213,5 +176,32 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/translate.js](https://github.com/arjan-tools/cli/blob/v0.0.0/src/commands/translate.js)_
+_See code: [src/commands/localize.js](https://github.com/arjan-tools/cli/blob/v0.1.0/src/commands/localize.js)_
+
+## `arjan optimize [FILENAME]`
+
+Describe the command here
+
+```
+USAGE
+  $ arjan optimize [FILENAME]
+
+ARGUMENTS
+  FILENAME  name of the file i.e. index.html
+
+OPTIONS
+  -c, --css     minifiy css using cssnano
+  -h, --html    compress html using html-minifier
+  -i, --images  compress images and if possible maintain the format. otherwise its converted to png.
+  -j, --js      minify js using uglify js
+
+  -w, --webp    saves a webp version of each image, then replaces each image instance in the html files with a picture
+                tag.
+
+DESCRIPTION
+  ...
+  Extra documentation goes here
+```
+
+_See code: [src/commands/optimize.js](https://github.com/arjan-tools/cli/blob/v0.1.0/src/commands/optimize.js)_
 <!-- commandsstop -->

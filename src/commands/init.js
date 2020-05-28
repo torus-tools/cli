@@ -2,21 +2,21 @@ const {Command, flags} = require('@oclif/command')
 const Localize = require('arjan-localize')
 const fs = require('fs')
 
-class BuildCommand extends Command {
+class InitCommand extends Command {
   async run() {
-    const {flags, args} = this.parse(BuildCommand)
+    const {flags, args} = this.parse(InitCommand)
     if(flags.localize) Localize.Build(args.region, args.profile)
     .then(data=> console.log(data))
     .catch(err => console.log(err))
   }
 }
 
-BuildCommand.description = `Describe the command here
+InitCommand.description = `Describe the command here
 ...
 Extra documentation goes here
 `
 
-BuildCommand.args = [
+InitCommand.args = [
   {
     name: 'region',
     required: false,
@@ -31,7 +31,7 @@ BuildCommand.args = [
   }
 ]
 
-BuildCommand.flags = {
+InitCommand.flags = {
   localize: flags.boolean({
     char: 'l',                    
     description: 'builds required files/dirs for arjan localize',
@@ -54,4 +54,4 @@ BuildCommand.flags = {
   }),
 }
 
-module.exports = BuildCommand
+module.exports = InitCommand
