@@ -23,7 +23,7 @@ module.exports = function TranslateLocale(input, from, to, size){
           i += 1;
           //loading(i, 'translating your file');
           if(i >= size){
-            console.log("")
+            //console.log("")
             resolve(translation)
           }
         }
