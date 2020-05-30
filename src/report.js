@@ -1,6 +1,6 @@
 function getScoreColor(score, threshold){
   let color = "\x1b[31m";    //red by default
-  if(score > threshold+10) color = "\x1b[32m"    //green
+  if(score > threshold+.1) color = "\x1b[32m"    //green
   else if(score > threshold) color = "\x1b[33m";    //yellow
   return color;
 }

@@ -50,8 +50,16 @@ function formatReport(files){
     compressed_size += files[file].compressed;
   }
   let pcent = compressed_size/original_size;
-  let body = sepparator + blankLine + reports.getReportItem(true, i, 'Total Files Compressed', file_count) + reports.getReportItem(true, i, 'Before', original_size) + reports.getReportItem(true, i, 'After', compressed_size) + reports.getReportItem(true, i, 'After', reports.getScore(pcent, .8, true, true, true), reports.getScoreColor(pcent, .8))
-  let report = header+body+blankLine+sepparator;
+  let body = sepparator + 
+  blankLine + 
+  reports.getReportItem(false, i, 'Total Files Compressed', file_count) + 
+  blankLine + 
+  reports.getReportItem(false, i, 'Before', original_size+' bytes') + 
+  blankLine + 
+  reports.getReportItem(false, i, 'After', compressed_size+' bytes', reports.getScoreColor(1-pcent, .1)) + 
+  blankLine + 
+  reports.getReportItem(false, i, 'Compression', reports.getScore(1-pcent, true, true), reports.getScoreColor(1-pcent, .1))
+  let report = '\n'+header+body+blankLine+sepparator;
   return report;
 }
 
@@ -66,47 +74,47 @@ class OptimizeCommand extends Command {
     let file_sizes = arrs.file_sizes;
     for(let s in arrs.scripts){
       //if(s >= arrs.scripts.length) cli.action.stop()
-      cli.action.start(`minifying js ${arrs.scripts[s]} : ${file_sizes[arrs.scripts[s]].original}`)
+      cli.action.start(`minifying js ${arrs.scripts[s]} \x1b[31m${file_sizes[arrs.scripts[s]].original} bytes \x1b[0m`)
       var code = await fs.promises.readFile(arrs.scripts[s], 'utf8')
       var result = await Terser.minify(code);
       if (result.error) cli.action.stop(`\x1b[31m Error ${arrs.scripts[s]} not copied. Terser: ${result.error.message}\x1b[0m`)
       else {
         let filesize = await writeFile(`./dep_pack/${arrs.scripts[s]}`, result.code).catch((err)=>console.log(err))
         file_sizes[arrs.scripts[s]].compressed = filesize;
-        cli.action.stop(filesize)
+        cli.action.stop(reports.getScoreColor(1-filesize/file_sizes[arrs.scripts[s]].original, .1)+filesize+" bytes \x1b[0m")
       }
     }
     for(let c in arrs.stylesheets) {
       //if(c >= arrs.stylesheets.length) cli.action.stop()
-      cli.action.start(`minifying css ${arrs.stylesheets[c]} : ${file_sizes[arrs.stylesheets[c]].original}`)
+      cli.action.start(`minifying css ${arrs.stylesheets[c]} \x1b[31m${file_sizes[arrs.stylesheets[c]].original} bytes \x1b[0m`)
       let css = await fs.promises.readFile(arrs.stylesheets[c], 'utf8').catch(err=>console.log(err))
       var result = await csso.minify(css, {});
       let filesize = await writeFile(`./dep_pack/${arrs.stylesheets[c]}`, result.css).catch(err=>console.log(err))
       file_sizes[arrs.stylesheets[c]].compressed = filesize;
-      cli.action.stop(filesize)
+      cli.action.stop(reports.getScoreColor(1-filesize/file_sizes[arrs.stylesheets[c]].original, .1)+filesize+" bytes \x1b[0m")
     }
     for(let h in arrs.htmlfiles) {
       //if(h >= arrs.htmlfiles.length) cli.action.stop()
-      cli.action.start(`minifying html ${arrs.htmlfiles[h]} : ${file_sizes[arrs.htmlfiles[h]].original}`)
+      cli.action.start(`minifying html ${arrs.htmlfiles[h]} \x1b[31m${file_sizes[arrs.htmlfiles[h]].original} bytes \x1b[0m`)
       let html = await fs.promises.readFile(arrs.htmlfiles[h], 'utf8')
       if(flags.webp) html = await Optimize.replaceWebp(arrs.htmlfiles[h], html)
       if(flags.html) html = HtmlMinifier.minify(html, config_json.html_minifier);
       let filesize = await writeFile(`./dep_pack/${arrs.htmlfiles[h]}`, html)
       file_sizes[arrs.htmlfiles[h]].compressed = filesize;
-      cli.action.stop(filesize)
+      cli.action.stop(reports.getScoreColor(1-filesize/file_sizes[arrs.htmlfiles[h]].original, .1)+filesize+" bytes \x1b[0m")
     }
     for(let i in arrs.images){
       //if(i >= arrs.images.length) cli.action.stop()
-      cli.action.start(`compressing image ${arrs.images[i]} : ${file_sizes[arrs.images[i]].original}`)
+      cli.action.start(`compressing image ${arrs.images[i]} \x1b[31m${file_sizes[arrs.images[i]].original} bytes \x1b[0m`)
       let img = await Optimize.compressImages(arrs.images[i], "dep_pack", arrs.images, config_json.svgo)
       if(flags.webp){
         let webp = await Optimize.compressWebp(arrs.images[i], "./dep_pack");
         file_sizes[arrs.images[i]].compressed = webp;
-        cli.action.stop(webp)
+        cli.action.stop(reports.getScoreColor(1-webp/file_sizes[arrs.images[i]].original, .1)+webp+" bytes \x1b[0m")
       }
       else {
         file_sizes[arrs.images[i]].compressed = img;
-        cli.action.stop(img)
+        cli.action.stop(reports.getScoreColor(1-img/file_sizes[arrs.images[i]].original, .1)+img+" bytes \x1b[0m")
       }
     }
     let report = formatReport(file_sizes)
