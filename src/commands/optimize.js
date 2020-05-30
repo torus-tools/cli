@@ -1,3 +1,4 @@
+require('dotenv').config()
 const {Command, flags} = require('@oclif/command')
 const fs = require('fs')
 const Optimize = require('arjan-optimize')
@@ -6,6 +7,7 @@ const {cli} = require('cli-ux');
 const HtmlMinifier = require('html-minifier');
 const csso = require('csso');
 var Terser = require("terser");
+const reports = require('../report')
 
 /* ({
   preset: ['default', {
@@ -34,6 +36,25 @@ const ignorePaths = {
   "test":true
 }
 
+function formatReport(files){
+  let i = 40;
+  let blankLine = "|" + " ".repeat(i) + "|\n";
+  let sepparator = "|" + "-".repeat(i) + "|\n";
+  let header = sepparator + blankLine + reports.getHeading("Optimization Report") + blankLine;
+  let file_count = 0;
+  let original_size = 0;
+  let compressed_size = 0;
+  for(let file in files){
+    file_count +=1;
+    original_size += files[file].original;
+    compressed_size += files[file].compressed;
+  }
+  let pcent = compressed_size/original_size;
+  let body = sepparator + blankLine + reports.getReportItem(true, i, 'Total Files Compressed', file_count) + reports.getReportItem(true, i, 'Before', original_size) + reports.getReportItem(true, i, 'After', compressed_size) + reports.getReportItem(true, i, 'After', reports.getScore(pcent, .8, true, true, true), reports.getScoreColor(pcent, .8))
+  let report = header+body+blankLine+sepparator;
+  return report;
+}
+
 class OptimizeCommand extends Command {
   async run() {
     const {flags, args} = this.parse(OptimizeCommand)
@@ -42,52 +63,54 @@ class OptimizeCommand extends Command {
     let config = await Localize.createFile('./optimize_config.json', JSON.stringify(Optimize.optimizeConfig))
     let config_json = JSON.parse(config)
     let arrs = await scanFiles().catch((err) => {console.log(err)})
-    console.log(arrs)
     let file_sizes = arrs.file_sizes;
-    for(let i in arrs.images){
-      //if(i >= arrs.images.length) cli.action.stop()
-      cli.action.start(`compressing image ${arrs.images[i]} : ${file_sizes[arrs.images[i]].original}`)
-      let img = await Optimize.compressImages(arrs.images[i], "dep_pack", options.svgo)
-      if(flags.webp){
-        let webp = await Optimize.compressWebp(arrs.images[i], "./dep_pack");
-        file_sizes[arrs.images[i]] = {compressed:webp}
-        cli.action.stop(webp)
-      }
-      else {
-        file_sizes[arrs.images[i]] = {compressed:img}
-        cli.action.stop(img)
-      }
-    }
     for(let s in arrs.scripts){
       //if(s >= arrs.scripts.length) cli.action.stop()
-      cli.action.start(`minifying js ${arrs.scripts[s]} : ${file_path[arrs.scripts[s]].original}`)
+      cli.action.start(`minifying js ${arrs.scripts[s]} : ${file_sizes[arrs.scripts[s]].original}`)
       var code = await fs.promises.readFile(arrs.scripts[s], 'utf8')
       var result = await Terser.minify(code);
       if (result.error) cli.action.stop(`\x1b[31m Error ${arrs.scripts[s]} not copied. Terser: ${result.error.message}\x1b[0m`)
       else {
         let filesize = await writeFile(`./dep_pack/${arrs.scripts[s]}`, result.code).catch((err)=>console.log(err))
-        file_sizes[arrs.scripts[s]] = {compressed:filesize}
+        file_sizes[arrs.scripts[s]].compressed = filesize;
         cli.action.stop(filesize)
       }
     }
     for(let c in arrs.stylesheets) {
       //if(c >= arrs.stylesheets.length) cli.action.stop()
-      cli.action.start(`minifying css ${arrs.stylesheets[c]} : ${file_path[arrs.stylesheets[c]].original}`)
-      let css = await fs.promises.readFile(filePath, 'utf8').catch(err=>console.log(err))
+      cli.action.start(`minifying css ${arrs.stylesheets[c]} : ${file_sizes[arrs.stylesheets[c]].original}`)
+      let css = await fs.promises.readFile(arrs.stylesheets[c], 'utf8').catch(err=>console.log(err))
       var result = await csso.minify(css, {});
-      let filesize = await writeFile(`./dep_pack/${filePath}`, result.css).catch(err=>console.log(err))
-      file_sizes[filePath] = {compressed:filesize}
+      let filesize = await writeFile(`./dep_pack/${arrs.stylesheets[c]}`, result.css).catch(err=>console.log(err))
+      file_sizes[arrs.stylesheets[c]].compressed = filesize;
       cli.action.stop(filesize)
     }
-    for(let h in arrs.htmlFiles) {
-      //if(h >= arrs.htmlFiles.length) cli.action.stop()
-      cli.action.start(`minifying html ${arrs.htmlFiles[h]} : ${file_path[arrs.htmlFiles[h]].original}`)
-      let html = await fs.promises.readFile(arrs.htmlFiles[h], 'utf8')
-      if(flags.webp) html = await Optimize.replaceWebp(img, html, arrs.htmlFiles[h])
+    for(let h in arrs.htmlfiles) {
+      //if(h >= arrs.htmlfiles.length) cli.action.stop()
+      cli.action.start(`minifying html ${arrs.htmlfiles[h]} : ${file_sizes[arrs.htmlfiles[h]].original}`)
+      let html = await fs.promises.readFile(arrs.htmlfiles[h], 'utf8')
+      if(flags.webp) html = await Optimize.replaceWebp(arrs.htmlfiles[h], html)
       if(flags.html) html = HtmlMinifier.minify(html, config_json.html_minifier);
-      let filesize = await writeFile(`./dep_pack/${arrs.htmlFiles[h]}`, html)
+      let filesize = await writeFile(`./dep_pack/${arrs.htmlfiles[h]}`, html)
+      file_sizes[arrs.htmlfiles[h]].compressed = filesize;
       cli.action.stop(filesize)
     }
+    for(let i in arrs.images){
+      //if(i >= arrs.images.length) cli.action.stop()
+      cli.action.start(`compressing image ${arrs.images[i]} : ${file_sizes[arrs.images[i]].original}`)
+      let img = await Optimize.compressImages(arrs.images[i], "dep_pack", arrs.images, config_json.svgo)
+      if(flags.webp){
+        let webp = await Optimize.compressWebp(arrs.images[i], "./dep_pack");
+        file_sizes[arrs.images[i]].compressed = webp;
+        cli.action.stop(webp)
+      }
+      else {
+        file_sizes[arrs.images[i]].compressed = img;
+        cli.action.stop(img)
+      }
+    }
+    let report = formatReport(file_sizes)
+    console.log(report)
   }
 }
 
@@ -133,7 +156,7 @@ function getFile(filePath, arrs){
   let fileStat = fs.statSync(filePath)
   if(fileExtension =='html'){
     arrs.htmlfiles.push(filePath);
-    if(flags.html && !flags.webp) file_sizes[filePath] = {original:fileStat.size}
+    file_sizes[filePath] = {original:fileStat.size}
   }
   else if(fileExtension =='css'){
     arrs.stylesheets.push(filePath)
