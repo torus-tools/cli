@@ -15,11 +15,11 @@ Mutli CLI for arjan tools
 # Usage
 <!-- usage -->
 ```sh-session
-$ npm install -g arjancli
+$ npm install -g arjan-cli
 $ arjan COMMAND
 running command...
 $ arjan (-v|--version|version)
-arjancli/0.1.0 linux-x64 node-v12.13.1
+arjan-cli/0.1.0 linux-x64 node-v12.13.1
 $ arjan --help [COMMAND]
 USAGE
   $ arjan COMMAND
@@ -29,9 +29,9 @@ USAGE
 # Commands
 <!-- commands -->
 * [`arjan audit`](#arjan-audit)
-* [`arjan build [REGION] [PROFILE]`](#arjan-build-region-profile)
 * [`arjan deploy SITE ACTION [SETUP]`](#arjan-deploy-site-action-setup)
 * [`arjan help [COMMAND]`](#arjan-help-command)
+* [`arjan init [REGION] [PROFILE]`](#arjan-init-region-profile)
 * [`arjan localize FILENAME FROM [TO]`](#arjan-localize-filename-from-to)
 * [`arjan optimize [FILENAME]`](#arjan-optimize-filename)
 
@@ -61,31 +61,6 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/audit.js](https://github.com/arjan-tools/cli/blob/v0.1.0/src/commands/audit.js)_
-
-## `arjan build [REGION] [PROFILE]`
-
-Describe the command here
-
-```
-USAGE
-  $ arjan build [REGION] [PROFILE]
-
-ARGUMENTS
-  REGION   [default: us-east-1] AWS Region
-  PROFILE  [default: default] AWS Profile
-
-OPTIONS
-  -a, --audit     builds required files/dirs for arjan audit
-  -d, --deploy    builds required files/dirs for arjan deploy
-  -l, --localize  builds required files/dirs for arjan localize
-  -o, --optimize  builds required files/dirs for arjan optimize
-
-DESCRIPTION
-  ...
-  Extra documentation goes here
-```
-
-_See code: [src/commands/build.js](https://github.com/arjan-tools/cli/blob/v0.1.0/src/commands/build.js)_
 
 ## `arjan deploy SITE ACTION [SETUP]`
 
@@ -142,6 +117,31 @@ OPTIONS
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.0.1/src/commands/help.ts)_
+
+## `arjan init [REGION] [PROFILE]`
+
+Describe the command here
+
+```
+USAGE
+  $ arjan init [REGION] [PROFILE]
+
+ARGUMENTS
+  REGION   [default: us-east-1] AWS Region
+  PROFILE  [default: default] AWS Profile
+
+OPTIONS
+  -a, --audit     builds required files/dirs for arjan audit
+  -d, --deploy    builds required files/dirs for arjan deploy
+  -l, --localize  builds required files/dirs for arjan localize
+  -o, --optimize  builds required files/dirs for arjan optimize
+
+DESCRIPTION
+  ...
+  Extra documentation goes here
+```
+
+_See code: [src/commands/init.js](https://github.com/arjan-tools/cli/blob/v0.1.0/src/commands/init.js)_
 
 ## `arjan localize FILENAME FROM [TO]`
 
