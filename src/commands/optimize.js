@@ -19,7 +19,7 @@ const reports = require('../report')
 const path = require("path");
 
 const ignorePaths = {
-  "dep_pack":true,
+  "dep_pack":true, //must be ignored.
   "node_modules":true,
   "package.json":true,
   "package_lock.json":true,
