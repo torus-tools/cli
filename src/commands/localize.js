@@ -15,8 +15,8 @@ function getLocaleAndFile(from, to, filePath){
     let destname = to+'/'+filePath;
     if(localename === from) destname = to+'.html'
     else if(filePath.split('/')[0] === from) destname = to+filePath.split('/', 2)[1]
-    console.log(filePath)
-    console.log(destname)
+    //console.log(filePath)
+    //console.log(destname)
     resolve({locale:localename, filepath:destname})  
   })
 }
@@ -30,19 +30,30 @@ function setup(flags){
     .then(() => {Localize.CreateDir(`locales/${flags.from}`)
       .then(()=>{
         if(flags.to) Localize.CreateDir(`locales/${flags.to}`).then(()=> resolve(true))
-        else resolve(true);
+        else resolve(true)
       }).catch(err => reject(err))
     }).catch(err => reject(err))
+  })
+}
+
+function setupCsv(flags){
+  return new Promise((resolve, reject) => {
     if(flags.export) {
       Localize.CreateDir('exports')
-      .then(() => {Localize.CreateDir('exports/csv')})
-      .then(() => {Localize.CreateDir(`exports/csv/${flags.from}`)})
-      .then(()=> {
-        if(flags.to) Localize.CreateDir(`locales/${flags.to}`).then(()=> exports = true)
+      .then(() => {
+        Localize.CreateDir('exports/csv')
+        .then(() => {
+          Localize.CreateDir(`exports/csv/${flags.from}`)
+          .then(()=> {
+            if(flags.to) Localize.CreateDir(`exports/csv/${flags.to}`).then(()=> resolve(true))
+            else resolve(true)
+          }).catch(err => reject(err))
+        }).catch(err => reject(err))
       }).catch(err => reject(err))
     }
   })
 }
+
 
 class LocalizeCommand extends Command {
   static strict = false
@@ -58,13 +69,11 @@ class LocalizeCommand extends Command {
     const {args, flags} = this.parse(LocalizeCommand)
     cli.action.start('Setting Up')
     let setting = await setup(flags)
+    await setupCsv(flags)
     if(setting) {
       if(args.filename !== `${flags.from}.html`) await Localize.CreateDir(flags.to)
       if(!args.filename || args.filename === 'all') files = await scanFiles()
-      for(let file of files){
-        console.log(file)
-        localize(file, flags, cli)
-      }
+      for(let file of files) await localize(file, flags, cli)
     }
   }
 }
