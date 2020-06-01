@@ -124,6 +124,7 @@ function createPath(files, origin, output){
           let path = output;
           for(let i=0; i<dirs.length-1; i++){
             path += '/'+dirs[i];
+            //console.log(path)
             await Localize.CreateDir(path).catch(err => reject(err))
           }
         }
