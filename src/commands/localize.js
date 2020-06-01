@@ -12,7 +12,7 @@ var ignorePaths = {
 function getPaths(from, to, filePath){
   return new Promise((resolve, reject) => {
     let create = false;
-    let localename = filePath.substr(0, filePath.lastIndexOf(".")).replace(/\//g, '_')
+    let localename = getLocaleName(filePath)
     let destname = to+'/'+filePath;
     if(filePath.endsWith(`${from}.html`)) destname = to+'.html';
     else if(filePath.split('/')[0] === from) {
@@ -22,6 +22,10 @@ function getPaths(from, to, filePath){
     else create = true;
     resolve({locale:localename, filepath:destname, create:create});  
   })
+}
+
+function getLocaleName(filePath){
+  return filePath.substr(0, filePath.lastIndexOf(".")).replace(/\//g, '_')
 }
 
 function setup(origin, translations){
@@ -36,21 +40,17 @@ function setup(origin, translations){
   })
 }
 
-function setupCsv(flags){
+function setupCsv(origin, translations){
   return new Promise((resolve, reject) => {
-    if(flags.export) {
-      Localize.CreateDir('exports')
-      .then(() => {
-        Localize.CreateDir('exports/csv')
-        .then(() => {
-          Localize.CreateDir(`exports/csv/${flags.from}`)
-          .then(()=> {
-            if(flags.translate) Localize.CreateDir(`exports/csv/${flags.translate}`).then(()=> resolve(true))
-            else resolve(true)
-          }).catch(err => reject(err))
+    Localize.CreateDir('exports').then(()=>{
+      Localize.CreateDir('exports/csv')
+      .then(() => {Localize.CreateDir(`exports/csv/${origin}`)
+        .then(()=>{
+          if(translations) for(let t in translations) Localize.CreateDir(`exports/csv/${translations[t]}`).then(()=> {if(t>=translations.length-1)resolve(true)})
+          else resolve(true)
         }).catch(err => reject(err))
       }).catch(err => reject(err))
-    }
+    }).catch(err => reject(err))
   })
 }
 
@@ -74,7 +74,7 @@ class LocalizeCommand extends Command {
     for(let f=1; f<this.argv.length; f++) if(!this.argv[f].startsWith('-')) files.push(this.argv[f])
     const {args, flags} = this.parse(LocalizeCommand)
     let setting = await setup(args.language, flags.translate)
-    if(flags.export) exports = await setupCsv(flags)
+    if(flags.export) exports = await setupCsv(args.language, flags.translate)
     else exports = true;
     if(setting && exports) {
       cli.action.stop()
@@ -138,11 +138,7 @@ async function localize(filename, language, flags, cli){
   let wait = false;
   if(flags.create) {
     cli.action.start(`Localizing and translating ${filename}`)
-    await localizeAndTranslate(fileContent, filename, language, flags.translate)
-    .then(()=> {
-      wait = true;
-      cli.action.stop()
-    }).catch(err => console.log(err))
+    wait = await localizeAndTranslate(fileContent, filename, language, flags.translate).catch(err => console.log(err))
   }
   else if(flags.update && flags.backwards){
     cli.action.start(`Updating contents of locales/${language}/${localename}.json`)
@@ -174,15 +170,19 @@ async function localize(filename, language, flags, cli){
     }).catch(err => console.log(err))
   }
   else wait = true;
+  if(wait) cli.action.stop()
   if(flags.export && wait) {
+    let localename = getLocaleName(filename)
     cli.action.start(`Exporting ./locales/${language}/${localename}.json to a CSV file`)
     let fromjson = await fs.promises.readFile(`./locales/${language}/${localename}.json`).catch(err => console.log(err))
     let fromcsv = await Localize.exportCsv(language, fromjson).catch(err => console.log(err))
     await fs.promises.writeFile(`exports/csv/${language}/${localename}.csv`, fromcsv).then(()=>cli.action.stop()).catch(err => console.log(err))
     if(flags.translate) {
-      let tojson = await fs.promises.readFile(`./locales/${flags.translate}/${localename}.json`).catch(err => console.log(err))
-      let tocsv = await Localize.exportCsv(flags.translate, tojson).catch(err => console.log(err))
-      await fs.promises.writeFile(`exports/csv/${flags.translate}/${localename}.csv`, tocsv).then(()=>cli.action.stop()).catch(err => console.log(err))
+      for(let t of flags.translate){
+        let tojson = await fs.promises.readFile(`./locales/${t}/${localename}.json`, 'utf8').catch(err => console.log(err))
+        let tocsv = await Localize.exportCsv(t, tojson).catch(err => console.log(err))
+        await fs.promises.writeFile(`exports/csv/${t}/${localename}.csv`, tocsv).then(()=>cli.action.stop()).catch(err => console.log(err))
+      }
     }
   }
 }
@@ -194,13 +194,13 @@ function localizeAndTranslate(html, filePath, from, translations){
     var origin_html = data.html;
     await fs.promises.writeFile(`./locales/${from}/${oname.locale}.json`, JSON.stringify(data.locale)).catch(err => reject(err));
     await fs.promises.writeFile(filePath, origin_html).catch(err => reject(err));
-    for(let to of translations){
-      let name = await getPaths(from, to, filePath)
-      if(to){
-        let translatedLocale = await Localize.TranslateLocale(data.locale, from, to, data.size).catch(err => reject(err));
-        await fs.promises.writeFile(`./locales/${to}/${name.locale}.json`, JSON.stringify(translatedLocale)).catch(err => reject(err))
+    if(translations){
+      for(let t in translations){
+        let name = await getPaths(from, translations[t], filePath)
+        let translatedLocale = await Localize.TranslateLocale(data.locale, from, translations[t], data.size).catch(err => reject(err));
+        await fs.promises.writeFile(`locales/${translations[t]}/${name.locale}.json`, JSON.stringify(translatedLocale)).catch(err => reject(err))
         let translatedHtml = await Localize.TranslateHtml(origin_html, translatedLocale).catch(err => reject(err))
-        await fs.promises.writeFile(name.filepath, translatedHtml).then(resolve(true)).catch(err => reject(err))
+        await fs.promises.writeFile(name.filepath, translatedHtml).then(()=>{if(t>=translations.length-1)resolve(true)}).catch(err => reject(err))
       }
     }
   })
