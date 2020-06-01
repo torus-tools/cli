@@ -127,9 +127,10 @@ function createPath(files, origin, output){
             path += '/'+dirs[i];
             console.log(path)
             await Localize.CreateDir(path).catch(err => reject(err))
+            if(i >= dirs.length -2  && f >= files.length-1) resolve(true)
           }
         }
-        if(f >= files.length-1) resolve(true)
+        else if(f >= files.length-1) resolve(true)
       }
     }).catch(err => reject(err))
   })
@@ -219,7 +220,7 @@ function localizeAndTranslate(html, filePath, from, translations){
       let translatedHtml = await Localize.TranslateHtml(origin_html, translatedLocale).catch(err => reject(err))
       await fs.promises.writeFile(name.filepath, translatedHtml)
       .then(()=>{
-        exec(getCommandLine() + ' ' + name.filepath);
+        //exec(getCommandLine() + ' ' + name.filepath);
         if(to>=translations.length-1)resolve(true)
       }).catch(err => reject(err))
     }
