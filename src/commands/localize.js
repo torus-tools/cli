@@ -194,14 +194,12 @@ function localizeAndTranslate(html, filePath, from, translations){
     var origin_html = data.html;
     await fs.promises.writeFile(`./locales/${from}/${oname.locale}.json`, JSON.stringify(data.locale)).catch(err => reject(err));
     await fs.promises.writeFile(filePath, origin_html).catch(err => reject(err));
-    for(let to of translations){
-      let name = await getPaths(from, to, filePath)
-      if(to){
-        let translatedLocale = await Localize.TranslateLocale(data.locale, from, to, data.size).catch(err => reject(err));
-        await fs.promises.writeFile(`./locales/${to}/${name.locale}.json`, JSON.stringify(translatedLocale)).catch(err => reject(err))
-        let translatedHtml = await Localize.TranslateHtml(origin_html, translatedLocale).catch(err => reject(err))
-        await fs.promises.writeFile(name.filepath, translatedHtml).then(resolve(true)).catch(err => reject(err))
-      }
+    for(let to in translations){
+      let name = await getPaths(from, translations[to], filePath)
+      let translatedLocale = await Localize.TranslateLocale(data.locale, from, translations[to], data.size).catch(err => reject(err));
+      await fs.promises.writeFile(`./locales/${translations[to]}/${name.locale}.json`, JSON.stringify(translatedLocale)).catch(err => reject(err))
+      let translatedHtml = await Localize.TranslateHtml(origin_html, translatedLocale).catch(err => reject(err))
+      await fs.promises.writeFile(name.filepath, translatedHtml).then(()=>{if(to>=translations.length-1)resolve(true)}).catch(err => reject(err))
     }
   })
 }
