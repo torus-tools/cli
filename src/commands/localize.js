@@ -68,13 +68,16 @@ class LocalizeCommand extends Command {
     }
   ]
   async run() {
+    cli.action.start('Setting Up')
     let files = []
+    let exports = false;
     for(let f=1; f<this.argv.length; f++) if(!this.argv[f].startsWith('-')) files.push(this.argv[f])
     const {args, flags} = this.parse(LocalizeCommand)
-    cli.action.start('Setting Up')
     let setting = await setup(args.language, flags.translate)
-    //await setupCsv(flags)
-    if(setting) {
+    if(flags.export) exports = await setupCsv(flags)
+    else exports = true;
+    if(setting && exports) {
+      cli.action.stop()
       for(let t of flags.translate) ignorePaths[t] = true;
       if(!args.files || args.files === '/') files = await scanFiles()
       if(flags.translate) for(let t of flags.translate) await createPath(files, args.language, t)
@@ -121,7 +124,6 @@ function createPath(files, origin, output){
           let path = output;
           for(let i=0; i<dirs.length-1; i++){
             path += '/'+dirs[i];
-            console.log(path)
             await Localize.CreateDir(path).catch(err => reject(err))
           }
         }
@@ -186,7 +188,6 @@ async function localize(filename, language, flags, cli){
 }
 
 function localizeAndTranslate(html, filePath, from, translations){
-  console.log('LOCALIZE AND TRANSLATE')
   return new Promise(async (resolve, reject) => {
     let oname = await getPaths(from, from, filePath)
     let data = await Localize.CreateLocale(html).catch(err => reject(err))
