@@ -3,7 +3,7 @@ const Localize = require('arjan-localize')
 const fs = require('fs')
 const path = require("path");
 const {cli} = require('cli-ux');
-const ignorePaths = {
+var ignorePaths = {
   "dep_pack": true, //must be ingored.
   "node_modules":true,
   ".git":true
@@ -21,15 +21,12 @@ function getLocaleAndFile(from, to, filePath){
   })
 }
 
-
-function setup(flags){
+function setup(origin, translations){
   return new Promise((resolve, reject) => {
-    let dirs = false;
-    let exports = false;
     Localize.CreateDir('locales')
-    .then(() => {Localize.CreateDir(`locales/${flags.from}`)
+    .then(() => {Localize.CreateDir(`locales/${origin}`)
       .then(()=>{
-        if(flags.to) Localize.CreateDir(`locales/${flags.to}`).then(()=> resolve(true))
+        if(translations) for(let t in translations) Localize.CreateDir(`locales/${translations[t]}`).then(()=> {if(t>=translations.length-1)resolve(true)})
         else resolve(true)
       }).catch(err => reject(err))
     }).catch(err => reject(err))
@@ -45,7 +42,7 @@ function setupCsv(flags){
         .then(() => {
           Localize.CreateDir(`exports/csv/${flags.from}`)
           .then(()=> {
-            if(flags.to) Localize.CreateDir(`exports/csv/${flags.to}`).then(()=> resolve(true))
+            if(flags.translate) Localize.CreateDir(`exports/csv/${flags.translate}`).then(()=> resolve(true))
             else resolve(true)
           }).catch(err => reject(err))
         }).catch(err => reject(err))
@@ -54,26 +51,31 @@ function setupCsv(flags){
   })
 }
 
-
 class LocalizeCommand extends Command {
   static strict = false
   static args = [
     {
-      name: 'filename',
+      name: 'language',
+      description: 'origin language of the file/s.',
+      required: true
+    },
+    {
+      name: 'files',
       description: 'name of the file you want to translate -only html files accepted. Use all to translate all of your html files (default).',
     }
   ]
   async run() {
     let files = []
-    for(let f of this.argv) if(!f.startsWith('-')) files.push(f)
+    for(let f=1; f<this.argv.length; f++) if(!this.argv[f].startsWith('-')) files.push(this.argv[f])
     const {args, flags} = this.parse(LocalizeCommand)
     cli.action.start('Setting Up')
-    let setting = await setup(flags)
+    let setting = await setup(args.language, flags.translate)
     await setupCsv(flags)
     if(setting) {
-      if(args.filename !== `${flags.from}.html`) await Localize.CreateDir(flags.to)
-      if(!args.filename || args.filename === 'all') files = await scanFiles()
-      for(let file of files) await localize(file, flags, cli)
+      for(let t of flags.translate) ignorePaths[t] = true;
+      if(!args.files || args.files === '/') files = await scanFiles()
+      if(flags.translate) for(let t of flags.translate) await createPath(files, args.language, t)
+      //for(let file of files) await localize(file, flags, cli)
     }
   }
 }
@@ -81,12 +83,11 @@ class LocalizeCommand extends Command {
 function scanFiles(){
   let arrs = [];
   return new Promise(async (resolve, reject) => {
-    scanDir("./", "./dep_pack", (filePath, stat) => arrs.push(filePath))
+    scanDir("./", (filePath, stat) => arrs.push(filePath))
     resolve(arrs)
   })
 }
-
-function scanDir(currentDirPath, output, callback) {
+function scanDir(currentDirPath, callback) {
   fs.readdirSync(currentDirPath).forEach((name)=>{
     var filePath = path.join(currentDirPath, name);
     var stat = fs.statSync(filePath);
@@ -96,21 +97,51 @@ function scanDir(currentDirPath, output, callback) {
         if(ext === "html") callback(filePath, stat);
       }
       else if (stat.isDirectory()) {
-        if(output && !fs.existsSync(`${output}/${filePath}`)) fs.mkdirSync(`${output}/${filePath}`)
-        scanDir(filePath, output, callback)
+        //i && !fs.existsSync(`}/${filePath}`)) fs.mkdirSync(`}/${filePath}`)
+        scanDir(filePath, callback)
       }
     }
   });
 }
+//create the appropriate filestructure for each file
+function createPath(files, origin, output){
+  return new Promise((resolve, reject) => {
+    Localize.CreateDir(output)
+    .then(async (data)=> {
+      for(let f in files){
+        //if(files[f].startsWith('./')) files[f] = files[f].substr(2);
+        if(files[f].includes('/')){
+          let dirs = files[f].split('/');
+          await createPathDirs(dirs, output)
+        }
+        if(f >= files.length-1) resolve(true)
+      }
+    }).catch(err => reject(err))
+  })
+}
+
+function createPathDirs(dirs, output){
+  return new Promise((resolve, reject)=> {
+    let path = output;
+    for(let i=0; i<dirs.length-1; i++){
+      path += '/'+dirs[i];
+      console.log(path)
+      Localize.CreateDir(path)
+      .then(()=>{if(i >= dirs.length-2) resolve(true)})
+      .catch(err => reject(err))
+    }
+  })
+}
 
 async function localize(filename, flags, cli){
   let fileContent = await fs.promises.readFile(filename, 'utf8')
-  let name = await getLocaleAndFile(flags.from, flags.to, filename).catch(err => console.log(err))
+  let name = await getLocaleAndFile(flags.from, flags.translate, filename).catch(err => console.log(err))
   let localename = name.locale;
+  console.log(localename)
   let wait = false;
   if(flags.create) {
     cli.action.start(`Localizing and translating ${filename}`)
-    await localizeAndTranslate(fileContent, filename, flags.from, flags.to)
+    await localizeAndTranslate(fileContent, filename, flags.from, flags.translate)
     .then(()=> {
       wait = true;
       cli.action.stop()
@@ -151,18 +182,19 @@ async function localize(filename, flags, cli){
     let fromjson = await fs.promises.readFile(`./locales/${flags.from}/${localename}.json`).catch(err => console.log(err))
     let fromcsv = await Localize.exportCsv(flags.from, fromjson).catch(err => console.log(err))
     await fs.promises.writeFile(`exports/csv/${flags.from}/${localename}.csv`, fromcsv).then(()=>cli.action.stop()).catch(err => console.log(err))
-    if(flags.to) {
-      let tojson = await fs.promises.readFile(`./locales/${flags.to}/${localename}.json`).catch(err => console.log(err))
-      let tocsv = await Localize.exportCsv(flags.to, tojson).catch(err => console.log(err))
-      await fs.promises.writeFile(`exports/csv/${flags.to}/${localename}.csv`, tocsv).then(()=>cli.action.stop()).catch(err => console.log(err))
+    if(flags.translate) {
+      let tojson = await fs.promises.readFile(`./locales/${flags.translate}/${localename}.json`).catch(err => console.log(err))
+      let tocsv = await Localize.exportCsv(flags.translate, tojson).catch(err => console.log(err))
+      await fs.promises.writeFile(`exports/csv/${flags.translate}/${localename}.csv`, tocsv).then(()=>cli.action.stop()).catch(err => console.log(err))
     }
   }
 }
 
 function localizeAndTranslate(html, filePath, from, to){
+  console.log('LOCALIZE AND TRANSLATE')
   return new Promise(async (resolve, reject) => {
     let data = await Localize.CreateLocale(html).catch(err => reject(err))
-    var origin_html = data.html
+    var origin_html = data.html;
     let name = await getLocaleAndFile(from, to, filePath)
     await fs.promises.writeFile(`./locales/${from}/${name.locale}.json`, JSON.stringify(data.locale)).catch(err => reject(err));
     await fs.promises.writeFile(filePath, origin_html).catch(err => reject(err));
@@ -181,19 +213,15 @@ LocalizeCommand.description = `Describe the command here
 Extra documentation goes here
 `
 LocalizeCommand.flags = {
-  from: flags.string({
-    char: 'f',                    
-    description: 'origin language of the file.',
-    required: true     
-  }),
-  to: flags.string({
+  translate: flags.string({
     char: 't',                    
-    description: 'desired translation language.',
-    required: true     
+    description: 'desired translation language. You may apply this flag multiple times to translate into multiple languages.',
+    required: false,
+    multiple: true     
   }),  
   create: flags.boolean({
     char: 'c',                    
-    description: 'Create locales for your html website. if a destination language isnt provided it wont be translated.',
+    description: 'Create locale/s for your site. When used with translate flags, it generates a translated version of the locale and the HTML.',
     exclusive: ['update']         
   }),  
   update: flags.boolean({
