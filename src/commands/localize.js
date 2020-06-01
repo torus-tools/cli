@@ -103,6 +103,7 @@ function scanDir(currentDirPath, callback) {
     }
   });
 }
+
 //create the appropriate filestructure for each file
 function createPath(files, origin, output){
   return new Promise((resolve, reject) => {
