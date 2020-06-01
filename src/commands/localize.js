@@ -24,6 +24,10 @@ function getPaths(from, to, filePath){
   })
 }
 
+function getLocalname(filePath){
+  return filePath.substr(0, filePath.lastIndexOf(".")).replace(/\//g, '_');
+}
+
 function setup(origin, translations){
   return new Promise((resolve, reject) => {
     Localize.CreateDir('locales')
@@ -36,21 +40,17 @@ function setup(origin, translations){
   })
 }
 
-function setupCsv(flags){
+function setupCsv(origin, translations){
   return new Promise((resolve, reject) => {
-    if(flags.export) {
-      Localize.CreateDir('exports')
-      .then(() => {
-        Localize.CreateDir('exports/csv')
-        .then(() => {
-          Localize.CreateDir(`exports/csv/${flags.from}`)
-          .then(()=> {
-            if(flags.translate) Localize.CreateDir(`exports/csv/${flags.translate}`).then(()=> resolve(true))
-            else resolve(true)
-          }).catch(err => reject(err))
+    Localize.CreateDir('exports').then(()=>{
+      Localize.CreateDir('exports/csv')
+      .then(() => {Localize.CreateDir(`exports/csv/${origin}`)
+        .then(()=>{
+          if(translations) for(let t in translations) Localize.CreateDir(`exports/csv/${translations[t]}`).then(()=> {if(t>=translations.length-1)resolve(true)})
+          else resolve(true)
         }).catch(err => reject(err))
       }).catch(err => reject(err))
-    }
+    }).catch(err => reject(err))
   })
 }
 
@@ -74,7 +74,7 @@ class LocalizeCommand extends Command {
     for(let f=1; f<this.argv.length; f++) if(!this.argv[f].startsWith('-')) files.push(this.argv[f])
     const {args, flags} = this.parse(LocalizeCommand)
     let setting = await setup(args.language, flags.translate)
-    if(flags.export) exports = await setupCsv(flags)
+    if(flags.export) exports = await setupCsv(args.language, flags.translate)
     else exports = true;
     if(setting && exports) {
       cli.action.stop()
@@ -175,14 +175,17 @@ async function localize(filename, language, flags, cli){
   }
   else wait = true;
   if(flags.export && wait) {
+    let localename = getLocalname(filename);
     cli.action.start(`Exporting ./locales/${language}/${localename}.json to a CSV file`)
     let fromjson = await fs.promises.readFile(`./locales/${language}/${localename}.json`).catch(err => console.log(err))
     let fromcsv = await Localize.exportCsv(language, fromjson).catch(err => console.log(err))
     await fs.promises.writeFile(`exports/csv/${language}/${localename}.csv`, fromcsv).then(()=>cli.action.stop()).catch(err => console.log(err))
     if(flags.translate) {
-      let tojson = await fs.promises.readFile(`./locales/${flags.translate}/${localename}.json`).catch(err => console.log(err))
-      let tocsv = await Localize.exportCsv(flags.translate, tojson).catch(err => console.log(err))
-      await fs.promises.writeFile(`exports/csv/${flags.translate}/${localename}.csv`, tocsv).then(()=>cli.action.stop()).catch(err => console.log(err))
+      for(let t of flags.translate){
+        let tojson = await fs.promises.readFile(`./locales/${t}/${localename}.json`).catch(err => console.log(err))
+        let tocsv = await Localize.exportCsv(t, tojson).catch(err => console.log(err))
+        await fs.promises.writeFile(`exports/csv/${t}/${localename}.csv`, tocsv).then(()=>cli.action.stop()).catch(err => console.log(err))
+      }
     }
   }
 }
