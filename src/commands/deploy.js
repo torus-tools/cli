@@ -114,6 +114,7 @@ class DeployCommand extends Command {
         }
       }
     }
+    // else if(args.action === 'import')
     else if(args.action === 'delete'){
       let stackName = args.site.split('.').join('') + 'Stack';
       cli.action.start('Removing any digital certificates associated to the domain')
@@ -128,7 +129,6 @@ class DeployCommand extends Command {
         }).catch(err => console.log(err))
       }).catch(err => console.log(err))
     }
-    //else if(args.action === upload)
   }
 }
 

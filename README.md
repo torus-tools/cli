@@ -32,8 +32,9 @@ USAGE
 * [`arjan deploy SITE ACTION [SETUP]`](#arjan-deploy-site-action-setup)
 * [`arjan help [COMMAND]`](#arjan-help-command)
 * [`arjan init [REGION] [PROFILE]`](#arjan-init-region-profile)
-* [`arjan localize FILENAME FROM [TO]`](#arjan-localize-filename-from-to)
+* [`arjan localize LANGUAGE [FILES]`](#arjan-localize-language-files)
 * [`arjan optimize [FILENAME]`](#arjan-optimize-filename)
+* [`arjan upload`](#arjan-upload)
 
 ## `arjan audit`
 
@@ -143,33 +144,35 @@ DESCRIPTION
 
 _See code: [src/commands/init.js](https://github.com/arjan-tools/cli/blob/v0.1.0/src/commands/init.js)_
 
-## `arjan localize FILENAME FROM [TO]`
+## `arjan localize LANGUAGE [FILES]`
 
 Describe the command here
 
 ```
 USAGE
-  $ arjan localize FILENAME FROM [TO]
+  $ arjan localize LANGUAGE [FILES]
 
 ARGUMENTS
-  FILENAME  [default: all] name of the file you want to translate -only html files accepted. Use all to translate all of
-            your html files (default).
+  LANGUAGE  origin language of the file/s.
 
-  FROM      origin language of the file
-
-  TO        desired translation language
+  FILES     name of the file you want to translate -only html files accepted. Use all to translate all of your html
+            files (default).
 
 OPTIONS
-  -b, --backwards  Update JSON locale accoridng to changes made in the HTML file. Must be used together with the update
-                   flag.
+  -b, --backwards            Update JSON locale accoridng to changes made in the HTML file. Must be used together with
+                             the update flag.
 
-  -c, --create     Create locales for your html website. if a destination language isnt provided it wont be translated.
+  -c, --create               Create locale/s for your site. When used with translate flags, it generates a translated
+                             version of the locale and the HTML.
 
-  -e, --export     Creates a CSV file for your JSON locale.
+  -e, --export               Creates a CSV file for your JSON locale.
 
-  -i, --import     Update JSON locale from changes made in the CSV file
+  -i, --import               Update JSON locale from changes made in the CSV file
 
-  -u, --update     Update HTML file accoridng to changes made in the JSON locale.
+  -t, --translate=translate  desired translation language. You may apply this flag multiple times to translate into
+                             multiple languages.
+
+  -u, --update               Update HTML file accoridng to changes made in the JSON locale.
 
 DESCRIPTION
   ...
@@ -204,4 +207,22 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/optimize.js](https://github.com/arjan-tools/cli/blob/v0.1.0/src/commands/optimize.js)_
+
+## `arjan upload`
+
+Describe the command here
+
+```
+USAGE
+  $ arjan upload
+
+OPTIONS
+  -n, --name=name  name to print
+
+DESCRIPTION
+  ...
+  Extra documentation goes here
+```
+
+_See code: [src/commands/upload.js](https://github.com/arjan-tools/cli/blob/v0.1.0/src/commands/upload.js)_
 <!-- commandsstop -->
