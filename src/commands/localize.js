@@ -3,6 +3,7 @@ const Localize = require('arjan-localize')
 const fs = require('fs')
 const path = require("path");
 const {cli} = require('cli-ux');
+const exec = require('child_process').exec;
 var ignorePaths = {
   "dep_pack": true, //must be ingored.
   "node_modules":true,
@@ -124,21 +125,32 @@ function createPath(files, origin, output){
           let path = output;
           for(let i=0; i<dirs.length-1; i++){
             path += '/'+dirs[i];
+            console.log(path)
             await Localize.CreateDir(path).catch(err => reject(err))
+            if(i >= dirs.length -2  && f >= files.length-1) resolve(true)
           }
         }
-        if(f >= files.length-1) resolve(true)
+        else if(f >= files.length-1) resolve(true)
       }
     }).catch(err => reject(err))
   })
 }
 
-async function localize(filename, language, flags, cli){
-  let fileContent = await fs.promises.readFile(filename, 'utf8')
+function getCommandLine() {
+  switch (process.platform) { 
+     case 'darwin' : return 'open';
+     case 'win32' : return 'start';
+     case 'win64' : return 'start';
+     default : return 'xdg-open';
+  }
+}
+
+async function localize(filePath, language, flags, cli){
+  let fileContent = await fs.promises.readFile(filePath, 'utf8')
   let wait = false;
   if(flags.create) {
-    cli.action.start(`Localizing and translating ${filename}`)
-    await localizeAndTranslate(fileContent, filename, language, flags.translate)
+    cli.action.start(`Localizing and translating ${filePath}`)
+    await localizeAndTranslate(fileContent, filePath, language, flags.translate)
     .then(()=> {
       wait = true;
       cli.action.stop()
@@ -154,10 +166,10 @@ async function localize(filename, language, flags, cli){
     }).catch(err => console.log(err)) 
   } 
   else if(flags.update) {
-    cli.action.start(`Updating contents of ${filename}`)
-    let json = await fs.promises.readFile(`./locales/${language}/${filename}`, 'utf8').catch(err => console.log(err))
+    cli.action.start(`Updating contents of ${filePath}`)
+    let json = await fs.promises.readFile(`./locales/${language}/${filePath}`, 'utf8').catch(err => console.log(err))
     let html = await Localize.TranslateHtml(fileContent, json).catch(err => console.log(err))
-    await fs.promises.writeFile(filename, html)
+    await fs.promises.writeFile(filePath, html)
     .then(()=>{
       wait = true;
       cli.action.stop()
@@ -175,7 +187,7 @@ async function localize(filename, language, flags, cli){
   }
   else wait = true;
   if(flags.export && wait) {
-    let localename = getLocalname(filename);
+    let localename = getLocalname(filePath);
     cli.action.start(`Exporting ./locales/${language}/${localename}.json to a CSV file`)
     let fromjson = await fs.promises.readFile(`./locales/${language}/${localename}.json`).catch(err => console.log(err))
     let fromcsv = await Localize.exportCsv(language, fromjson).catch(err => console.log(err))
@@ -184,7 +196,11 @@ async function localize(filename, language, flags, cli){
       for(let t of flags.translate){
         let tojson = await fs.promises.readFile(`./locales/${t}/${localename}.json`).catch(err => console.log(err))
         let tocsv = await Localize.exportCsv(t, tojson).catch(err => console.log(err))
-        await fs.promises.writeFile(`exports/csv/${t}/${localename}.csv`, tocsv).then(()=>cli.action.stop()).catch(err => console.log(err))
+        await fs.promises.writeFile(`exports/csv/${t}/${localename}.csv`, tocsv)
+        .then(()=>{
+          cli.action.stop()
+          exec(getCommandLine() + ' ' + `exports/csv/${t}/${localename}.csv`);
+        }).catch(err => console.log(err))
       }
     }
   }
@@ -202,7 +218,11 @@ function localizeAndTranslate(html, filePath, from, translations){
       let translatedLocale = await Localize.TranslateLocale(data.locale, from, translations[to], data.size).catch(err => reject(err));
       await fs.promises.writeFile(`./locales/${translations[to]}/${name.locale}.json`, JSON.stringify(translatedLocale)).catch(err => reject(err))
       let translatedHtml = await Localize.TranslateHtml(origin_html, translatedLocale).catch(err => reject(err))
-      await fs.promises.writeFile(name.filepath, translatedHtml).then(()=>{if(to>=translations.length-1)resolve(true)}).catch(err => reject(err))
+      await fs.promises.writeFile(name.filepath, translatedHtml)
+      .then(()=>{
+        //exec(getCommandLine() + ' ' + name.filepath);
+        if(to>=translations.length-1)resolve(true)
+      }).catch(err => reject(err))
     }
   })
 }
