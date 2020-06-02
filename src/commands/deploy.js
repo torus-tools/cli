@@ -4,6 +4,7 @@ const Deploy = require('arjan-deploy');
 const AWS = require('aws-sdk');
 const cloudformation = new AWS.CloudFormation({apiVersion: '2010-05-15'});
 const acm = new AWS.ACM({apiVersion: '2015-12-08'});
+require('dotenv').config()
 
 function delay(ms){
   return new Promise((resolve) => {
@@ -62,16 +63,15 @@ class DeployCommand extends Command {
               wait = false;
               let nameservers = await Deploy.newHostedZone(stackName).catch(err => console.log(err))
               if(nameservers){
-                console.log('\nIn your Domain name registrar, please change your DNS settings to custom DNS and add the following Nameservers: \n')
+                console.log('\nIn your Domain name registrar, change your DNS settings to custom DNS and add the following Nameservers: \n')
                 for(let ns of nameservers) console.log("\x1b[32m", ns+'.','\n', "\x1b[0m")
                 await delay(10000)
                 let answer = await cli.prompt('Have you finished updating your nameservers?')
                 if(answer === 'y' || answer === 'Y' || answer === 'yes'|| answer === 'Yes') wait = true;
-                else console.log('Exiting.') //exit the cli
+                else console.log('Exiting.') //exit the cliyou can access your test site at the following url ...
               }
             }
-            else console.log('you can access your test site at the following url ...')
-            //need to write a function to get the propper url of the s3 bucket
+            else console.log(` http://${args.site}.s3-website-${process.env.AWS_REGION}.amazonaws.com`)
           }
         }
         if(wait && flags.https){
