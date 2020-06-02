@@ -46,7 +46,7 @@ class DeployCommand extends Command {
         flags.https = true;
       }
     }
-    if(args.action === 'create' || args.action === 'update'){
+    if(args.action === 'create' || args.action === 'update' || args.action === 'import'){
       cli.action.start('Setting up...')
       let newTemplate = await Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, flags.https)
       let temp = {TemplateBody:{}};
@@ -63,13 +63,12 @@ class DeployCommand extends Command {
         if(template) cli.action.stop()
         if(temp.TemplateBody === JSON.stringify(template.template)) wait = true;
         else {
-          cli.action.start('Deploying Stack')
-          let stack = await Deploy.deployStack(args.site, template.template, template.existingResources, false)
+          cli.action.start(args.action + 'ing the Stack')
+          let stack = args.action==='import'? await Deploy.deployStack(args.site, template.template, template.existingResources, true): await Deploy.deployStack(args.site, template.template, template.existingResources, false);
           let waitAction = 'stackCreateComplete'
           if(stack.action === 'UPDATE') waitAction = 'stackUpdateComplete';
           else if(stack.action === 'IMPORT') waitAction = 'stackImportComplete';
           wait = await cloudformation.waitFor(waitAction, {StackName: stack.name}).promise()
-          //optional file upload
           if(wait) {
             cli.action.stop()
             if(flags.upload){
@@ -126,6 +125,7 @@ class DeployCommand extends Command {
           else certwait = true
           if(certwait && flags.cdn){
             //check that the cdn doesnt exist
+            //REPEATED CODE
             cli.action.start('Deploying the cloudfront distribution')
             let data = await Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, certArn).catch((err) => console.log(err))
             await Deploy.deployStack(args.site, data.template, data.existingResources, false)
@@ -138,6 +138,7 @@ class DeployCommand extends Command {
         }
         else if(wait && flags.cdn && !flags.https){
           //check that the cdn doesnt exist
+          //REPEATED CODE
           cli.action.start('Deploying the cloudfront distribution')
           Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, flags.https)
           .then((data)=> Deploy.deployStack(args.site, data.template, data.existingResources, false))
@@ -149,7 +150,9 @@ class DeployCommand extends Command {
         }
       }
     }
-    // else if(args.action === 'import')
+    else if(args.action === 'import'){
+
+    }
     else if(args.action === 'delete'){
       let stackName = args.site.split('.').join('') + 'Stack';
       cli.action.start('Removing any digital certificates associated to the domain')
