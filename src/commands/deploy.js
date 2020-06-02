@@ -2,6 +2,7 @@ const {Command, flags} = require('@oclif/command');
 const {cli} = require('cli-ux');
 const Deploy = require('arjan-deploy');
 const AWS = require('aws-sdk');
+const open = require('open');
 const cloudformation = new AWS.CloudFormation({apiVersion: '2010-05-15'});
 const acm = new AWS.ACM({apiVersion: '2015-12-08'});
 require('dotenv').config()
@@ -10,6 +11,24 @@ function delay(ms){
   return new Promise((resolve) => {
     setTimeout(resolve(true), ms)
   })
+}
+
+function scanFiles(dir){
+  let arrs = [];
+  return new Promise(async (resolve, reject) => {
+    scanDir(dir, (filePath, stat) => arrs.push(filePath))
+    resolve(arrs)
+  })
+}
+function scanDir(currentDirPath, callback) {
+  fs.readdirSync(currentDirPath).forEach((name)=>{
+    var filePath = path.join(currentDirPath, name);
+    var stat = fs.statSync(filePath);
+    if(!ignorePaths[filePath]) {
+      if (stat.isFile()) callback(filePath, stat);
+      else if (stat.isDirectory()) scanDir(filePath, callback)
+    }
+  });
 }
 
 class DeployCommand extends Command {
@@ -31,19 +50,20 @@ class DeployCommand extends Command {
       cli.action.start('Setting up...')
       let newTemplate = await Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, flags.https)
       let temp = {TemplateBody:{}};
-      let stackName = args.site.split('.').join('') + 'Stack'
-      let stackId = await Deploy.stackExists(stackName)
+      let stackName = args.site.split('.').join('') + 'Stack';
+      let stackId = await Deploy.stackExists(stackName);
+      let hostedZoneExists = await Deploy.hostedZoneExists(args.site);
       if(stackId) temp = await cloudformation.getTemplate({StackName: stackId}).promise().catch(err => console.log(err))
       if(temp.TemplateBody === JSON.stringify(newTemplate.template)) cli.action.stop('No changes detected...')
       else {
         cli.action.stop()
-        cli.action.start('Generating template')
+        cli.action.start('Generating Template')
         let template = await Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, false, flags.route53, false)
         let wait = false;
         if(template) cli.action.stop()
         if(temp.TemplateBody === JSON.stringify(template.template)) wait = true;
         else {
-          cli.action.start('Deploying your stack')
+          cli.action.start('Deploying Stack')
           let stack = await Deploy.deployStack(args.site, template.template, template.existingResources, false)
           let waitAction = 'stackCreateComplete'
           if(stack.action === 'UPDATE') waitAction = 'stackUpdateComplete';
@@ -53,13 +73,21 @@ class DeployCommand extends Command {
           if(wait) {
             cli.action.stop()
             if(flags.upload){
-              cli.action.start('Uploading files to your s3 bucket')
-              console.log('uploading Dir', 'uploadDir()')
-              cli.action.stop()
+              var stat = fs.statSync(flags.upload);
+              if(flags.upload === '*' || flags.upload === '/') files = await scanFiles('./').catch(err=>console.log(err))
+              else if(stat.isFile()) files = [file]
+              else if(stat.isDirectory()) files = await scanFiles(flags.upload).catch(err=>console.log(err))
+              files.forEach((file)=> Deploy.uploadFile(args.site, file))
             }
-          }
-          if(wait && stack.action === 'CREATE') {
-            if(flags.route53){
+            else if(!flags.upload && stack.action === 'CREATE'){
+              let fakeIndex = `<!DOCTYPE html><html><body><h1>Hello World</h1></body></html>`;
+              let fakeError = `<!DOCTYPE html><html><body><h1>Error</h1></body></html>`;
+              let indexParams = {Bucket: args.site, Key: 'index.html', Body: fakeIndex, ContentType: 'text/html'};
+              let errorParams = {Bucket: args.site, Key: 'error.html', Body: fakeError, ContentType: 'text/html'};
+              s3.putObject(indexParams).promise().catch(err => reject(err))
+              s3.putObject(errorParams).promise().catch(err => reject(err))
+            }
+            if(flags.route53 && !hostedZoneExists){
               wait = false;
               let nameservers = await Deploy.newHostedZone(stackName).catch(err => console.log(err))
               if(nameservers){
@@ -67,11 +95,18 @@ class DeployCommand extends Command {
                 for(let ns of nameservers) console.log("\x1b[32m", ns+'.','\n', "\x1b[0m")
                 await delay(10000)
                 let answer = await cli.prompt('Have you finished updating your nameservers?')
-                if(answer === 'y' || answer === 'Y' || answer === 'yes'|| answer === 'Yes') wait = true;
+                if(answer === 'y' || answer === 'Y' || answer === 'yes'|| answer === 'Yes') {
+                  wait = true;
+                  delay(5000).then(()=>open(`http://${args.site}`))
+                }
                 else console.log('Exiting.') //exit the cliyou can access your test site at the following url ...
               }
+              else console.log('error. no nameservers')
             }
-            else console.log(` http://${args.site}.s3-website-${process.env.AWS_REGION}.amazonaws.com`)
+            else if(!flags.route53) {
+              await open(`http://${args.site}.s3-website-${process.env.AWS_REGION}.amazonaws.com`)
+              console.log(`you may acces your site at http://${args.site}.s3-website-${process.env.AWS_REGION}.amazonaws.com`)
+            }
           }
         }
         if(wait && flags.https){
@@ -146,7 +181,7 @@ DeployCommand.args = [
     name: 'action',
     required: true,
     description: 'choose an action to perform. you can create, update, import your stack or upload files to your bucket.',
-    options: ['create', 'update', 'import', 'delete', 'upload']
+    options: ['create', 'update', 'import', 'delete']
   },
   {
     name: 'setup',
@@ -186,7 +221,7 @@ DeployCommand.flags = {
   }),
   upload: flags.string({
     char: 'u',
-    description: 'name of a specific file you want to upload to your site. all uploads all of the files'
+    description: 'name of a specific file or directory to add to your site. To add all files/dirs from your root use / or *'
   })
 }
 
