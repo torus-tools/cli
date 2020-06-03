@@ -2,13 +2,20 @@ const {Command, flags} = require('@oclif/command');
 const {cli} = require('cli-ux');
 const Deploy = require('arjan-deploy');
 const AWS = require('aws-sdk');
-const fs = require('fs')
+const fs = require('fs');
+const path = require("path");
 const open = require('open');
 const cloudformation = new AWS.CloudFormation({apiVersion: '2010-05-15'});
 const s3 = new AWS.S3({apiVersion: '2006-03-01'});
 const acm = new AWS.ACM({apiVersion: '2015-12-08'});
-
 require('dotenv').config()
+
+var ignorePaths = {
+  "dep_pack": true, //must be ingored.
+  "node_modules":true,
+  ".git":true,
+  ".env":true
+}
 
 function delay(ms){
   return new Promise((resolve) => {
@@ -51,6 +58,8 @@ class DeployCommand extends Command {
     }
     if(args.action === 'create' || args.action === 'update' || args.action === 'import'){
       cli.action.start('Setting up...')
+      let url = null;
+      let upload = null;
       let newTemplate = await Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, flags.https)
       let temp = {TemplateBody:{}};
       let stackName = args.site.split('.').join('') + 'Stack';
@@ -69,6 +78,7 @@ class DeployCommand extends Command {
           cli.action.start(args.action + 'ing the Stack')
           let stack = args.action==='import'? await Deploy.deployStack(args.site, template.template, template.existingResources, true): await Deploy.deployStack(args.site, template.template, template.existingResources, false);
           let changeSetObj = stack;
+          if(!flags.upload && args.action !== 'create') fileUpload = true;
           changeSetObj['template'] = template.template;
           changeSetObj['existingResources'] = template.existingResources;
           fs.promises.writeFile(`${stack.changeSet}.json`, JSON.stringify(changeSetObj));
@@ -80,18 +90,36 @@ class DeployCommand extends Command {
             cli.action.stop()
             if(flags.upload){
               var stat = fs.statSync(flags.upload);
+              let files = [];
+              let dir = null;
               if(flags.upload === '*' || flags.upload === '/') files = await scanFiles('./').catch(err=>console.log(err))
               else if(stat.isFile()) files = [flags.upload]
-              else if(stat.isDirectory()) files = await scanFiles(flags.upload).catch(err=>console.log(err))
-              files.forEach((file)=> Deploy.uploadFile(args.site, file))
+              else if(stat.isDirectory()) {
+                dir = flags.upload;
+                files = await scanFiles(flags.upload).catch(err=>console.log(err))
+              }
+              files.forEach((file, index)=> {
+                Deploy.uploadFile(args.site, file, dir)
+                .then(()=> {
+                  //console.log(index, files.length)
+                  if(index >= files.length-1) {
+                    upload = true;
+                    if(url) open(url);
+                  }
+                })
+                .catch(err => console.log(err))
+              })
             }
             else if(!flags.upload && stack.action === 'CREATE'){
               let fakeIndex = `<!DOCTYPE html><html><body><h1>Hello World</h1></body></html>`;
               let fakeError = `<!DOCTYPE html><html><body><h1>Error</h1></body></html>`;
               let indexParams = {Bucket: args.site, Key: 'index.html', Body: fakeIndex, ContentType: 'text/html'};
               let errorParams = {Bucket: args.site, Key: 'error.html', Body: fakeError, ContentType: 'text/html'};
-              s3.putObject(indexParams).promise().catch(err => reject(err))
-              s3.putObject(errorParams).promise().catch(err => reject(err))
+              s3.putObject(errorParams).promise().catch(err => console.log(err))
+              s3.putObject(indexParams).promise().then(()=> {
+                upload = true
+                if(url) open(url)
+              }).catch(err => console.log(err))
             }
             if(flags.route53 && !hostedZoneExists){
               wait = false;
@@ -99,19 +127,18 @@ class DeployCommand extends Command {
               if(nameservers){
                 console.log('\nIn your Domain name registrar, change your DNS settings to custom DNS and add the following Nameservers: \n')
                 for(let ns of nameservers) console.log("\x1b[32m", ns+'.','\n', "\x1b[0m")
-                await delay(10000)
                 let answer = await cli.prompt('Have you finished updating your nameservers?')
                 if(answer === 'y' || answer === 'Y' || answer === 'yes'|| answer === 'Yes') {
                   wait = true;
-                  delay(5000).then(()=>open(`http://${args.site}`))
+                  if(upload && !url) open(`http://${args.site}`);
                 }
                 else console.log('Exiting.') //exit the cliyou can access your test site at the following url ...
               }
               else console.log('error. no nameservers')
             }
             else if(!flags.route53) {
-              await open(`http://${args.site}.s3-website-${process.env.AWS_REGION}.amazonaws.com`)
-              console.log(`you may acces your site at http://${args.site}.s3-website-${process.env.AWS_REGION}.amazonaws.com`)
+              url = `http://${args.site}.s3-website-${process.env.AWS_REGION}.amazonaws.com`;
+              console.log(`you may acces your site at ${url}`)
             }
           }
         }
