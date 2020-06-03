@@ -132,7 +132,7 @@ class DeployCommand extends Command {
                   wait = true;
                   if(upload && !url) open(`http://${args.site}`);
                 }
-                else console.log('Exiting.') //exit the cliyou can access your test site at the following url ...
+                else console.log('Exiting.') //exit the cli
               }
               else console.log('error. no nameservers')
             }
