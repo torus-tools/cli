@@ -2,10 +2,20 @@ const {Command, flags} = require('@oclif/command');
 const {cli} = require('cli-ux');
 const Deploy = require('arjan-deploy');
 const AWS = require('aws-sdk');
+const fs = require('fs');
+const path = require("path");
 const open = require('open');
 const cloudformation = new AWS.CloudFormation({apiVersion: '2010-05-15'});
+const s3 = new AWS.S3({apiVersion: '2006-03-01'});
 const acm = new AWS.ACM({apiVersion: '2015-12-08'});
 require('dotenv').config()
+
+var ignorePaths = {
+  "dep_pack": true, //must be ingored.
+  "node_modules":true,
+  ".git":true,
+  ".env":true
+}
 
 function delay(ms){
   return new Promise((resolve) => {
@@ -46,8 +56,10 @@ class DeployCommand extends Command {
         flags.https = true;
       }
     }
-    if(args.action === 'create' || args.action === 'update'){
+    if(args.action === 'create' || args.action === 'update' || args.action === 'import'){
       cli.action.start('Setting up...')
+      let url = null;
+      let upload = null;
       let newTemplate = await Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, flags.https)
       let temp = {TemplateBody:{}};
       let stackName = args.site.split('.').join('') + 'Stack';
@@ -56,36 +68,58 @@ class DeployCommand extends Command {
       if(stackId) temp = await cloudformation.getTemplate({StackName: stackId}).promise().catch(err => console.log(err))
       if(temp.TemplateBody === JSON.stringify(newTemplate.template)) cli.action.stop('No changes detected...')
       else {
+        let wait = false;
         cli.action.stop()
         cli.action.start('Generating Template')
         let template = await Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, false, flags.route53, false)
-        let wait = false;
         if(template) cli.action.stop()
         if(temp.TemplateBody === JSON.stringify(template.template)) wait = true;
         else {
-          cli.action.start('Deploying Stack')
-          let stack = await Deploy.deployStack(args.site, template.template, template.existingResources, false)
-          let waitAction = 'stackCreateComplete'
+          cli.action.start(`Deploying ${stackName}. action:${args.action}`)
+          let stack = args.action==='import'? await Deploy.deployStack(args.site, template.template, template.existingResources, true): await Deploy.deployStack(args.site, template.template, template.existingResources, false);
+          let changeSetObj = stack;
+          if(!flags.upload && args.action !== 'create') fileUpload = true;
+          changeSetObj['template'] = template.template;
+          changeSetObj['existingResources'] = template.existingResources;
+          fs.promises.writeFile(`${stack.changeSet}.json`, JSON.stringify(changeSetObj));
+          let waitAction = 'stackCreateComplete';
           if(stack.action === 'UPDATE') waitAction = 'stackUpdateComplete';
           else if(stack.action === 'IMPORT') waitAction = 'stackImportComplete';
           wait = await cloudformation.waitFor(waitAction, {StackName: stack.name}).promise()
-          //optional file upload
           if(wait) {
             cli.action.stop()
             if(flags.upload){
               var stat = fs.statSync(flags.upload);
+              let files = [];
+              let dir = null;
               if(flags.upload === '*' || flags.upload === '/') files = await scanFiles('./').catch(err=>console.log(err))
-              else if(stat.isFile()) files = [file]
-              else if(stat.isDirectory()) files = await scanFiles(flags.upload).catch(err=>console.log(err))
-              files.forEach((file)=> Deploy.uploadFile(args.site, file))
+              else if(stat.isFile()) files = [flags.upload]
+              else if(stat.isDirectory()) {
+                dir = flags.upload;
+                files = await scanFiles(flags.upload).catch(err=>console.log(err))
+              }
+              files.forEach((file, index)=> {
+                Deploy.uploadFile(args.site, file, dir)
+                .then(()=> {
+                  //console.log(index, files.length)
+                  if(index >= files.length-1) {
+                    upload = true;
+                    if(url) open(url);
+                  }
+                })
+                .catch(err => console.log(err))
+              })
             }
             else if(!flags.upload && stack.action === 'CREATE'){
               let fakeIndex = `<!DOCTYPE html><html><body><h1>Hello World</h1></body></html>`;
               let fakeError = `<!DOCTYPE html><html><body><h1>Error</h1></body></html>`;
               let indexParams = {Bucket: args.site, Key: 'index.html', Body: fakeIndex, ContentType: 'text/html'};
               let errorParams = {Bucket: args.site, Key: 'error.html', Body: fakeError, ContentType: 'text/html'};
-              s3.putObject(indexParams).promise().catch(err => reject(err))
-              s3.putObject(errorParams).promise().catch(err => reject(err))
+              s3.putObject(errorParams).promise().catch(err => console.log(err))
+              s3.putObject(indexParams).promise().then(()=> {
+                upload = true
+                if(url) open(url)
+              }).catch(err => console.log(err))
             }
             if(flags.route53 && !hostedZoneExists){
               wait = false;
@@ -93,19 +127,18 @@ class DeployCommand extends Command {
               if(nameservers){
                 console.log('\nIn your Domain name registrar, change your DNS settings to custom DNS and add the following Nameservers: \n')
                 for(let ns of nameservers) console.log("\x1b[32m", ns+'.','\n', "\x1b[0m")
-                await delay(10000)
                 let answer = await cli.prompt('Have you finished updating your nameservers?')
                 if(answer === 'y' || answer === 'Y' || answer === 'yes'|| answer === 'Yes') {
                   wait = true;
-                  delay(5000).then(()=>open(`http://${args.site}`))
+                  if(upload && !url) open(`http://${args.site}`);
                 }
-                else console.log('Exiting.') //exit the cliyou can access your test site at the following url ...
+                else console.log('Exiting.') //exit the cli
               }
               else console.log('error. no nameservers')
             }
             else if(!flags.route53) {
-              await open(`http://${args.site}.s3-website-${process.env.AWS_REGION}.amazonaws.com`)
-              console.log(`you may acces your site at http://${args.site}.s3-website-${process.env.AWS_REGION}.amazonaws.com`)
+              url = `http://${args.site}.s3-website-${process.env.AWS_REGION}.amazonaws.com`;
+              console.log(`you may acces your site at ${url}`)
             }
           }
         }
@@ -114,11 +147,11 @@ class DeployCommand extends Command {
           let certwait = false;
           let certArn = null;
           if(!certExists){
-            cli.action.start('Creating your digital certificate')
+            cli.action.start('Creating SSL certificate')
             certArn = await Deploy.createCertificate(args.site, stackName, flags.route53).catch((err) => console.log(err))
             if(certArn) {
               cli.action.stop()
-              cli.action.start('validating your certificate')
+              cli.action.start('Validating certificate. This might take a while')
             }
             certwait = await acm.waitFor('certificateValidated', {CertificateArn:certArn}).promise().catch((err) => console.log(err))
             if(certwait) cli.action.stop('validated')
@@ -126,11 +159,16 @@ class DeployCommand extends Command {
           else certwait = true
           if(certwait && flags.cdn){
             //check that the cdn doesnt exist
+            //REPEATED CODE
             cli.action.start('Deploying the cloudfront distribution')
             let data = await Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, certArn).catch((err) => console.log(err))
             await Deploy.deployStack(args.site, data.template, data.existingResources, false)
-            .then(() => {
+            .then((stack) => {
               cli.action.stop()
+              let changeSetObj = stack;
+              changeSetObj['template'] = data.template;
+              changeSetObj['existingResources'] = data.existingResources;
+              fs.promises.writeFile(`${stack.changeSet}.json`, JSON.stringify(changeSetObj));
               console.log('Cloudfront distribution in progress. It may take while until the https is reflected in your url...')
               console.log('In the meantime your site is fully functional :)')
             }).catch((err) => console.log(err));
@@ -138,25 +176,32 @@ class DeployCommand extends Command {
         }
         else if(wait && flags.cdn && !flags.https){
           //check that the cdn doesnt exist
+          //REPEATED CODE
           cli.action.start('Deploying the cloudfront distribution')
           Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, flags.https)
           .then((data)=> Deploy.deployStack(args.site, data.template, data.existingResources, false))
-          .then(() => {
+          .then((stack) => {
             cli.action.stop()
+            let changeSetObj = stack;
+            changeSetObj['template'] = data.template;
+            changeSetObj['existingResources'] = data.existingResources;
+            fs.promises.writeFile(`${stack.changeSet}.json`, JSON.stringify(changeSetObj));
             console.log('Cloudfront distribution in progress.. It may take while...')
             console.log('In the meantime your site is fully functional :)')
           }).catch((err) => console.log(err));
         }
       }
     }
-    // else if(args.action === 'import')
+    else if(args.action === 'import'){
+
+    }
     else if(args.action === 'delete'){
       let stackName = args.site.split('.').join('') + 'Stack';
       cli.action.start('Removing any digital certificates associated to the domain')
       Deploy.deleteCertificate(args.site).then(data => {
         cli.action.stop();
         console.log("\x1b[33mIf any, please delete all additional route53 records you may have created and not attached to your cloudformation stack", "\x1b[0m");
-        cli.action.start('Deleting your stack')
+        cli.action.start(`Deleting ${stackName}`)
         cloudformation.deleteStack({StackName: stackName}).promise()
         .then(()=> {
           cli.action.stop('Success')
