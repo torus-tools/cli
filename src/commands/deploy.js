@@ -75,7 +75,7 @@ class DeployCommand extends Command {
         if(template) cli.action.stop()
         if(temp.TemplateBody === JSON.stringify(template.template)) wait = true;
         else {
-          cli.action.start(args.action + 'ing the Stack')
+          cli.action.start(`Deploying ${stackName}. action:${args.action}`)
           let stack = args.action==='import'? await Deploy.deployStack(args.site, template.template, template.existingResources, true): await Deploy.deployStack(args.site, template.template, template.existingResources, false);
           let changeSetObj = stack;
           if(!flags.upload && args.action !== 'create') fileUpload = true;
@@ -147,11 +147,11 @@ class DeployCommand extends Command {
           let certwait = false;
           let certArn = null;
           if(!certExists){
-            cli.action.start('Creating your digital certificate')
+            cli.action.start('Creating SSL certificate')
             certArn = await Deploy.createCertificate(args.site, stackName, flags.route53).catch((err) => console.log(err))
             if(certArn) {
               cli.action.stop()
-              cli.action.start('validating your certificate')
+              cli.action.start('Validating certificate. This might take a while')
             }
             certwait = await acm.waitFor('certificateValidated', {CertificateArn:certArn}).promise().catch((err) => console.log(err))
             if(certwait) cli.action.stop('validated')
@@ -201,7 +201,7 @@ class DeployCommand extends Command {
       Deploy.deleteCertificate(args.site).then(data => {
         cli.action.stop();
         console.log("\x1b[33mIf any, please delete all additional route53 records you may have created and not attached to your cloudformation stack", "\x1b[0m");
-        cli.action.start('Deleting your stack')
+        cli.action.start(`Deleting ${stackName}`)
         cloudformation.deleteStack({StackName: stackName}).promise()
         .then(()=> {
           cli.action.stop('Success')
