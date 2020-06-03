@@ -2,9 +2,12 @@ const {Command, flags} = require('@oclif/command');
 const {cli} = require('cli-ux');
 const Deploy = require('arjan-deploy');
 const AWS = require('aws-sdk');
+const fs = require('fs')
 const open = require('open');
 const cloudformation = new AWS.CloudFormation({apiVersion: '2010-05-15'});
+const s3 = new AWS.S3({apiVersion: '2006-03-01'});
 const acm = new AWS.ACM({apiVersion: '2015-12-08'});
+
 require('dotenv').config()
 
 function delay(ms){
@@ -56,16 +59,20 @@ class DeployCommand extends Command {
       if(stackId) temp = await cloudformation.getTemplate({StackName: stackId}).promise().catch(err => console.log(err))
       if(temp.TemplateBody === JSON.stringify(newTemplate.template)) cli.action.stop('No changes detected...')
       else {
+        let wait = false;
         cli.action.stop()
         cli.action.start('Generating Template')
         let template = await Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, false, flags.route53, false)
-        let wait = false;
         if(template) cli.action.stop()
         if(temp.TemplateBody === JSON.stringify(template.template)) wait = true;
         else {
           cli.action.start(args.action + 'ing the Stack')
           let stack = args.action==='import'? await Deploy.deployStack(args.site, template.template, template.existingResources, true): await Deploy.deployStack(args.site, template.template, template.existingResources, false);
-          let waitAction = 'stackCreateComplete'
+          let changeSetObj = stack;
+          changeSetObj['template'] = template.template;
+          changeSetObj['existingResources'] = template.existingResources;
+          fs.promises.writeFile(`${stack.changeSet}.json`, JSON.stringify(changeSetObj));
+          let waitAction = 'stackCreateComplete';
           if(stack.action === 'UPDATE') waitAction = 'stackUpdateComplete';
           else if(stack.action === 'IMPORT') waitAction = 'stackImportComplete';
           wait = await cloudformation.waitFor(waitAction, {StackName: stack.name}).promise()
@@ -74,7 +81,7 @@ class DeployCommand extends Command {
             if(flags.upload){
               var stat = fs.statSync(flags.upload);
               if(flags.upload === '*' || flags.upload === '/') files = await scanFiles('./').catch(err=>console.log(err))
-              else if(stat.isFile()) files = [file]
+              else if(stat.isFile()) files = [flags.upload]
               else if(stat.isDirectory()) files = await scanFiles(flags.upload).catch(err=>console.log(err))
               files.forEach((file)=> Deploy.uploadFile(args.site, file))
             }
@@ -129,8 +136,12 @@ class DeployCommand extends Command {
             cli.action.start('Deploying the cloudfront distribution')
             let data = await Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, certArn).catch((err) => console.log(err))
             await Deploy.deployStack(args.site, data.template, data.existingResources, false)
-            .then(() => {
+            .then((stack) => {
               cli.action.stop()
+              let changeSetObj = stack;
+              changeSetObj['template'] = data.template;
+              changeSetObj['existingResources'] = data.existingResources;
+              fs.promises.writeFile(`${stack.changeSet}.json`, JSON.stringify(changeSetObj));
               console.log('Cloudfront distribution in progress. It may take while until the https is reflected in your url...')
               console.log('In the meantime your site is fully functional :)')
             }).catch((err) => console.log(err));
@@ -142,8 +153,12 @@ class DeployCommand extends Command {
           cli.action.start('Deploying the cloudfront distribution')
           Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, flags.https)
           .then((data)=> Deploy.deployStack(args.site, data.template, data.existingResources, false))
-          .then(() => {
+          .then((stack) => {
             cli.action.stop()
+            let changeSetObj = stack;
+            changeSetObj['template'] = data.template;
+            changeSetObj['existingResources'] = data.existingResources;
+            fs.promises.writeFile(`${stack.changeSet}.json`, JSON.stringify(changeSetObj));
             console.log('Cloudfront distribution in progress.. It may take while...')
             console.log('In the meantime your site is fully functional :)')
           }).catch((err) => console.log(err));
