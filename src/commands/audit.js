@@ -3,12 +3,11 @@ const Audit = require('arjan-audit')
 const {createFile} = require('arjan-localize')
 const {cli} = require('cli-ux');
 const defaults = {
-  "dir":"./dep_pack",
+  "dir":"./",
   "file":"index.html",
   "port":8080,
   "threshold":0.8
 }
-
 
 function getScoreColor(score){
   let color = "\x1b[31m";    //red by default
@@ -40,7 +39,7 @@ function formatReport(audit){
   let blankLine = "|" + " ".repeat(i) + "|\n";
   let sepparator = "|" + "-".repeat(i) + "|\n";
   let header = sepparator + blankLine + getHeading("audit report") + blankLine;
-  let scores = sepparator + blankLine + getReportItem(true, i, 'lighthouse 6 score', audit.lh6_score) + getReportItem(true, i, 'lighthouse 6 score', audit.lh5_score) + blankLine;
+  let scores = sepparator + blankLine + getReportItem(true, i, 'lighthouse 6 score', audit.lh6_score) + getReportItem(true, i, 'lighthouse 5 score', audit.lh5_score) + blankLine;
   let mainMetrics = sepparator + getHeading("main metrics") + blankLine;
   for(let m in audit.main_metrics) mainMetrics += getReportItem(false, i, audit.main_metrics[m].title, audit.main_metrics[m].score);
   let recommendations = '\nRECOMMENDATIONS\n\n';
