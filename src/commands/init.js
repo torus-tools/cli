@@ -1,13 +1,19 @@
 const {Command, flags} = require('@oclif/command')
-const Localize = require('arjan-localize')
+const Build = require('arjan-build')
 const fs = require('fs')
+const open = require('open')
 
 class InitCommand extends Command {
   async run() {
     const {flags, args} = this.parse(InitCommand)
-    if(flags.localize) Localize.Build(args.region, args.profile)
-    .then(data=> console.log(data))
-    .catch(err => console.log(err))
+    if(flags.gloabl) {
+      let url = await Build.createIamUser(args.profile, args.region)
+      await open(url)
+    }
+    else {
+      let build = await Build.initBuild(args.profile, args.region)
+      console.log(build)
+    }
   }
 }
 
@@ -18,39 +24,23 @@ Extra documentation goes here
 
 InitCommand.args = [
   {
-    name: 'region',
-    required: false,
-    description: 'AWS Region',
-    default: 'us-east-1'
-  },
-  {
     name: 'profile',
     required: false,
     description: 'AWS Profile',
     default: 'default'
+  },
+  {
+    name: 'region',
+    required: false,
+    description: 'AWS Region',
+    default: 'us-east-1'
   }
 ]
 
 InitCommand.flags = {
-  localize: flags.boolean({
-    char: 'l',                    
-    description: 'builds required files/dirs for arjan localize',
-    default: true        
-  }),  
-  optimize: flags.boolean({
-    char: 'o',                    
-    description: 'builds required files/dirs for arjan optimize',
-    default: true        
-  }),
-  audit: flags.boolean({
-    char: 'a',                    
-    description: 'builds required files/dirs for arjan audit',
-    default: true        
-  }),
-  deploy: flags.boolean({
-    char: 'd',                    
-    description: 'builds required files/dirs for arjan deploy',
-    default: true        
+  global: flags.boolean({
+    char: 'g',                    
+    description: 'Guides you through your first time setup. Including AWS IAM user creation.',        
   }),
 }
 
