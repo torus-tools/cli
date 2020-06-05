@@ -3,7 +3,8 @@ const Localize = require('arjan-localize')
 const fs = require('fs')
 const path = require("path");
 const {cli} = require('cli-ux');
-const exec = require('child_process').exec;
+const open = require('open');
+
 var ignorePaths = {
   "dep_pack": true, //must be ingored.
   "node_modules":true,
@@ -136,15 +137,6 @@ function createPath(files, origin, output){
   })
 }
 
-function getCommandLine() {
-  switch (process.platform) { 
-     case 'darwin' : return 'open';
-     case 'win32' : return 'start';
-     case 'win64' : return 'start';
-     default : return 'xdg-open';
-  }
-}
-
 async function localize(filePath, language, flags, cli){
   let fileContent = await fs.promises.readFile(filePath, 'utf8')
   let wait = false;
@@ -198,8 +190,8 @@ async function localize(filePath, language, flags, cli){
         let tocsv = await Localize.exportCsv(t, tojson).catch(err => console.log(err))
         await fs.promises.writeFile(`exports/csv/${t}/${localename}.csv`, tocsv)
         .then(()=>{
+          open(`exports/csv/${t}/${localename}.csv`);
           cli.action.stop()
-          exec(getCommandLine() + ' ' + `exports/csv/${t}/${localename}.csv`);
         }).catch(err => console.log(err))
       }
     }
@@ -220,7 +212,7 @@ function localizeAndTranslate(html, filePath, from, translations){
       let translatedHtml = await Localize.TranslateHtml(origin_html, translatedLocale).catch(err => reject(err))
       await fs.promises.writeFile(name.filepath, translatedHtml)
       .then(()=>{
-        //exec(getCommandLine() + ' ' + name.filepath);
+        //open(name.filepath);
         if(to>=translations.length-1)resolve(true)
       }).catch(err => reject(err))
     }
