@@ -8,14 +8,6 @@ const HtmlMinifier = require('html-minifier');
 const csso = require('csso');
 var Terser = require("terser");
 const Report = require('../report')
-
-/* ({
-  preset: ['default', {
-      discardComments: {
-          removeAll: true,
-      },
-  }]
-}); */
 const path = require("path");
 
 const ignorePaths = {
@@ -64,13 +56,25 @@ function formatReport(files){
 }
 
 class OptimizeCommand extends Command {
+  static strict = false;
+  static args = [
+    {
+      name: 'files',
+      description: 'path of the files you want to optimize. Ommit the argument or use / to translate all of your html files (default).',
+    }
+  ]
   async run() {
+    let files = [];
+    for(let f=1; f<this.argv.length; f++) if(!this.argv[f].startsWith('-')) files.push(this.argv[f])
     const {flags, args} = this.parse(OptimizeCommand)
     cli.action.start('setting up')
     await Build.CreateDir('./dep_pack')
     let config = await Build.createFile('./arjan_config/optimize_config.json', JSON.stringify(Optimize.optimizeConfig))
     let config_json = JSON.parse(config)
-    let arrs = await scanFiles().catch((err) => {console.log(err)})
+    for(let f in AuditCommand.flags) if(!flags[f]) flags[f] = config_json[f]
+    let arrs = {stylesheets:[], htmlfiles:[], scripts:[], images:[], file_sizes:{}}
+    if(args.files && args.files !== '/') for(file of files) arrs = getFile(file, arrs)
+    else arrs = await scanFiles().catch(err => console.log)
     let file_sizes = arrs.file_sizes;
     for(let s in arrs.scripts){
       //if(s >= arrs.scripts.length) cli.action.stop()
@@ -189,13 +193,6 @@ OptimizeCommand.description = `Describe the command here
 ...
 Extra documentation goes here
 `
-OptimizeCommand.args = [
-  {
-    name: 'filename',
-    required: false,
-    description: 'name of the file i.e. index.html',
-  }
-]
 
 OptimizeCommand.flags = {
   images: flags.boolean({

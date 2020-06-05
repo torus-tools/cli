@@ -1,6 +1,7 @@
 const {Command, flags} = require('@oclif/command');
 const {cli} = require('cli-ux');
 const Deploy = require('arjan-deploy');
+const Build = require('arjan-build')
 const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require("path");
@@ -58,6 +59,7 @@ class DeployCommand extends Command {
     }
     if(args.action === 'create' || args.action === 'update' || args.action === 'import'){
       cli.action.start('Setting up...')
+      await Build.createDir('arjan_config/changesets')
       let url = null;
       let upload = null;
       let newTemplate = await Deploy.generateTemplate(args.site, flags.index, flags.error, flags.www, flags.cdn, flags.route53, flags.https)
@@ -81,7 +83,7 @@ class DeployCommand extends Command {
           if(!flags.upload && args.action !== 'create') fileUpload = true;
           changeSetObj['template'] = template.template;
           changeSetObj['existingResources'] = template.existingResources;
-          fs.promises.writeFile(`${stack.changeSet}.json`, JSON.stringify(changeSetObj));
+          fs.promises.writeFile(`arjan_config/changesets/${stack.changeSet}.json`, JSON.stringify(changeSetObj));
           let waitAction = 'stackCreateComplete';
           if(stack.action === 'UPDATE') waitAction = 'stackUpdateComplete';
           else if(stack.action === 'IMPORT') waitAction = 'stackImportComplete';
@@ -168,7 +170,7 @@ class DeployCommand extends Command {
               let changeSetObj = stack;
               changeSetObj['template'] = data.template;
               changeSetObj['existingResources'] = data.existingResources;
-              fs.promises.writeFile(`${stack.changeSet}.json`, JSON.stringify(changeSetObj));
+              fs.promises.writeFile(`arjan_config/changesets/${stack.changeSet}.json`, JSON.stringify(changeSetObj));
               console.log('Cloudfront distribution in progress. It may take while until the https is reflected in your url...')
               console.log('In the meantime your site is fully functional :)')
             }).catch((err) => console.log(err));
@@ -185,7 +187,7 @@ class DeployCommand extends Command {
             let changeSetObj = stack;
             changeSetObj['template'] = data.template;
             changeSetObj['existingResources'] = data.existingResources;
-            fs.promises.writeFile(`${stack.changeSet}.json`, JSON.stringify(changeSetObj));
+            fs.promises.writeFile(`arjan_config/changesets/${stack.changeSet}.json`, JSON.stringify(changeSetObj));
             console.log('Cloudfront distribution in progress.. It may take while...')
             console.log('In the meantime your site is fully functional :)')
           }).catch((err) => console.log(err));
