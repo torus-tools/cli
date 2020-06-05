@@ -33,7 +33,7 @@ function getRecommendation(item){
   return recommendation;
 }
 function getHeading(title){
-  let heading = "| " + " ".repeat((40-title.length)/2) + title.toUpperCase() + " ".repeat((40-title.length)/2) + "|\n";
+  let heading = "|" + " ".repeat((40-title.length)/2) + title.toUpperCase() + " ".repeat((40-title.length)/2) + "|\n";
   return heading;
 }
 
