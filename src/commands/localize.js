@@ -34,10 +34,10 @@ function getLocalname(filePath){
 
 function setup(origin, translations){
   return new Promise((resolve, reject) => {
-    Build.CreateDir('arjan_config/locales')
-    .then(() => {Build.CreateDir(`arjan_config/locales/${origin}`)
+    Build.createDir('arjan_config/locales')
+    .then(() => {Build.createDir(`arjan_config/locales/${origin}`)
       .then(()=>{
-        if(translations) for(let t in translations) Build.CreateDir(`arjan_config/locales/${translations[t]}`).then(()=> {if(t>=translations.length-1)resolve(true)})
+        if(translations) for(let t in translations) Build.createDir(`arjan_config/locales/${translations[t]}`).then(()=> {if(t>=translations.length-1)resolve(true)})
         else resolve(true)
       }).catch(err => reject(err))
     }).catch(err => reject(err))
@@ -46,11 +46,11 @@ function setup(origin, translations){
 
 function setupCsv(origin, translations){
   return new Promise((resolve, reject) => {
-    Build.CreateDir('arjan_config/exports').then(()=>{
-      Build.CreateDir('arjan_config/exports/csv')
-      .then(() => {Build.CreateDir(`arjan_config/exports/csv/${origin}`)
+    Build.createDir('arjan_config/exports').then(()=>{
+      Build.createDir('arjan_config/exports/csv')
+      .then(() => {Build.createDir(`arjan_config/exports/csv/${origin}`)
         .then(()=>{
-          if(translations) for(let t in translations) Build.CreateDir(`arjan_config/exports/csv/${translations[t]}`).then(()=> {if(t>=translations.length-1)resolve(true)})
+          if(translations) for(let t in translations) Build.createDir(`arjan_config/exports/csv/${translations[t]}`).then(()=> {if(t>=translations.length-1)resolve(true)})
           else resolve(true)
         }).catch(err => reject(err))
       }).catch(err => reject(err))
@@ -117,7 +117,7 @@ function scanDir(currentDirPath, callback) {
 //create the appropriate filestructure for each file
 function createPath(files, origin, output){
   return new Promise((resolve, reject) => {
-    Build.CreateDir(output)
+    Build.createDir(output)
     .then(async (data)=> {
       for(let f in files){
         if(files[f].startsWith('./')) files[f] = files[f].substr(2);
@@ -129,7 +129,7 @@ function createPath(files, origin, output){
           for(let i=0; i<dirs.length-1; i++){
             path += '/'+dirs[i];
             console.log(path)
-            await Build.CreateDir(path).catch(err => reject(err))
+            await Build.createDir(path).catch(err => reject(err))
             if(i >= dirs.length -2  && f >= files.length-1) resolve(true)
           }
         }
@@ -192,7 +192,7 @@ async function localize(filePath, language, flags, cli){
         let tocsv = await Localize.exportCsv(t, tojson).catch(err => console.log(err))
         await fs.promises.writeFile(`arjan_config/exports/csv/${t}/${localename}.csv`, tocsv)
         .then(()=>{
-          open(`exports/csv/${t}/${localename}.csv`);
+          open(`arjan_config/exports/csv/${t}/${localename}.csv`);
           cli.action.stop()
         }).catch(err => console.log(err))
       }
