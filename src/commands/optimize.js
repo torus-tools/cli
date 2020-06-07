@@ -2,20 +2,12 @@ require('dotenv').config()
 const {Command, flags} = require('@oclif/command')
 const fs = require('fs')
 const Optimize = require('arjan-optimize')
-const Localize = require('arjan-localize')
+const Build = require('arjan-build')
 const {cli} = require('cli-ux');
 const HtmlMinifier = require('html-minifier');
 const csso = require('csso');
 var Terser = require("terser");
-const reports = require('../report')
-
-/* ({
-  preset: ['default', {
-      discardComments: {
-          removeAll: true,
-      },
-  }]
-}); */
+const Report = require('../report')
 const path = require("path");
 
 const ignorePaths = {
@@ -40,7 +32,7 @@ function formatReport(files){
   let i = 40;
   let blankLine = "|" + " ".repeat(i) + "|\n";
   let sepparator = "|" + "-".repeat(i) + "|\n";
-  let header = sepparator + blankLine + reports.getHeading("Optimization Report") + blankLine;
+  let header = sepparator + blankLine + Report.getHeading("Optimization Report") + blankLine;
   let file_count = 0;
   let original_size = 0;
   let compressed_size = 0;
@@ -52,25 +44,37 @@ function formatReport(files){
   let pcent = compressed_size/original_size;
   let body = sepparator + 
   blankLine + 
-  reports.getReportItem(false, i, 'Total Files Compressed', file_count) + 
+  Report.getReportItem(false, i, 'Total Files Compressed', file_count) + 
   blankLine + 
-  reports.getReportItem(false, i, 'Before', original_size+' bytes') + 
+  Report.getReportItem(false, i, 'Before', original_size+' bytes') + 
   blankLine + 
-  reports.getReportItem(false, i, 'After', compressed_size+' bytes', reports.getScoreColor(1-pcent, .1)) + 
+  Report.getReportItem(false, i, 'After', compressed_size+' bytes', Report.getScoreColor(1-pcent, .1)) + 
   blankLine + 
-  reports.getReportItem(false, i, 'Compression', reports.getScore(1-pcent, true, true), reports.getScoreColor(1-pcent, .1))
+  Report.getReportItem(false, i, 'Compression', Report.getScore(1-pcent, true, true), Report.getScoreColor(1-pcent, .1))
   let report = '\n'+header+body+blankLine+sepparator;
   return report;
 }
 
 class OptimizeCommand extends Command {
+  static strict = false;
+  static args = [
+    {
+      name: 'files',
+      description: 'path of the files you want to optimize. Ommit the argument or use / to translate all of your html files (default).',
+    }
+  ]
   async run() {
+    let files = [];
+    for(let f=1; f<this.argv.length; f++) if(!this.argv[f].startsWith('-')) files.push(this.argv[f])
     const {flags, args} = this.parse(OptimizeCommand)
     cli.action.start('setting up')
-    await Localize.CreateDir('./dep_pack')
-    let config = await Localize.createFile('./optimize_config.json', JSON.stringify(Optimize.optimizeConfig))
+    await Build.CreateDir('./dep_pack')
+    let config = await Build.createFile('./arjan_config/optimize_config.json', JSON.stringify(Optimize.optimizeConfig))
     let config_json = JSON.parse(config)
-    let arrs = await scanFiles().catch((err) => {console.log(err)})
+    for(let f in AuditCommand.flags) if(!flags[f]) flags[f] = config_json[f]
+    let arrs = {stylesheets:[], htmlfiles:[], scripts:[], images:[], file_sizes:{}}
+    if(args.files && args.files !== '/') for(file of files) arrs = getFile(file, arrs)
+    else arrs = await scanFiles().catch(err => console.log)
     let file_sizes = arrs.file_sizes;
     for(let s in arrs.scripts){
       //if(s >= arrs.scripts.length) cli.action.stop()
@@ -81,7 +85,7 @@ class OptimizeCommand extends Command {
       else {
         let filesize = await writeFile(`./dep_pack/${arrs.scripts[s]}`, result.code).catch((err)=>console.log(err))
         file_sizes[arrs.scripts[s]].compressed = filesize;
-        cli.action.stop(reports.getScoreColor(1-filesize/file_sizes[arrs.scripts[s]].original, .1)+filesize+" bytes \x1b[0m")
+        cli.action.stop(Report.getScoreColor(1-filesize/file_sizes[arrs.scripts[s]].original, .1)+filesize+" bytes \x1b[0m")
       }
     }
     for(let c in arrs.stylesheets) {
@@ -91,7 +95,7 @@ class OptimizeCommand extends Command {
       var result = await csso.minify(css, {});
       let filesize = await writeFile(`./dep_pack/${arrs.stylesheets[c]}`, result.css).catch(err=>console.log(err))
       file_sizes[arrs.stylesheets[c]].compressed = filesize;
-      cli.action.stop(reports.getScoreColor(1-filesize/file_sizes[arrs.stylesheets[c]].original, .1)+filesize+" bytes \x1b[0m")
+      cli.action.stop(Report.getScoreColor(1-filesize/file_sizes[arrs.stylesheets[c]].original, .1)+filesize+" bytes \x1b[0m")
     }
     for(let h in arrs.htmlfiles) {
       //if(h >= arrs.htmlfiles.length) cli.action.stop()
@@ -101,7 +105,7 @@ class OptimizeCommand extends Command {
       if(flags.html) html = HtmlMinifier.minify(html, config_json.html_minifier);
       let filesize = await writeFile(`./dep_pack/${arrs.htmlfiles[h]}`, html)
       file_sizes[arrs.htmlfiles[h]].compressed = filesize;
-      cli.action.stop(reports.getScoreColor(1-filesize/file_sizes[arrs.htmlfiles[h]].original, .1)+filesize+" bytes \x1b[0m")
+      cli.action.stop(Report.getScoreColor(1-filesize/file_sizes[arrs.htmlfiles[h]].original, .1)+filesize+" bytes \x1b[0m")
     }
     for(let i in arrs.images){
       //if(i >= arrs.images.length) cli.action.stop()
@@ -110,11 +114,11 @@ class OptimizeCommand extends Command {
       if(flags.webp){
         let webp = await Optimize.compressWebp(arrs.images[i], "./dep_pack");
         file_sizes[arrs.images[i]].compressed = webp;
-        cli.action.stop(reports.getScoreColor(1-webp/file_sizes[arrs.images[i]].original, .1)+webp+" bytes \x1b[0m")
+        cli.action.stop(Report.getScoreColor(1-webp/file_sizes[arrs.images[i]].original, .1)+webp+" bytes \x1b[0m")
       }
       else {
         file_sizes[arrs.images[i]].compressed = img;
-        cli.action.stop(reports.getScoreColor(1-img/file_sizes[arrs.images[i]].original, .1)+img+" bytes \x1b[0m")
+        cli.action.stop(Report.getScoreColor(1-img/file_sizes[arrs.images[i]].original, .1)+img+" bytes \x1b[0m")
       }
     }
     let report = formatReport(file_sizes)
@@ -189,13 +193,6 @@ OptimizeCommand.description = `Describe the command here
 ...
 Extra documentation goes here
 `
-OptimizeCommand.args = [
-  {
-    name: 'filename',
-    required: false,
-    description: 'name of the file i.e. index.html',
-  }
-]
 
 OptimizeCommand.flags = {
   images: flags.boolean({
