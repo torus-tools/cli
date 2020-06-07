@@ -1,11 +1,11 @@
 const sharp = require('sharp');
 var fs = require('fs')
 
-function compress(file, output){
+function compress(filePath, output){
   return new Promise((resolve, reject) => {
     //let fileExtension = file.split(".")[1]
-    let fileSubPath = file.split(".")[0];
-    sharp(file)
+    let fileSubPath = filePath.split(".")[0];
+    sharp(filePath)
     .webp({nearLossless: true, force: true})
     .toFile(`${output}/${fileSubPath}.webp`)
     .then( data => { 
@@ -18,15 +18,15 @@ function compress(file, output){
   })
 }
 
-function replace(img, html){
+function replace(imgPath, html){
   //scan the html file and find all instances of the image
   return new Promise((resolve, reject) => {
     //console.log("\x1b[33m", img, "\x1b[0m")
-    if(html.includes(`src="${img}"`)){
-      let splife = html.split(`src="${img}"`);
+    if(html.includes(`src="${imgPath}"`)){
+      let splife = html.split(`src="${imgPath}"`);
       let img_tag_bgn = splife[0].substr(splife[0].lastIndexOf('<'));
       let img_tag_end = splife[1].substr(0, splife[1].indexOf('>')+1);
-      let img_tag = img_tag_bgn + `src="${img}"` + img_tag_end;
+      let img_tag = img_tag_bgn + `src="${imgPath}"` + img_tag_end;
       let subPath = img.substr(0, img.lastIndexOf('.'));
       let ext = img.substr(img.lastIndexOf('.'));
       //let classes = "";
@@ -35,7 +35,7 @@ function replace(img, html){
       let webp_tag = 
       `<picture>
         <source type="image/webp" srcset="${webp_img}">
-        <source type="image/${ext}" srcset="${img}">
+        <source type="image/${ext}" srcset="${imgPath}">
         ${img_tag}
       </picture>`
       //console.log("\x1b[31m", img_tag, '\n', webp_tag, "\x1b[0m")

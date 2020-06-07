@@ -1,11 +1,14 @@
 const {Command, flags} = require('@oclif/command')
 const Localize = require('arjan-localize')
+const Build = require('arjan-build')
 const fs = require('fs')
 const path = require("path");
 const {cli} = require('cli-ux');
-const exec = require('child_process').exec;
+const open = require('open');
+
 var ignorePaths = {
   "dep_pack": true, //must be ingored.
+  "arjan_config": true,
   "node_modules":true,
   ".git":true
 }
@@ -31,10 +34,10 @@ function getLocalname(filePath){
 
 function setup(origin, translations){
   return new Promise((resolve, reject) => {
-    Localize.CreateDir('locales')
-    .then(() => {Localize.CreateDir(`locales/${origin}`)
+    Build.createDir('arjan_config/locales')
+    .then(() => {Build.createDir(`arjan_config/locales/${origin}`)
       .then(()=>{
-        if(translations) for(let t in translations) Localize.CreateDir(`locales/${translations[t]}`).then(()=> {if(t>=translations.length-1)resolve(true)})
+        if(translations) for(let t in translations) Build.createDir(`arjan_config/locales/${translations[t]}`).then(()=> {if(t>=translations.length-1)resolve(true)})
         else resolve(true)
       }).catch(err => reject(err))
     }).catch(err => reject(err))
@@ -43,11 +46,11 @@ function setup(origin, translations){
 
 function setupCsv(origin, translations){
   return new Promise((resolve, reject) => {
-    Localize.CreateDir('exports').then(()=>{
-      Localize.CreateDir('exports/csv')
-      .then(() => {Localize.CreateDir(`exports/csv/${origin}`)
+    Build.createDir('arjan_config/exports').then(()=>{
+      Build.createDir('arjan_config/exports/csv')
+      .then(() => {Build.createDir(`arjan_config/exports/csv/${origin}`)
         .then(()=>{
-          if(translations) for(let t in translations) Localize.CreateDir(`exports/csv/${translations[t]}`).then(()=> {if(t>=translations.length-1)resolve(true)})
+          if(translations) for(let t in translations) Build.createDir(`arjan_config/exports/csv/${translations[t]}`).then(()=> {if(t>=translations.length-1)resolve(true)})
           else resolve(true)
         }).catch(err => reject(err))
       }).catch(err => reject(err))
@@ -79,7 +82,7 @@ class LocalizeCommand extends Command {
     else exports = true;
     if(setting && exports) {
       cli.action.stop()
-      for(let t of flags.translate) ignorePaths[t] = true;
+      if(flags.translate) for(let t of flags.translate) ignorePaths[t] = true;
       if(!args.files || args.files === '/') files = await scanFiles()
       if(flags.translate) for(let t of flags.translate) await createPath(files, args.language, t)
       for(let file of files) await localize(file, args.language, flags, cli)
@@ -114,7 +117,7 @@ function scanDir(currentDirPath, callback) {
 //create the appropriate filestructure for each file
 function createPath(files, origin, output){
   return new Promise((resolve, reject) => {
-    Localize.CreateDir(output)
+    Build.createDir(output)
     .then(async (data)=> {
       for(let f in files){
         if(files[f].startsWith('./')) files[f] = files[f].substr(2);
@@ -126,7 +129,7 @@ function createPath(files, origin, output){
           for(let i=0; i<dirs.length-1; i++){
             path += '/'+dirs[i];
             console.log(path)
-            await Localize.CreateDir(path).catch(err => reject(err))
+            await Build.createDir(path).catch(err => reject(err))
             if(i >= dirs.length -2  && f >= files.length-1) resolve(true)
           }
         }
@@ -134,15 +137,6 @@ function createPath(files, origin, output){
       }
     }).catch(err => reject(err))
   })
-}
-
-function getCommandLine() {
-  switch (process.platform) { 
-     case 'darwin' : return 'open';
-     case 'win32' : return 'start';
-     case 'win64' : return 'start';
-     default : return 'xdg-open';
-  }
 }
 
 async function localize(filePath, language, flags, cli){
@@ -157,9 +151,9 @@ async function localize(filePath, language, flags, cli){
     }).catch(err => console.log(err))
   }
   else if(flags.update && flags.backwards){
-    cli.action.start(`Updating contents of locales/${language}/${localename}.json`)
+    cli.action.start(`Updating contents of arjan_config/locales/${language}/${localename}.json`)
     let locale = await Localize.CreateLocale(fileContent).catch(err => console.log(err))
-    await fs.promises.writeFile(`./locales/${language}/${localename}.json`, locale)
+    await fs.promises.writeFile(`./arjan_config/locales/${language}/${localename}.json`, locale)
     .then(()=> {
       wait = true;
       cli.action.stop()
@@ -167,7 +161,7 @@ async function localize(filePath, language, flags, cli){
   } 
   else if(flags.update) {
     cli.action.start(`Updating contents of ${filePath}`)
-    let json = await fs.promises.readFile(`./locales/${language}/${filePath}`, 'utf8').catch(err => console.log(err))
+    let json = await fs.promises.readFile(`./arjan_config/locales/${language}/${filePath}`, 'utf8').catch(err => console.log(err))
     let html = await Localize.TranslateHtml(fileContent, json).catch(err => console.log(err))
     await fs.promises.writeFile(filePath, html)
     .then(()=>{
@@ -176,10 +170,10 @@ async function localize(filePath, language, flags, cli){
     }).catch(err => console.log(err)) 
   }
   else if(flags.import){
-    cli.action.start(`Importing CSV file content into locales/${language}/${localename}.json`)
-    let csv = await fs.promises.readFile(`exports/csv/${language}/${localename}.csv`, 'utf8')
-    let obj = await Localize.importCsv(language, csv).catch(err => console.log(err))
-    await fs.promises.writeFile(`./locales/${language}/${localename}.json`, obj)
+    cli.action.start(`Importing CSV file content into arjan_config/locales/${language}/${localename}.json`)
+    let csv = await fs.promises.readFile(`arjan_config/exports/csv/${language}/${localename}.csv`, 'utf8')
+    let obj = await Localize.csvToJson(language, csv).catch(err => console.log(err))
+    await fs.promises.writeFile(`./arjan_config/locales/${language}/${localename}.json`, obj)
     .then(()=>{
       wait = true;
       cli.action.stop();
@@ -188,18 +182,21 @@ async function localize(filePath, language, flags, cli){
   else wait = true;
   if(flags.export && wait) {
     let localename = getLocalname(filePath);
-    cli.action.start(`Exporting ./locales/${language}/${localename}.json to a CSV file`)
-    let fromjson = await fs.promises.readFile(`./locales/${language}/${localename}.json`).catch(err => console.log(err))
-    let fromcsv = await Localize.exportCsv(language, fromjson).catch(err => console.log(err))
-    await fs.promises.writeFile(`exports/csv/${language}/${localename}.csv`, fromcsv).then(()=>cli.action.stop()).catch(err => console.log(err))
+    cli.action.start(`Exporting ./arjan_config/locales/${language}/${localename}.json to a CSV file`)
+    let fromjson = await fs.promises.readFile(`./arjan_config/locales/${language}/${localename}.json`).catch(err => console.log(err))
+    let fromcsv = await Localize.jsonToCsv(language, fromjson).catch(err => console.log(err))
+    await fs.promises.writeFile(`arjan_config/exports/csv/${language}/${localename}.csv`, fromcsv).then(()=>{
+      open(`arjan_config/exports/csv/${language}/${localename}.csv`);
+      cli.action.stop()
+    }).catch(err => console.log(err))
     if(flags.translate) {
       for(let t of flags.translate){
-        let tojson = await fs.promises.readFile(`./locales/${t}/${localename}.json`).catch(err => console.log(err))
-        let tocsv = await Localize.exportCsv(t, tojson).catch(err => console.log(err))
-        await fs.promises.writeFile(`exports/csv/${t}/${localename}.csv`, tocsv)
+        let tojson = await fs.promises.readFile(`./arjan_config/locales/${t}/${localename}.json`).catch(err => console.log(err))
+        let tocsv = await Localize.jsonToCsv(t, tojson).catch(err => console.log(err))
+        await fs.promises.writeFile(`arjan_config/exports/csv/${t}/${localename}.csv`, tocsv)
         .then(()=>{
+          open(`arjan_config/exports/csv/${t}/${localename}.csv`);
           cli.action.stop()
-          exec(getCommandLine() + ' ' + `exports/csv/${t}/${localename}.csv`);
         }).catch(err => console.log(err))
       }
     }
@@ -211,16 +208,16 @@ function localizeAndTranslate(html, filePath, from, translations){
     let oname = await getPaths(from, from, filePath)
     let data = await Localize.CreateLocale(html).catch(err => reject(err))
     var origin_html = data.html;
-    await fs.promises.writeFile(`./locales/${from}/${oname.locale}.json`, JSON.stringify(data.locale)).catch(err => reject(err));
+    await fs.promises.writeFile(`./arjan_config/locales/${from}/${oname.locale}.json`, JSON.stringify(data.locale)).catch(err => reject(err));
     await fs.promises.writeFile(filePath, origin_html).catch(err => reject(err));
     for(let to in translations){
       let name = await getPaths(from, translations[to], filePath)
       let translatedLocale = await Localize.TranslateLocale(data.locale, from, translations[to], data.size).catch(err => reject(err));
-      await fs.promises.writeFile(`./locales/${translations[to]}/${name.locale}.json`, JSON.stringify(translatedLocale)).catch(err => reject(err))
+      await fs.promises.writeFile(`./arjan_config/locales/${translations[to]}/${name.locale}.json`, JSON.stringify(translatedLocale)).catch(err => reject(err))
       let translatedHtml = await Localize.TranslateHtml(origin_html, translatedLocale).catch(err => reject(err))
       await fs.promises.writeFile(name.filepath, translatedHtml)
       .then(()=>{
-        //exec(getCommandLine() + ' ' + name.filepath);
+        //open(name.filepath);
         if(to>=translations.length-1)resolve(true)
       }).catch(err => reject(err))
     }
