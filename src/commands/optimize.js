@@ -32,7 +32,7 @@ function formatReport(files){
   let i = 40;
   let blankLine = "|" + " ".repeat(i) + "|\n";
   let sepparator = "|" + "-".repeat(i) + "|\n";
-  let header = sepparator + blankLine + Report.getHeading("Optimization Report") + blankLine;
+  let header = sepparator + blankLine + Report.getHeading("Optimization Report ") + blankLine;
   let file_count = 0;
   let original_size = 0;
   let compressed_size = 0;
@@ -68,10 +68,10 @@ class OptimizeCommand extends Command {
     for(let f=1; f<this.argv.length; f++) if(!this.argv[f].startsWith('-')) files.push(this.argv[f])
     const {flags, args} = this.parse(OptimizeCommand)
     cli.action.start('setting up')
-    await Build.CreateDir('./dep_pack')
+    await Build.createDir('./dep_pack')
     let config = await Build.createFile('./arjan_config/optimize_config.json', JSON.stringify(Optimize.optimizeConfig))
     let config_json = JSON.parse(config)
-    for(let f in AuditCommand.flags) if(!flags[f]) flags[f] = config_json[f]
+    for(let f in OptimizeCommand.flags) if(!flags[f]) flags[f] = config_json[f]
     let arrs = {stylesheets:[], htmlfiles:[], scripts:[], images:[], file_sizes:{}}
     if(args.files && args.files !== '/') for(file of files) arrs = getFile(file, arrs)
     else arrs = await scanFiles().catch(err => console.log)
@@ -91,7 +91,7 @@ class OptimizeCommand extends Command {
       else {
         cli.action.start(`Copying js ${arrs.scripts[s]}`)
         file_sizes[arrs.scripts[s]].compressed = file_sizes[arrs.scripts[s]].original;
-        Optimize.copyFile(arrs.scripts[s]).then(()=>cli.action.stop()).catch(err=>console.log(err))
+        Optimize.copyFile(arrs.scripts[s], 'dep_pack').then(()=>cli.action.stop()).catch(err=>console.log(err))
       }
     }
     for(let c in arrs.stylesheets) {
@@ -106,7 +106,7 @@ class OptimizeCommand extends Command {
       else {
         cli.action.start(`Copying css ${arrs.stylesheets[c]}`)
         file_sizes[arrs.stylesheets[c]].compressed = file_sizes[arrs.stylesheets[c]].original;
-        Optimize.copyFile(arrs.stylesheets[c]).then(()=>cli.action.stop()).catch(err=>console.log(err))
+        Optimize.copyFile(arrs.stylesheets[c], 'dep_pack').then(()=>cli.action.stop()).catch(err=>console.log(err))
       }
     }
     for(let h in arrs.htmlfiles) {
@@ -122,7 +122,7 @@ class OptimizeCommand extends Command {
       else {
         cli.action.start(`Copying html ${arrs.htmlfiles[h]}`)
         file_sizes[arrs.htmlfiles[h]].compressed = file_sizes[arrs.htmlfiles[h]].original;
-        fs.promises.writeFile(arrs.htmlfiles[h], html).then(()=>cli.action.stop()).catch(err=>console.log(err))
+        fs.promises.writeFile(`./dep_pack/${arrs.htmlfiles[h]}`, html).then(()=>cli.action.stop()).catch(err=>console.log(err))
       }
     }
     for(let i in arrs.images){
@@ -133,9 +133,9 @@ class OptimizeCommand extends Command {
         cli.action.stop(Report.getScoreColor(1-img/file_sizes[arrs.images[i]].original, .1)+img+" bytes \x1b[0m")
       }
       else {
-        cli.action.start(`Copying image ${arrs.images[i]}`)
+        cli.action.start(`Copying css ${arrs.images[i]}`)
         file_sizes[arrs.images[i]].compressed = file_sizes[arrs.images[i]].original;
-        fs.promises.writeFile(arrs.images[i], html).then(()=>cli.action.stop()).catch(err=>console.log(err))
+        Optimize.copyFile(arrs.images[i], 'dep_pack').then(()=>cli.action.stop()).catch(err=>console.log(err))
       }
       if(flags.webp){
         cli.action.start(`converting image ${arrs.images[i]} to webP \x1b[31m${file_sizes[arrs.images[i]].original} bytes \x1b[0m`)
