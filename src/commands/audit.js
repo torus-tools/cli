@@ -1,6 +1,6 @@
 const {Command, flags} = require('@oclif/command')
 const Audit = require('arjan-audit')
-const {createFile} = require('arjan-localize')
+const {createFile} = require('arjan-build')
 const {cli} = require('cli-ux');
 const Report = require('../report')
 
@@ -17,7 +17,7 @@ function formatReport(audit){
   let blankLine = "|" + " ".repeat(i) + "|\n";
   let sepparator = "|" + "-".repeat(i) + "|\n";
   let header = sepparator + blankLine + Report.getHeading("audit report") + blankLine;
-  let scores = sepparator + blankLine + Report.getReportItem(true, i, 'lighthouse 6 score', Report.getScore(audit.lh6_score, true, true), Report.getScoreColor(audit.lh6_score, flags.threshold)) + Report.getReportItem(true, i, 'lighthouse 6 score', Report.getScore(audit.lh5_score, true, true), Report.getScoreColor(audit.lh5_score, flags.threshold)) + blankLine;
+  let scores = sepparator + blankLine + Report.getReportItem(true, i, 'lighthouse 6 score', Report.getScore(audit.lh6_score, true, true), Report.getScoreColor(audit.lh6_score, flags.threshold)) + Report.getReportItem(true, i, 'lighthouse 5 score', Report.getScore(audit.lh5_score, true, true), Report.getScoreColor(audit.lh5_score, flags.threshold)) + blankLine;
   let mainMetrics = sepparator + Report.getHeading("main metrics") + blankLine;
   for(let m in audit.main_metrics) mainMetrics += Report.getReportItem(false, i, audit.main_metrics[m].title, Report.getScore(audit.main_metrics[m].score, true, true), Report.getScoreColor(audit.main_metrics[m].score, flags.threshold));
   let recommendations = '\nRECOMMENDATIONS\n\n';
