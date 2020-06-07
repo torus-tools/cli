@@ -82,7 +82,7 @@ class LocalizeCommand extends Command {
     else exports = true;
     if(setting && exports) {
       cli.action.stop()
-      for(let t of flags.translate) ignorePaths[t] = true;
+      if(flags.translate) for(let t of flags.translate) ignorePaths[t] = true;
       if(!args.files || args.files === '/') files = await scanFiles()
       if(flags.translate) for(let t of flags.translate) await createPath(files, args.language, t)
       for(let file of files) await localize(file, args.language, flags, cli)
@@ -172,7 +172,7 @@ async function localize(filePath, language, flags, cli){
   else if(flags.import){
     cli.action.start(`Importing CSV file content into arjan_config/locales/${language}/${localename}.json`)
     let csv = await fs.promises.readFile(`arjan_config/exports/csv/${language}/${localename}.csv`, 'utf8')
-    let obj = await Localize.importCsv(language, csv).catch(err => console.log(err))
+    let obj = await Localize.csvToJson(language, csv).catch(err => console.log(err))
     await fs.promises.writeFile(`./arjan_config/locales/${language}/${localename}.json`, obj)
     .then(()=>{
       wait = true;
@@ -184,12 +184,15 @@ async function localize(filePath, language, flags, cli){
     let localename = getLocalname(filePath);
     cli.action.start(`Exporting ./arjan_config/locales/${language}/${localename}.json to a CSV file`)
     let fromjson = await fs.promises.readFile(`./arjan_config/locales/${language}/${localename}.json`).catch(err => console.log(err))
-    let fromcsv = await Localize.exportCsv(language, fromjson).catch(err => console.log(err))
-    await fs.promises.writeFile(`arjan_config/exports/csv/${language}/${localename}.csv`, fromcsv).then(()=>cli.action.stop()).catch(err => console.log(err))
+    let fromcsv = await Localize.jsonToCsv(language, fromjson).catch(err => console.log(err))
+    await fs.promises.writeFile(`arjan_config/exports/csv/${language}/${localename}.csv`, fromcsv).then(()=>{
+      open(`arjan_config/exports/csv/${language}/${localename}.csv`);
+      cli.action.stop()
+    }).catch(err => console.log(err))
     if(flags.translate) {
       for(let t of flags.translate){
         let tojson = await fs.promises.readFile(`./arjan_config/locales/${t}/${localename}.json`).catch(err => console.log(err))
-        let tocsv = await Localize.exportCsv(t, tojson).catch(err => console.log(err))
+        let tocsv = await Localize.jsonToCsv(t, tojson).catch(err => console.log(err))
         await fs.promises.writeFile(`arjan_config/exports/csv/${t}/${localename}.csv`, tocsv)
         .then(()=>{
           open(`arjan_config/exports/csv/${t}/${localename}.csv`);
