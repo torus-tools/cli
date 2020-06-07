@@ -1,5 +1,5 @@
-const main = require('./index')
+const runAudit = require('./index')
 
-main('output', 'index.html', 8080, .7)
+runAudit('output', 'index.html', 8080, .7)
 .then(data=> console.log(data))
 .catch(err=>console.log(err))

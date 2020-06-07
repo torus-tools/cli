@@ -1,4 +1,4 @@
-require('dotenv').config();
+/* require('dotenv').config();
 var fs = require("fs");
 var {createDir, createFile} = require('./Build');
 var CreateLocale = require('./CreateLocale');
@@ -86,4 +86,4 @@ function translateFile(html, file, translation, name, from, to){
       })
     }
   })
-}
+} */

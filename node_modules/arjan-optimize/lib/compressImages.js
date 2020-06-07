@@ -4,9 +4,9 @@ SVGO = require('svgo');
 const img_formats = require('./imgFormats');
 
 
-module.exports = function compressImage(file, output, imageArr, svg_config){
+module.exports = function compressImage(file, output, imageArr, svgoConfig){
   return new Promise(async (resolve, reject) => {
-    svgo = new SVGO(svg_config);
+    svgo = new SVGO(svgoConfig);
     let fileExtension = file.substr(file.lastIndexOf(".")+1)
     //console.log('EXTENSION ', fileExtension)
     if(fileExtension === 'svg'){

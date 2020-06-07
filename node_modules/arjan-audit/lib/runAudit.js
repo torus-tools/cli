@@ -14,7 +14,7 @@ function launchChromeAndRunLighthouse(url, opts, config = null) {
   });
 }
 
-module.exports = function main(dir, index, port, threshhold){
+module.exports = function runAudit(dir, index, port, threshhold){
   return new Promise((resolve, reject)=> {
     app.use(express.static(dir))
     var server = app.listen(port, () => {

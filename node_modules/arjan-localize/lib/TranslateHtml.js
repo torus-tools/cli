@@ -3,7 +3,8 @@ const elements = require('./HtmlElements');
 
 module.exports = function TranslateHtml(html, json){
   return new Promise((resolve, reject) => {
-    var body = html.split('</head>')[1]
+    var body = html;
+    if(html.includes('</head>')) body = html.split('</head>')[1]
     let html2 = html
     for(key of elements){
       let elem = `<${key}`
@@ -46,7 +47,6 @@ module.exports = function TranslateHtml(html, json){
         
       }
     }
-    //fs.writeFileSync(translation, html2);
     resolve(html2)
   });
 }
