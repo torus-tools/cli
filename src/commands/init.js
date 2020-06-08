@@ -6,9 +6,10 @@ const open = require('open')
 class InitCommand extends Command {
   async run() {
     const {flags, args} = this.parse(InitCommand)
-    if(flags.gloabl) {
+    if(flags.global) {
       let url = await Build.createIamUser(args.profile, args.region)
       await open(url)
+      console.log('Finish setting up your IAM user in the AWS console then update your local profile with the keys displayed. For more info see https://arjan.tools/en/docs.html')
     }
     else {
       let build = await Build.initBuild(args.profile, args.region)
