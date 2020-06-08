@@ -84,8 +84,12 @@ class LocalizeCommand extends Command {
       cli.action.stop()
       if(flags.translate) for(let t of flags.translate) ignorePaths[t] = true;
       if(!args.files || args.files === '/') files = await scanFiles()
+      //console.log(files)
       if(flags.translate) for(let t of flags.translate) await createPath(files, args.language, t)
-      for(let file of files) await localize(file, args.language, flags, cli)
+      for(let file of files) {
+        //console.log(file)
+        await localize(file, args.language, flags, cli)
+      }
     }
   }
 }
@@ -128,7 +132,7 @@ function createPath(files, origin, output){
           let path = output;
           for(let i=0; i<dirs.length-1; i++){
             path += '/'+dirs[i];
-            console.log(path)
+            //console.log(path)
             await Build.createDir(path).catch(err => reject(err))
             if(i >= dirs.length -2  && f >= files.length-1) resolve(true)
           }
@@ -212,13 +216,13 @@ function localizeAndTranslate(html, filePath, from, translations){
     await fs.promises.writeFile(filePath, origin_html).catch(err => reject(err));
     for(let to in translations){
       let name = await getPaths(from, translations[to], filePath)
-      let translatedLocale = await Localize.TranslateLocale(data.locale, from, translations[to], data.size).catch(err => reject(err));
+      let translatedLocale = await Localize.TranslateLocale(data.locale, from, translations[to]).catch(err => reject(err));
       await fs.promises.writeFile(`./arjan_config/locales/${translations[to]}/${name.locale}.json`, JSON.stringify(translatedLocale)).catch(err => reject(err))
       let translatedHtml = await Localize.TranslateHtml(origin_html, translatedLocale).catch(err => reject(err))
       await fs.promises.writeFile(name.filepath, translatedHtml)
       .then(()=>{
         //open(name.filepath);
-        if(to>=translations.length-1)resolve(true)
+        if(to>=translations.length-1) resolve(true)
       }).catch(err => reject(err))
     }
   })
