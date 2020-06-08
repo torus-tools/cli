@@ -1,6 +1,9 @@
 function getScoreColor(score, threshold){
   let color = "\x1b[31m";    //red by default
-  if(score > threshold+.1) color = "\x1b[32m"    //green
+  if(!score) color = "\x1b[31m"
+  else if(score > threshold+.1){
+    color = "\x1b[32m"    //green
+  } 
   else if(score > threshold) color = "\x1b[33m";    //yellow
   return color;
 }
@@ -8,7 +11,9 @@ function getScoreColor(score, threshold){
 function getScore(score, percent, truncate){
   score = Number(score);
   if(truncate || percent) score = score.toFixed(2);
-  if(percent) score = score.toString().substr(2,3) + '%';
+  let scoreString = score.toString().replace('.','')
+  if(!score.startsWith(1)) scoreString = scoreString.substr(1)
+  if(percent) score = scoreString + '%';
   let final_score = score;
   return final_score;
 }
@@ -27,9 +32,9 @@ function getReportItem(caps, i, item, score, color){
   return line;
 }
 
-function getRecommendation(item){
+function getRecommendation(item, threshold){
   let colorReset = "\x1b[0m";
-  let recommendation = getScoreColor(item.score) + item.title + colorReset+ ": " +item.description;
+  let recommendation = getScoreColor(item.score, threshold) + item.title + colorReset+ ": " +item.description;
   return recommendation;
 }
 function getHeading(title){
