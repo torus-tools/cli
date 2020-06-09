@@ -19,9 +19,9 @@ function getPaths(from, to, filePath){
     let localename = filePath.substr(0, filePath.lastIndexOf(".")).replace(/\//g, '_')
     let destname = to+'/'+filePath;
     if(filePath.endsWith(`${from}.html`)) destname = to+'.html';
-    else if(filePath.split('/')[0] === from) {
-      destname = to+filePath.split('/', 2)[1];
-      create = true;
+    else if(filePath.startsWith(from)) {
+      destname = to+'/'+filePath.split('/', 2)[1];
+      if(filePath.split('/').length > 2) create = true;
     }
     else create = true;
     resolve({locale:localename, filepath:destname, create:create});  
