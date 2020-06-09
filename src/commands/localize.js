@@ -84,12 +84,8 @@ class LocalizeCommand extends Command {
       cli.action.stop()
       if(flags.translate) for(let t of flags.translate) ignorePaths[t] = true;
       if(!args.files || args.files === '/') files = await scanFiles()
-      //console.log(files)
       if(flags.translate) for(let t of flags.translate) await createPath(files, args.language, t)
-      for(let file of files) {
-        //console.log(file)
-        await localize(file, args.language, flags, cli)
-      }
+      for(let file of files) await localize(file, args.language, flags, cli)
     }
   }
 }
@@ -132,7 +128,6 @@ function createPath(files, origin, output){
           let path = output;
           for(let i=0; i<dirs.length-1; i++){
             path += '/'+dirs[i];
-            //console.log(path)
             await Build.createDir(path).catch(err => reject(err))
             if(i >= dirs.length -2  && f >= files.length-1) resolve(true)
           }
