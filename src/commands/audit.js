@@ -11,18 +11,18 @@ const defaults = {
   "threshold":0.8
 }
 
-function formatReport(audit){
+function formatReport(audit, threshold){
   let i = 40;
   let count = 1;
   let blankLine = "|" + " ".repeat(i) + "|\n";
   let sepparator = "|" + "-".repeat(i) + "|\n";
   let header = sepparator + blankLine + Report.getHeading("audit report") + blankLine;
-  let scores = sepparator + blankLine + Report.getReportItem(true, i, 'lighthouse 6 score', Report.getScore(audit.lh6_score, true, true), Report.getScoreColor(audit.lh6_score, flags.threshold)) + Report.getReportItem(true, i, 'lighthouse 5 score', Report.getScore(audit.lh5_score, true, true), Report.getScoreColor(audit.lh5_score, flags.threshold)) + blankLine;
+  let scores = sepparator + blankLine + Report.getReportItem(true, i, 'lighthouse 6 score', Report.getScore(audit.lh6_score, true, true), Report.getScoreColor(audit.lh6_score, threshold)) + Report.getReportItem(true, i, 'lighthouse 5 score', Report.getScore(audit.lh5_score, true, true), Report.getScoreColor(audit.lh5_score, threshold)) + blankLine;
   let mainMetrics = sepparator + Report.getHeading("main metrics") + blankLine;
-  for(let m in audit.main_metrics) mainMetrics += Report.getReportItem(false, i, audit.main_metrics[m].title, Report.getScore(audit.main_metrics[m].score, true, true), Report.getScoreColor(audit.main_metrics[m].score, flags.threshold));
+  for(let m in audit.main_metrics) mainMetrics += Report.getReportItem(false, i, audit.main_metrics[m].title, Report.getScore(audit.main_metrics[m].score, true, true), Report.getScoreColor(audit.main_metrics[m].score, threshold));
   let recommendations = '\nRECOMMENDATIONS\n\n';
   for(let r in audit.improvements){
-    recommendations += count+". "+Report.getRecommendation(audit.improvements[r])+'\n\n';
+    recommendations += count+". "+Report.getRecommendation(audit.improvements[r], threshold)+'\n\n';
     count += 1;
   }
   let report = recommendations+'\n'+header+scores+mainMetrics+sepparator;
@@ -42,7 +42,7 @@ class AuditCommand extends Command {
     cli.action.start('Running Lighthouse Audit')
     Audit(flags.dir, flags.file, flags.port, flags.threshold).then(data => {
       //console.log(data)
-      console.log(formatReport(data))
+      console.log(formatReport(data, flags.threshold))
       cli.action.stop()
     })
   }
