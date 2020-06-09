@@ -19,7 +19,7 @@ $ npm install -g arjan-cli
 $ arjan COMMAND
 running command...
 $ arjan (-v|--version|version)
-arjan-cli/0.1.0 linux-x64 node-v12.13.1
+arjan-cli/0.2.0 linux-x64 node-v12.13.1
 $ arjan --help [COMMAND]
 USAGE
   $ arjan COMMAND
@@ -29,12 +29,12 @@ USAGE
 # Commands
 <!-- commands -->
 * [`arjan audit`](#arjan-audit)
-* [`arjan deploy SITE ACTION [SETUP]`](#arjan-deploy-site-action-setup)
+* [`arjan deploy DOMAIN ACTION [SETUP]`](#arjan-deploy-domain-action-setup)
 * [`arjan help [COMMAND]`](#arjan-help-command)
-* [`arjan init [REGION] [PROFILE]`](#arjan-init-region-profile)
+* [`arjan init [PROFILE] [REGION]`](#arjan-init-profile-region)
 * [`arjan localize LANGUAGE [FILES]`](#arjan-localize-language-files)
-* [`arjan optimize [FILENAME]`](#arjan-optimize-filename)
-* [`arjan upload`](#arjan-upload)
+* [`arjan optimize [FILES]`](#arjan-optimize-files)
+* [`arjan upload DOMAIN [FILES]`](#arjan-upload-domain-files)
 
 ## `arjan audit`
 
@@ -52,30 +52,30 @@ OPTIONS
 
   -p, --port=port            Port used for the test server. Default is 8080.
 
-  -t, --threshold=threshold  Integer value from 0 to 1 that represents what you consider to be an acceptable lighthouse
-                             score for your site. Its very similar to what you would consider an acceptable school test
-                             grade.
+  -t, --threshold=threshold  [default: 0.8] Integer value from 0 to 1 that represents what you consider to be an
+                             acceptable lighthouse score for your site. Its very similar to what you would consider an
+                             acceptable school test grade.
 
 DESCRIPTION
   ...
   Extra documentation goes here
 ```
 
-_See code: [src/commands/audit.js](https://github.com/arjan-tools/cli/blob/v0.1.0/src/commands/audit.js)_
+_See code: [src/commands/audit.js](https://github.com/arjan-tools/cli/blob/v0.2.0/src/commands/audit.js)_
 
-## `arjan deploy SITE ACTION [SETUP]`
+## `arjan deploy DOMAIN ACTION [SETUP]`
 
 Describe the command here
 
 ```
 USAGE
-  $ arjan deploy SITE ACTION [SETUP]
+  $ arjan deploy DOMAIN ACTION [SETUP]
 
 ARGUMENTS
-  SITE    name of the site i.e. yoursite.com
+  DOMAIN  name of the site i.e. yoursite.com
 
-  ACTION  (create|update|import|delete|upload) choose an action to perform. you can create, update, import your stack or
-          upload files to your bucket.
+  ACTION  (create|update|import|delete) choose an action to perform. you can create, update, import your stack or upload
+          files to your bucket.
 
   SETUP   (dev|test|prod|custom) [default: dev] setup for the site - dev, test, production or custom
 
@@ -91,7 +91,8 @@ OPTIONS
   -r, --route53        creates a Hosted Zone in route 53. Have your current DNS provider page open and ready to add a
                        custom DNS.
 
-  -u, --upload=upload  name of a specific file you want to upload to your site. all uploads all of the files
+  -u, --upload=upload  name of a specific file or directory to add to your site. To add all files/dirs from your root
+                       use / or *
 
   -w, --www            creates a www s3 bucket that reroutes requests to the index.
 
@@ -100,7 +101,7 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/deploy.js](https://github.com/arjan-tools/cli/blob/v0.1.0/src/commands/deploy.js)_
+_See code: [src/commands/deploy.js](https://github.com/arjan-tools/cli/blob/v0.2.0/src/commands/deploy.js)_
 
 ## `arjan help [COMMAND]`
 
@@ -119,30 +120,27 @@ OPTIONS
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.0.1/src/commands/help.ts)_
 
-## `arjan init [REGION] [PROFILE]`
+## `arjan init [PROFILE] [REGION]`
 
 Describe the command here
 
 ```
 USAGE
-  $ arjan init [REGION] [PROFILE]
+  $ arjan init [PROFILE] [REGION]
 
 ARGUMENTS
-  REGION   [default: us-east-1] AWS Region
   PROFILE  [default: default] AWS Profile
+  REGION   [default: us-east-1] AWS Region
 
 OPTIONS
-  -a, --audit     builds required files/dirs for arjan audit
-  -d, --deploy    builds required files/dirs for arjan deploy
-  -l, --localize  builds required files/dirs for arjan localize
-  -o, --optimize  builds required files/dirs for arjan optimize
+  -g, --global  Guides you through your first time setup. Including AWS IAM user creation.
 
 DESCRIPTION
   ...
   Extra documentation goes here
 ```
 
-_See code: [src/commands/init.js](https://github.com/arjan-tools/cli/blob/v0.1.0/src/commands/init.js)_
+_See code: [src/commands/init.js](https://github.com/arjan-tools/cli/blob/v0.2.0/src/commands/init.js)_
 
 ## `arjan localize LANGUAGE [FILES]`
 
@@ -179,50 +177,57 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/localize.js](https://github.com/arjan-tools/cli/blob/v0.1.0/src/commands/localize.js)_
+_See code: [src/commands/localize.js](https://github.com/arjan-tools/cli/blob/v0.2.0/src/commands/localize.js)_
 
-## `arjan optimize [FILENAME]`
+## `arjan optimize [FILES]`
 
 Describe the command here
 
 ```
 USAGE
-  $ arjan optimize [FILENAME]
+  $ arjan optimize [FILES]
 
 ARGUMENTS
-  FILENAME  name of the file i.e. index.html
+  FILES  path of the files you want to optimize. Ommit the argument or use / to translate all of your html files
+         (default).
 
 OPTIONS
-  -c, --css     minifiy css using cssnano
-  -h, --html    compress html using html-minifier
-  -i, --images  compress images and if possible maintain the format. otherwise its converted to png.
-  -j, --js      minify js using uglify js
+  -c, --css   minifiy css using cssnano
+  -h, --html  compress html using html-minifier
+  -i, --img   compress images and if possible maintain the format. otherwise its converted to png.
+  -j, --js    minify js using uglify js
 
-  -w, --webp    saves a webp version of each image, then replaces each image instance in the html files with a picture
-                tag.
+  -w, --webp  saves a webp version of each image, then replaces each image instance in the html files with a picture
+              tag.
 
 DESCRIPTION
   ...
   Extra documentation goes here
 ```
 
-_See code: [src/commands/optimize.js](https://github.com/arjan-tools/cli/blob/v0.1.0/src/commands/optimize.js)_
+_See code: [src/commands/optimize.js](https://github.com/arjan-tools/cli/blob/v0.2.0/src/commands/optimize.js)_
 
-## `arjan upload`
+## `arjan upload DOMAIN [FILES]`
 
 Describe the command here
 
 ```
 USAGE
-  $ arjan upload
+  $ arjan upload DOMAIN [FILES]
+
+ARGUMENTS
+  DOMAIN  root domain of your site
+
+  FILES   path of the file/s you want to upload. Providing none or / will upload all the files in your current
+          directory.
 
 OPTIONS
-  -n, --name=name  name to print
+  -d, --dir  path of a directory you want to upload to your site
 
 DESCRIPTION
   ...
   Extra documentation goes here
 ```
 
-_See code: [src/commands/upload.js](https://github.com/arjan-tools/cli/blob/v0.1.0/src/commands/upload.js)_
+_See code: [src/commands/upload.js](https://github.com/arjan-tools/cli/blob/v0.2.0/src/commands/upload.js)_
 <!-- commandsstop -->

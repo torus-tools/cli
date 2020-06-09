@@ -72,6 +72,6 @@ module.exports = function CreateLocale(html){
         }
       }
     }
-   resolve({size:size, locale:locale, html:html1})
+   resolve({locale:locale, html:html1})
   })
 }

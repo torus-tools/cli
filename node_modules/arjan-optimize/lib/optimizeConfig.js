@@ -1,8 +1,8 @@
 const config = {
   img:true,
-  html:true,
   css:true,
   js:true,
+  html:false,
   webp:false,
   html_minifier: {
     removeAttributeQuotes: false,
