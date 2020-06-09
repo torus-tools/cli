@@ -2,8 +2,9 @@ require('dotenv').config();
 var AWS = require('aws-sdk');
 var translate = new AWS.Translate({apiVersion: '2017-07-01'});
 
-module.exports = function TranslateLocale(input, language, translation, size){
+module.exports = function TranslateLocale(input, language, translation){
   return new Promise((resolve, reject) => {
+    var size = Object.keys(input).length
     var translatedLocale= {}
     let i = 0;
     for(let key in input){
