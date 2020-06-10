@@ -63,12 +63,10 @@ class DeployCommand extends Command {
     }
     if(args.action === 'create' || args.action === 'update' || args.action === 'import'){
       cli.action.start('Setting up...')
-      console.log('hello')
       await Build.createDir('arjan_config/changesets')
       let url = null;
       let upload = null;
       let newTemplate = await Deploy.generateTemplate(args.domain, flags.index, flags.error, flags.www, flags.cdn, flags.route53, flags.https)
-      console.log(newTemplate)
       let temp = {TemplateBody:{}};
       let stackName = args.domain.split('.').join('') + 'Stack';
       let stackId = await Deploy.stackExists(stackName);
