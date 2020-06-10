@@ -91,7 +91,7 @@ class DeployCommand extends Command {
           let waitAction = 'stackCreateComplete';
           if(stack.action === 'UPDATE') waitAction = 'stackUpdateComplete';
           else if(stack.action === 'IMPORT') waitAction = 'stackImportComplete';
-          wait = await cloudformation.waitFor(waitAction, {StackName: stack.name}).promise()
+          wait = await cloudformation.waitFor(waitAction, {StackName: stack.stackName}).promise()
           if(wait) {
             cli.action.stop()
             if(flags.upload){

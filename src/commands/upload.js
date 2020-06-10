@@ -1,6 +1,8 @@
 const {Command, flags} = require('@oclif/command')
 const {uploadFile} = require('arjan-deploy')
 const {cli} = require('cli-ux');
+const fs = require('fs')
+const path = require('path')
 const ignorePaths = {
   "dep_pack": true, //must be ingored.
   "node_modules":true,
@@ -49,7 +51,10 @@ class UploadCommand extends Command {
     let dir = './'
     if(flags.dir) dir = flags.dir;
     if(!args.files || args.files === '/') files = await scanFiles(dir)
-    for(let file of files) await uploadFile(args.domain, file)
+    for(let file of files) {
+      console.log(file)
+      await uploadFile(args.domain, file)
+    }
     cli.action.stop()
   }
 }
@@ -60,7 +65,7 @@ Extra documentation goes here
 `
 
 UploadCommand.flags = {
-  dir: flags.boolean({
+  dir: flags.string({
     char: 'd',                    
     description: 'path of a directory you want to upload to your site',      
   }),  
