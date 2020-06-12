@@ -30,6 +30,7 @@
     "mocha": "^7.1.2",
     "nyc": "^14.1.1",
     "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^3.11.0"
   },
   "engines": {
@@ -60,6 +61,6 @@
     "prepack": "oclif-dev manifest && oclif-dev readme",
     "test": "nyc mocha --forbid-only \"test/**/*.test.js\"",
     "version": "oclif-dev readme && git add README.md",
-    "start:dev": "webpack-dev-server"
+    "start:dev": "webpack-dev-server --config webpack.dev.js --mode development --open"
   }
 }
