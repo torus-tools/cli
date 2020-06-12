@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head> 
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="Torus Project">
+    <title>Arjan Localize</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/shared.css">
+    <link rel="stylesheet" href="css/localize.css">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  </head>
+  <body id="page-top" class="bg-black text-white">
+    
+    <!-- NAV -->
+    <nav>
+      <div class="d-flex justify-content-center py-2 fade-in">
+        <div class="load-link">
+          <a href="localize.html" id="localize_nav">
+            <span id="load_l" class="load_letter">YO</span>
+          </a>
+        </div>
+        <div class="load-link">
+          <a href="optimize.html" id="optimize_nav">
+            <span id="load_o" class="load_letter">O</span>
+          </a>
+        </div>
+        <div class="load-link">
+          <a href="audit.html" id="audit_nav">
+            <span id="load_a" class="load_letter">UNA</span>
+          </a>
+        </div>
+        <div class="load-link">
+          <a href="deploy.html" id="deploy_nav">
+            <span id="load_d" class="load_letter">D</span>
+          </a>
+        </div>
+      </div>
+      <div class="d-flex justify-content-center py-2 bg-secondary-nav text-white">
+        <a href="index.html" class="d-inline nav-logo"> 
+                  <h1 class="h3 d-inline" id="Arjan_Tools0">Herramientas de Arjan</h1><div id="Beta14" class="pt-3 pl-2 d-inline small">Beta</div>
+        </a>
+      </div>
+    </nav>
+    <script src="js/nav.js"></script>
+
+    <!-- HEADER -->
+    <header>
+      <div class="container contop">
+        <div class="row">
+          <div class="col-md-6 text-md-left text-center order-1 order-lg-0">
+            <h1 id="Arjan_Locali2" class="localize-text h1 h1-padding">Arjan Localize</h1>
+            <p id="Arjan_Locali8" class="header-text-padding">Arjan Localize es módulo de nodo para localizar y traducir automáticamente sitios html. También funciona como un sistema básico de administración de contenido para sitios estáticos</p>
+            <a id="Get_Started11" href="#getstarted" class="arjan-btn border-color text-white ">Empezar</a>
+            <a id="Docs12" href="#docs.html" class="text-white arjan-btn border-color ">Doctores</a>
+          </div>
+          <div class="col-md-6 order-0 order-md-1 text-center">
+            <img src="img/arjan_localize_logo.svg" class="audit-logo" alt="">
+            <div class="audit-logo-bg">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 792.66 475.75">
+              <title id="arjan_locali0">arjan_localize_bg</title>
+                <g class="cls-1">
+                  <rect class="square-right square-top cls-2" x="494.03" y="356.81" width="185.25" height="82"/>
+                  <rect class="square-right cls-2" x="550.85" y="165.97" width="241.81" height="141.05"/>
+                  <rect class="square-top cls-3" x="319.34" y="312.22" width="221.31" height="163.53"/>
+                  <rect class="square-right cls-2" x="60.08" y="181.43" width="241.81" height="220.66"/>
+                  <rect class="square-top cls-4" y="43.2" width="197.76" height="272.11"/>
+                  <rect class="square-right cls-5" x="26.45" y="351.69" width="120.83" height="100.3"/>
+                  <rect class="square-top cls-5 square-right" x="392.56" y="70.7" width="280.81" height="195.93"/>
+                  <rect class="cls-2 square-top" y="0" x="244.13" width="137.15" height="163.8"/>
+                </g>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+    
+    <!-- HOW IT WORKS -->
+    <section class="contop">
+      <div class="container">
+        <h3 id="Try_it_Out4" class="localize-text text-padding text-center h1">Pruébalo</h3>
+
+        <div class="row">
+          <div class="col-md-6 order-1">
+            <div class="row"> 
+              <div class="col-12 pt-4 pt-md-0">
+                <p id="The_localiza9">La localización de html consiste en analizar el documento html, extraer identificaciones en elementos con texto, y crear una configuración regional JSON que contenga todos los ID del documento y el contenido de texto.</p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-8">
+                <p id="It_uses_AWS’10">Utiliza el sistema de traducción automática neuronal de AWS que se utiliza en amazon.com.</p>
+              </div>
+              <div class="col-4">
+                <img class="image-fluid w-100" src="img/brain.svg" alt="">
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6 px-5 order-0">
+            <div class="form-padding">
+
+            <!-- TRY IT OUT -->
+
+            <form id="arjantranslate-form" alt="Form by Super Easy Forms" class="holoform" action="#">
+              <!-- <label id="From28" for="from" class="small mb-0">Desde</label> -->
+              <select class="form-control" id="from" name="from" required>
+                <option id="Origin_langu33" value="" selected="selected" disabled="disabled">Idioma de origen de su sitio</option>
+                <option id="Afrikaans34" value="af">afrikáans</option>
+                <option id="Albanian35" value="sq">albanesa</option>
+                <option id="Amharic36" value="am">amárico</option>
+                <option id="Arabic37" value="ar">árabe</option>
+                <option id="Azerbaijani38" value="az">azerbaiyano</option>
+                <option id="Bengali39" value="bn">bengalí</option>
+                <option id="Bosnian40" value="bs">bosnio</option>
+                <option id="Bulgarian41" value="bg">búlgaro</option>
+                <option id="Chinese_Sim42" value="zh">Chino (simplificado)</option>
+                <option id="Chinese_Tra43" value="zh-TW">Chino (tradicional)</option>
+                <option id="Croatian44" value="hr">croata</option>
+                <option id="Czech45" value="cs">checa</option>
+                <option id="Danish46" value="da">danés</option>
+                <option id="Dari47" value="fa-AF">dari</option>
+                <option id="Dutch48" value="nl">holandés</option>
+                <option id="English49" value="en">Inglés</option>
+                <option id="Estonian50" value="et">estonio</option>
+                <option id="Finnish51" value="fi">finlandés</option>
+                <option id="French52" value="fr">francés</option>
+                <option id="French_Cana53" value="fr-CA">Francés (Canadá)</option>
+                <option id="Georgian54" value="ka">georgiana</option>
+                <option id="German55" value="de">alemán</option>
+                <option id="Greek56" value="el">griego</option>
+                <option id="Hausa57" value="ha">¡Hausa</option>
+                <option id="Hebrew58" value="he">hebreo</option>
+                <option id="Hindi59" value="hi">hindi</option>
+                <option id="Hungarian60" value="hu">húngaro</option>
+                <option id="Indonesian61" value="id">indonesio</option>
+                <option id="Italian62" value="it">italiano</option>
+                <option id="Japanese63" value="ja">japonés</option>
+                <option id="Korean64" value="ko">coreano</option>
+                <option id="Latvian65" value="lv">letón</option>
+                <option id="Malay66" value="ms">malayo</option>
+                <option id="Norwegian67" value="no">noruego</option>
+                <option id="Persian68" value="fa">persa</option>
+                <option id="Pashto69" value="ps">pastún</option>
+                <option id="Polish70" value="pl">polaco</option>
+                <option id="Portuguese71" value="pt">portugués</option>
+                <option id="Romanian72" value="ro">rumano</option>
+                <option id="Russian73" value="ru">ruso</option>
+                <option id="Serbian74" value="sr">serbio</option>
+                <option id="Slovak75" value="sk">eslovaco</option>
+                <option id="Slovenian76" value="sl">Esloveno</option>
+                <option id="Somali77" value="so">somalí</option>
+                <option id="Spanish78" value="es">Español</option>
+                <option id="Spanish_Mex79" value="es-MX">Español (México)</option>
+                <option id="Swahili80" value="sw">swahili</option>
+                <option id="Swedish81" value="sv">sueco</option>
+                <option id="Tagalog82" value="tl">tagalo</option>
+                <option id="Tamil83" value="ta">tamil</option>
+                <option id="Thai84" value="th">tailandés</option>
+                <option id="Turkish85" value="tr">turco</option>
+                <option id="Ukrainian86" value="uk">ucraniano</option>
+                <option id="Urdu87" value="ur">urdu</option>
+                <option id="Vietnamese88" value="vi">vietnamita</option>
+              </select>
+              <!-- <label id="To29" for="to" class="small mb-0">Para</label> -->
+              <select class="form-control" id="to" name="to" required>
+                <option id="Desired_tran89" value="" selected="selected" disabled="disabled">Idioma de traducción deseado</option>
+                <option id="Afrikaans90" value="af">afrikáans</option>
+                <option id="Albanian91" value="sq">albanesa</option>
+                <option id="Amharic92" value="am">amárico</option>
+                <option id="Arabic93" value="ar">árabe</option>
+                <option id="Azerbaijani94" value="az">azerbaiyano</option>
+                <option id="Bengali95" value="bn">bengalí</option>
+                <option id="Bosnian96" value="bs">bosnio</option>
+                <option id="Bulgarian97" value="bg">búlgaro</option>
+                <option id="Chinese_Sim98" value="zh">Chino (simplificado)</option>
+                <option id="Chinese_Tra99" value="zh-TW">Chino (tradicional)</option>
+                <option id="Croatian100" value="hr">croata</option>
+                <option id="Czech101" value="cs">checa</option>
+                <option id="Danish102" value="da">danés</option>
+                <option id="Dari103" value="fa-AF">dari</option>
+                <option id="Dutch104" value="nl">holandés</option>
+                <option id="English105" value="en">Inglés</option>
+                <option id="Estonian106" value="et">estonio</option>
+                <option id="Finnish107" value="fi">finlandés</option>
+                <option id="French108" value="fr">francés</option>
+                <option id="French_Cana109" value="fr-CA">Francés (Canadá)</option>
+                <option id="Georgian110" value="ka">georgiana</option>
+                <option id="German111" value="de">alemán</option>
+                <option id="Greek112" value="el">griego</option>
+                <option id="Hausa113" value="ha">¡Hausa</option>
+                <option id="Hebrew114" value="he">hebreo</option>
+                <option id="Hindi115" value="hi">hindi</option>
+                <option id="Hungarian116" value="hu">húngaro</option>
+                <option id="Indonesian117" value="id">indonesio</option>
+                <option id="Italian118" value="it">italiano</option>
+                <option id="Japanese119" value="ja">japonés</option>
+                <option id="Korean120" value="ko">coreano</option>
+                <option id="Latvian121" value="lv">letón</option>
+                <option id="Malay122" value="ms">malayo</option>
+                <option id="Norwegian123" value="no">noruego</option>
+                <option id="Persian124" value="fa">persa</option>
+                <option id="Pashto125" value="ps">pastún</option>
+                <option id="Polish126" value="pl">polaco</option>
+                <option id="Portuguese127" value="pt">portugués</option>
+                <option id="Romanian128" value="ro">rumano</option>
+                <option id="Russian129" value="ru">ruso</option>
+                <option id="Serbian130" value="sr">serbio</option>
+                <option id="Slovak131" value="sk">eslovaco</option>
+                <option id="Slovenian132" value="sl">Esloveno</option>
+                <option id="Somali133" value="so">somalí</option>
+                <option id="Spanish134" value="es">Español</option>
+                <option id="Spanish_Mex135" value="es-MX">Español (México)</option>
+                <option id="Swahili136" value="sw">swahili</option>
+                <option id="Swedish137" value="sv">sueco</option>
+                <option id="Tagalog138" value="tl">tagalo</option>
+                <option id="Tamil139" value="ta">tamil</option>
+                <option id="Thai140" value="th">tailandés</option>
+                <option id="Turkish141" value="tr">turco</option>
+                <option id="Ukrainian142" value="uk">ucraniano</option>
+                <option id="Urdu143" value="ur">urdu</option>
+                <option id="Vietnamese144" value="vi">vietnamita</option>
+              </select>
+              <!-- <label id="Email30" for="email" class="small mb-0">Correo</label> -->
+              <input type="email" class="form-control" id="email" name="email" placeholder="Your Email Address" required>
+              <!-- <label id="File31" for="file" class="small mb-0">Archivo</label> -->
+              <div id="drop-area">
+                <div class="cotnainer text-center">
+                  <h4 id="Drag_&_Drop_6" class="text-center h5">Arrastra y suelta tu archivo html</h4>
+                  <input type="file" id="fileElem" accept="html, markdown, txt" onchange="handleFiles(this.files)">
+                  <label id="or_Browse32" class="btn-gui border-color" for="fileElem">o Navegar</label>
+                  <div class=""><span class="pr-2" id="fileName"></span><progress hidden id="progress-bar" max=100 value=0></progress></div>
+                </div>
+              </div>
+              <input id="file" name="file" hidden>
+              <div class="g-recaptcha pt-3" data-sitekey="6LecsvQUAAAAABJxe9r7x5P3ARE4c5tCMdLeryxT" data-theme="dark"></div>
+              <h4 id="arjantranslate-status" class="text-secondary" style="display:none;"><span id="Translating7">Traduciendo</span><span id=".19">- Sí.</span><span id=".20">- Sí.</span><span id=".21">- Sí.</span></h4>
+              <button class="btn text-white arjan-btn border-color mt-3" type="submit" id="arjantranslate-btn">Traducir</button>             <small><span id="made_with27">hecho con</span><a id="super_easy_f13" href="http://supereasyforms.com">formas super fáciles</a> </small>
+
+            </form>
+          </div>
+        </div>
+      </div>
+      </div>
+    </section>
+
+
+    <!-- ADVANCED LOCALIZATION WORKFLOW -->
+    <section class="contop">
+      <h2 id="Advanced_Loc3" class="text-center text-padding localize-text">Flujo de trabajo de localización avanzada</h2>
+      <div class="container workflow-padding center">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1036.3 410.9">
+          <g id="diagram_group" data-name="Layer 2">
+            <text class="diagram_text" transform="translate(707 357)">
+              CSV
+            </text>
+            <path class="diagram_line" d="M1036 159H916V1h80l-1 33h41zM996 1l40 33"/>
+            <path class="diagram_line" d="M934 68h44v14h-44zM978 68h44v14h-44zM934 82h44v13h-44zM978 82h44v13h-44zM934 95h44v14h-44zM978 95h44v14h-44zM934 109h44v13h-44zM978 109h44v13h-44z"/>
+            <circle class="diagram_line" cx="77" cy="82.1" r="76.4"/>
+            <ellipse class="diagram_line" cx="77" cy="82.3" rx="45.7" ry="76.4"/>
+            <ellipse class="diagram_line" cx="77" cy="82.3" rx="10.8" ry="76.4"/>
+            <circle class="diagram_line" cx="77.1" cy="82.2" r="76.4"/>
+            <ellipse class="diagram_line" cx="76.9" cy="82.2" rx="76.4" ry="45.7"/>
+            <ellipse class="diagram_line" cx="76.9" cy="82.2" rx="76.4" ry="10.8"/>
+            <text class="diagram_text" transform="translate(220 357)">
+              HTML
+            </text>
+            <path class="diagram_line" d="M172 277h233v133H172zM638 277h232v133H638zM411 14h232v134H411z"/>
+            <text class="diagram_text" transform="translate(460 93)">
+              JSON
+            </text>
+            <path class="diagram_line animated_line" d="M71 159v195h101"/>
+            <path class="diagram_line animated_line_back" d="M86 157v183h86M283 276V75h127"/>
+            <path class="diagram_line animated_line" d="M299 277V88h111M519 149v204h118"/>
+            <path class="diagram_line animated_line_back" d="M534 148v190h103M750 276V75h166"/>
+            <path class="diagram_line animated_line" d="M764 277V90h152"/>
+          </g>
+        </svg>
+      </div>
+    </section>
+    
+    <!--GET STARTED-->
+    <section class="contop">
+      <div class="container"> 
+          <div class="row">
+            <div class="col-12">
+              <h3 id="getstarted" class="h1 text-center text-padding localize-text">Empezar</h3>
+
+            </div>
+            <div class="container">
+            <div class="row">
+            <div class="col-md-6 bg-color get-started">
+              <ol>
+                <li><span id="Install_arja25">Instalar arjan globalmente</span><button id="npm_i_-g_arj146" class="codebox" onclick="copyVal(this.textContent)">npm i -g arjan-cli</button></li>
+                <li><span id="Go_into_your26">Entra en el directorio de tu proyecto</span><button id="cd_SITE_NAME147" class="codebox" onclick="copyVal(this.textContent)">cd SITE_NAME</button> and Initialize the project (you only have to do this once per project) <button id="arjan_init_S148" class="codebox" onclick="copyVal(this.textContent)">arjan init SITE_NAME</button></li>
+                <li><span id="Translate_yo27">Traducir tu sitio</span><button id="arjan_transl149" class="codebox" onclick="copyVal(this.textContent)">arjan translate SITE_NAME de [a]</button></li>
+              </ol>
+            </div>
+              <div class="col-md-6">
+                <video playsinline="playsinline" autoplay="autoplay" muted="muted" loop="loop" class="get-video">
+                  <source src="video/movie_test.mp4">
+                  </video>
+              </div>
+          </div>
+          </div>
+        </div>
+    </section>
+
+    <section class="contop">
+      <div class="social-row d-flex justify-content-center d-lg-block">
+        <div class="d-lg-block social-icon">
+          <a href="#docs.html">
+            <img height="50px" src="img/docs_icon.svg" alt="npm logo outline">
+          </a>
+        </div>
+        <div class="d-lg-block social-icon">
+          <a href="https://twitter.com/ArjanTools">
+            <img height="45px" src="img/twitter_logo_2.svg" alt="npm logo outline">
+          </a>
+        </div>
+        <div class="d-lg-block social-icon">
+          <a href="#">
+            <img height="50px" src="img/slack_logo_2.svg" alt="npm logo outline">
+          </a>
+        </div>
+      </div>
+    </section>
+    
+
+  <!-- FOOTER -->
+  <footer class="footer contop">
+    <div class="container-fluid py-2 footer-deploy bg-secondary-nav text-right">
+      <span id="Powered_by22" class="text-muted">Desarrollado por</span>
+      <a href="https://torus-digital.com/">
+        <span id="torus" class="text-muted">Torus</span>
+      </a>
+    </div>
+  </footer>
+
+    <script src="js/localize.js"></script>
+    <script src="js/copy.js"></script>
+      <script defer
+      src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+      integrity="sha256-4+XzXVhsDmqanXGHaHvgh1gMQKX40OUvDEBTu8JcmNs="
+      crossorigin="anonymous"></script>
+    <script async defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js" integrity="sha384-xrRywqdh3PHs8keKZN+8zzc5TX0GRTLCcmivcbNJWm2rs5C8PRhcEn3czEjhAO9o" crossorigin="anonymous"></script>
+  </body>
+</html>
