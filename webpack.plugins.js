@@ -9,10 +9,8 @@ const ignorePaths = {
 
 function scanFiles(){
   let arrs = [];
-  return new Promise(async (resolve, reject) => {
     scanDir("./", (filePath, stat) => arrs.push(filePath))
-    resolve(arrs)
-  })
+    return (arrs)
 }
 function scanDir(currentDirPath, callback) {
   fs.readdirSync(currentDirPath).forEach((name)=>{
@@ -34,47 +32,20 @@ function scanDir(currentDirPath, callback) {
 const getAltName =(filePath)=> filePath.substr(0, filePath.lastIndexOf(".")).replace(/\//g, '_')
 
 const getHtmlPlugins =()=>{
-  scanFiles().then(files => {
-    htmlPlugins = []; 
-    for(let filePath of files){
-      console.log(filePath)
-      htmlPlugins.push(
-      new HtmlWebpackPlugin({
-        template: './'+filePath,
-        inject: true,
-        chunks: [getAltName(filePath)],
-        filename: filePath
-      })
-      )
-    }
-    console.log(htmlPlugins)
-    return htmlPlugins
-  })
+  let files = scanFiles()
+  console.log('FILEs ', files)
+  htmlPlugins = []; 
+  for(let filePath of files){
+    htmlPlugins.push(
+    new HtmlWebpackPlugin({
+      template: './'+filePath,
+      inject: true,
+      chunks: [getAltName(filePath)],
+      filename: filePath.includes('/') ? filePath.substr(filePath.lastIndexOf('/')+1, filePath.length) : filePath
+    })
+    )
+  }
+  return htmlPlugins
 }
 
-module.exports = module.exports = [
-  new HtmlWebpackPlugin({
-    template: './index.html',
-    inject: true,
-    chunks: ['index'],
-    filename: 'index.html'
-  }),
-  new HtmlWebpackPlugin({
-    template: './localize.html',
-    inject: true,
-    chunks: ['localize'],
-    filename: 'localize.html'
-  }),
-  new HtmlWebpackPlugin({
-    template: './es/audit.html',
-    inject: true,
-    chunks: ['es_audit'],
-    filename: 'audit.html'
-  }),
-  new HtmlWebpackPlugin({
-    template: './es/deploy.html',
-    inject: true,
-    chunks: ['es_deploy'],
-    filename: 'deploy.html'
-  })
-]
+module.exports = getHtmlPlugins()

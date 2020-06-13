@@ -44,24 +44,6 @@ const getEntries =async()=>{
   return entries;
 }
 
-/* const getHtmlPlugins =async()=>{
-  let files = await scanFiles()
-  htmlPlugins = []; 
-  for(let filePath of files){
-    console.log(filePath)
-    htmlPlugins.push(
-    new HtmlWebpackPlugin({
-      template: './'+filePath,
-      inject: true,
-      chunks: [getAltName(filePath)],
-      filename: filePath
-    })
-    )
-  }
-  console.log(htmlPlugins)
-  return htmlPlugins
-}
-*/
 
 module.exports = {
   // https://webpack.js.org/concepts/entry-points/#multi-page-application
