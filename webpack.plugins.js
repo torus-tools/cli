@@ -52,4 +52,29 @@ const getHtmlPlugins =()=>{
   })
 }
 
-module.exports = getHtmlPlugins()
+module.exports = module.exports = [
+  new HtmlWebpackPlugin({
+    template: './index.html',
+    inject: true,
+    chunks: ['index'],
+    filename: 'index.html'
+  }),
+  new HtmlWebpackPlugin({
+    template: './localize.html',
+    inject: true,
+    chunks: ['localize'],
+    filename: 'localize.html'
+  }),
+  new HtmlWebpackPlugin({
+    template: './es/audit.html',
+    inject: true,
+    chunks: ['es_audit'],
+    filename: 'audit.html'
+  }),
+  new HtmlWebpackPlugin({
+    template: './es/deploy.html',
+    inject: true,
+    chunks: ['es_deploy'],
+    filename: 'deploy.html'
+  })
+]
