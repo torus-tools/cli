@@ -3,6 +3,17 @@ const Build = require('arjan-build')
 const fs = require('fs')
 const open = require('open')
 
+const ignorePaths = {
+  'node_modules':true,
+  'dep_pack':true,
+  'webpack.config.js':true,
+  'webpack.loaders.js':true,
+  'webpack.plugins.js':true,
+  'lib':true,
+  'src':true,
+  'test':true,
+}
+
 class InitCommand extends Command {
   async run() {
     const {flags, args} = this.parse(InitCommand)
@@ -13,7 +24,8 @@ class InitCommand extends Command {
     }
     else {
       let build = await Build.initBuild(args.profile, args.region)
-      console.log(build)
+      let file = await Build.createFile('arjan_config/arjan_ingore.json', JSON.stringify(ignorePaths))
+      console.log(build, file)
     }
   }
 }
