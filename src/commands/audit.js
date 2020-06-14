@@ -48,19 +48,18 @@ class AuditCommand extends Command {
   }
 }
 
-AuditCommand.description = `Describe the command here
-...
-Extra documentation goes here
+AuditCommand.description = `Audit your site's performance using Lighthouse 6
+Arjan audit uses Express.js to serve your site and Google Chrome Launcher to make a headless launch and retrieve the audits from Larjan ighthouse 6. Arjan then parses the results and returns an organized subset of the results.
 `
 
 AuditCommand.flags = {
   dir: flags.string({
     char: 'd',                    
-    description: 'Directory path to serve. default is root (relative to the path in which you run the command)',        
+    description: 'Directory path to serve. Default is root (relative to the path in which you run the command)',        
   }),
   file: flags.string({
     char: 'f',                    
-    description: 'Path of the page you want to audit. default is index.html',        
+    description: 'Path of the page you want to audit. Default is index.html',        
   }),
   port: flags.string({
     char: 'p',                    

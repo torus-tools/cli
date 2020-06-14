@@ -214,7 +214,7 @@ class DeployCommand extends Command {
   }
 }
 
-DeployCommand.description = `Describe the command here
+DeployCommand.description = `Deploy static sites to the AWS Cloud using Cloudformation
 ...
 Extra documentation goes here
 `

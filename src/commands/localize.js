@@ -223,9 +223,9 @@ function localizeAndTranslate(html, filePath, from, translations){
   })
 }
 
-LocalizeCommand.description = `Describe the command here
+LocalizeCommand.description = `Automatic localization and translation
 ...
-Extra documentation goes here
+Arjan uses the id attributes in your html elements and saves them as variables in a JSON locale. If the element doesn't has an id, Arjan creates one.  It uses AWS neural machine to translate in up to 54 languages."
 `
 LocalizeCommand.flags = {
   translate: flags.string({

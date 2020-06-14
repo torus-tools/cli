@@ -212,9 +212,9 @@ function getFile(filePath, arrs){
   return arrs
 }
 
-OptimizeCommand.description = `Describe the command here
+OptimizeCommand.description = `Optimize your static assets
 ...
-Extra documentation goes here
+Uses some the best node modules for compression/minification to help you generate an optimal deployment package.
 `
 
 OptimizeCommand.flags = {

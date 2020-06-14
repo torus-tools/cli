@@ -18,9 +18,8 @@ class InitCommand extends Command {
   }
 }
 
-InitCommand.description = `Describe the command here
-...
-Extra documentation goes here
+InitCommand.description = `Initialize Arjan 
+
 `
 
 InitCommand.args = [
