@@ -4,7 +4,9 @@ const {scanFiles, getAltName} = require('./src/scanDir')
 const getEntries = () =>{
   let entries = {}
   let files = scanFiles()
-  for(let filePath of files) entries[getAltName(filePath)] = './lib/'+filePath.substr(0,filePath.lastIndexOf('.')) + '.js'
+  for(let script of files.js) entries[getAltName(script)+'_js'] = './'+script
+  for(let filePath of files.html) entries[getAltName(filePath)] = './lib/'+filePath.substr(0,filePath.lastIndexOf('.')) + '.js'
+  console.log(entries)
   return entries;
 }
 

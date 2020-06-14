@@ -9,7 +9,7 @@ const ignorePaths = {
 const getHtmlPlugins =()=>{
   let files = scanFiles()
   htmlPlugins = []; 
-  for(let filePath of files){
+  for(let filePath of files.html){
     htmlPlugins.push(
     new HtmlWebpackPlugin({
       template: './'+filePath,
