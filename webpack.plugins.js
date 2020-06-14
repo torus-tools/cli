@@ -8,7 +8,6 @@ const ignorePaths = {
 
 const getHtmlPlugins =()=>{
   let files = scanFiles()
-  console.log('FILEs ', files)
   htmlPlugins = []; 
   for(let filePath of files){
     htmlPlugins.push(

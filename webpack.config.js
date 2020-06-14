@@ -5,10 +5,8 @@ const getEntries = () =>{
   let entries = {}
   let files = scanFiles()
   for(let filePath of files) entries[getAltName(filePath)] = './lib/'+filePath.substr(0,filePath.lastIndexOf('.')) + '.js'
-  console.log(entries)
   return entries;
 }
-
 
 module.exports = {
   mode: 'development',
@@ -16,6 +14,17 @@ module.exports = {
   devServer: {
     port: 8080,
     open: true
+  },
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: [
+          "style-loader",
+          "css-loader"
+        ]
+      }
+    ]
   },
   plugins
 };
