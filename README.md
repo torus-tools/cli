@@ -19,7 +19,7 @@ $ npm install -g arjan-cli
 $ arjan COMMAND
 running command...
 $ arjan (-v|--version|version)
-arjan-cli/0.2.2 linux-x64 node-v12.13.1
+arjan-cli/0.2.3 linux-x64 node-v12.13.1
 $ arjan --help [COMMAND]
 USAGE
   $ arjan COMMAND
@@ -34,6 +34,7 @@ USAGE
 * [`arjan init [PROFILE] [REGION]`](#arjan-init-profile-region)
 * [`arjan localize LANGUAGE [FILES]`](#arjan-localize-language-files)
 * [`arjan optimize [FILES]`](#arjan-optimize-files)
+* [`arjan start`](#arjan-start)
 * [`arjan upload DOMAIN [FILES]`](#arjan-upload-domain-files)
 
 ## `arjan audit`
@@ -61,7 +62,7 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/audit.js](https://github.com/arjan-tools/cli/blob/v0.2.2/src/commands/audit.js)_
+_See code: [src/commands/audit.js](https://github.com/arjan-tools/cli/blob/v0.2.3/src/commands/audit.js)_
 
 ## `arjan deploy DOMAIN ACTION [SETUP]`
 
@@ -101,7 +102,7 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/deploy.js](https://github.com/arjan-tools/cli/blob/v0.2.2/src/commands/deploy.js)_
+_See code: [src/commands/deploy.js](https://github.com/arjan-tools/cli/blob/v0.2.3/src/commands/deploy.js)_
 
 ## `arjan help [COMMAND]`
 
@@ -140,7 +141,7 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/init.js](https://github.com/arjan-tools/cli/blob/v0.2.2/src/commands/init.js)_
+_See code: [src/commands/init.js](https://github.com/arjan-tools/cli/blob/v0.2.3/src/commands/init.js)_
 
 ## `arjan localize LANGUAGE [FILES]`
 
@@ -177,7 +178,7 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/localize.js](https://github.com/arjan-tools/cli/blob/v0.2.2/src/commands/localize.js)_
+_See code: [src/commands/localize.js](https://github.com/arjan-tools/cli/blob/v0.2.3/src/commands/localize.js)_
 
 ## `arjan optimize [FILES]`
 
@@ -205,7 +206,25 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/optimize.js](https://github.com/arjan-tools/cli/blob/v0.2.2/src/commands/optimize.js)_
+_See code: [src/commands/optimize.js](https://github.com/arjan-tools/cli/blob/v0.2.3/src/commands/optimize.js)_
+
+## `arjan start`
+
+Describe the command here
+
+```
+USAGE
+  $ arjan start
+
+OPTIONS
+  -n, --name=name  name to print
+
+DESCRIPTION
+  ...
+  Extra documentation goes here
+```
+
+_See code: [src/commands/start.js](https://github.com/arjan-tools/cli/blob/v0.2.3/src/commands/start.js)_
 
 ## `arjan upload DOMAIN [FILES]`
 
@@ -229,5 +248,5 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/upload.js](https://github.com/arjan-tools/cli/blob/v0.2.2/src/commands/upload.js)_
+_See code: [src/commands/upload.js](https://github.com/arjan-tools/cli/blob/v0.2.3/src/commands/upload.js)_
 <!-- commandsstop -->

@@ -11,14 +11,11 @@ const getEntries = () =>{
 
 
 module.exports = {
-  // https://webpack.js.org/concepts/entry-points/#multi-page-application
   entry: getEntries,
-
-  // https://webpack.js.org/configuration/dev-server/
   devServer: {
-    port: 8080
+    port: 8080,
+    open: true
   },
-  // https://webpack.js.org/concepts/plugins/
   plugins
 };
 
