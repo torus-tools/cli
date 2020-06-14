@@ -8,7 +8,6 @@ const port = 8080;
 const path = require('path');
 
 const options = {
-  mode: 'development',
   hot: true,
   open: true
 };
