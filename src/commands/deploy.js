@@ -11,12 +11,7 @@ const s3 = new AWS.S3({apiVersion: '2006-03-01'});
 const acm = new AWS.ACM({apiVersion: '2015-12-08'});
 require('dotenv').config()
 
-var ignorePaths = {
-  "dep_pack": true, //must be ingored.
-  "node_modules":true,
-  ".git":true,
-  ".env":true
-}
+var ignorePaths = JSON.parse(fs.readFileSync('./arjan_config/arjan_ignore.json'));
 
 function delay(ms){
   return new Promise((resolve) => {

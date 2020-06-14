@@ -4,13 +4,22 @@ const fs = require('fs')
 const open = require('open')
 
 const ignorePaths = {
-  'node_modules':true,
-  'dep_pack':true,
+  '.env':true,
+  '.git':true,
+  '.gitignore':true,
+  'package.json':true,
+  'package_lock.json':true,
   'webpack.config.js':true,
   'webpack.loaders.js':true,
   'webpack.plugins.js':true,
-  'lib':true,
+  '.yo-repository':true,
+  'bin':true,
   'src':true,
+  'node_modules':true,
+  'dep_pack':true,
+  'arjan_config':true,
+  'forms':true,
+  'lib':true,
   'test':true,
 }
 

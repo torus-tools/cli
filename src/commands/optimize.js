@@ -10,23 +10,7 @@ var Terser = require("terser");
 const Report = require('../report')
 const path = require("path");
 
-const ignorePaths = {
-  "dep_pack":true, //must be ignored.
-  "node_modules":true,
-  "package.json":true,
-  "package_lock.json":true,
-  ".env":true,
-  ".git":true,
-  ".gitignore":true,
-  "README.md":true,
-  "forms":true,
-  "locales":true,
-  "exports":true,
-  ".yo-repository":true,
-  "bin":true,
-  "src":true,
-  "test":true
-}
+var ignorePaths = JSON.parse(fs.readFileSync('./arjan_config/arjan_ignore.json'));
 
 function formatReport(files){
   let i = 40;

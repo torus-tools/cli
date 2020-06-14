@@ -1,11 +1,8 @@
 const {Command, flags} = require('@oclif/command')
 const {uploadFile} = require('arjan-deploy')
 const {cli} = require('cli-ux');
-const ignorePaths = {
-  "dep_pack": true, //must be ingored.
-  "node_modules":true,
-  ".git":true
-}
+
+var ignorePaths = JSON.parse(fs.readFileSync('./arjan_config/arjan_ignore.json'));
 
 function scanFiles(dir){
   let arrs = [];
