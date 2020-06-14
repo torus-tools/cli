@@ -2,6 +2,9 @@ const {Command, flags} = require('@oclif/command')
 const webpack = require('webpack');
 const WebpackDevServer = require('webpack-dev-server');
 const config = require('../../webpack.config');
+const Build = require('arjan-build')
+const {scanFiles} = require('../scanDir')
+
 
 console.log('Starting the dev web server...');
 const port = 8080;
@@ -12,16 +15,32 @@ const options = {
   open: true
 };
 
+function createFakeScripts(){
+  return new Promise((resolve, reject) => {
+    let files = scanFiles()
+    Build.createDir('./lib')
+    .then(() => {
+      for(let f in files){
+        let filename = './lib/'+files[f].substr(0,files[f].lastIndexOf('.')) + '.js'
+        Build.createFile(filename, '')
+        .then(()=> {
+          if(f>=files.length-1)resolve(true)
+        }).catch(err => reject(err))
+      }
+    }).catch(err => reject(err))
+  })
+}
+
 class StartCommand extends Command {
   async run() {
-    const server = new WebpackDevServer(webpack(config), options);
-    console.log(config)
     const {flags} = this.parse(StartCommand)
-    //first create the lib directories
-    server.listen(port, 'localhost', function (err) {
-      if (err) console.log(err);
-      console.log('WebpackDevServer listening at localhost:', port);
-    });
+    const server = new WebpackDevServer(webpack(config), options);
+    createFakeScripts.then(()=> {
+      server.listen(port, 'localhost', (err) =>{
+        if (err) console.log(err);
+        console.log('WebpackDevServer listening at localhost:', port);
+      });
+    })
   }
 }
 
