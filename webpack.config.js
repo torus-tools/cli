@@ -11,11 +11,10 @@ const getEntries = () =>{
 
 
 module.exports = {
-  entry: getEntries,
   mode: 'development',
+  entry: getEntries,
   devServer: {
     port: 8080,
-    hot: true,
     open: true
   },
   plugins

@@ -8,14 +8,14 @@ const port = 8080;
 const path = require('path');
 
 const options = {
-  hot: true,
+  port: 8080,
   open: true
 };
 
-const server = new WebpackDevServer(webpack(config), options);
-
 class StartCommand extends Command {
   async run() {
+    const server = new WebpackDevServer(webpack(config), options);
+    console.log(config)
     const {flags} = this.parse(StartCommand)
     //first create the lib directories
     server.listen(port, 'localhost', function (err) {
