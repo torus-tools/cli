@@ -1,11 +1,6 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const {scanFiles, getAltName} = require('./src/scanDir')
 
-const ignorePaths = {
-  'node_modules':true,
-  'dep_pack':true
-}
-
 const getHtmlPlugins =()=>{
   let files = scanFiles()
   htmlPlugins = []; 
