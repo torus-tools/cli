@@ -1,15 +1,18 @@
+require('dotenv').config()
+
 const {Command, flags} = require('@oclif/command');
+const AWS = require('aws-sdk');
+
 const {cli} = require('cli-ux');
 const Deploy = require('arjan-deploy');
 const Build = require('arjan-build')
-const AWS = require('aws-sdk');
+
 const fs = require('fs');
 const path = require("path");
 const open = require('open');
 const cloudformation = new AWS.CloudFormation({apiVersion: '2010-05-15'});
 const s3 = new AWS.S3({apiVersion: '2006-03-01'});
 const acm = new AWS.ACM({apiVersion: '2015-12-08'});
-require('dotenv').config()
 
 var ignorePaths = {
   "dep_pack": true, //must be ingored.
@@ -80,15 +83,17 @@ class DeployCommand extends Command {
           cli.action.start(`Deploying ${stackName}. action:${args.action}`)
           let stack = args.action==='import'? await Deploy.deployStack(args.domain, template.template, template.existingResources, true) : await Deploy.deployStack(args.domain, template.template, template.existingResources, false);
           let changeSetObj = stack;
-          if(!flags.upload && args.action !== 'create') fileUpload = true;
+          if(!flags.upload && args.action !== 'create') upload = true;
           changeSetObj['template'] = template.template;
           changeSetObj['existingResources'] = template.existingResources;
           fs.promises.writeFile(`arjan_config/changesets/${stack.changeSetName}.json`, JSON.stringify(changeSetObj));
           let waitAction = 'stackCreateComplete';
           if(stack.action === 'UPDATE') waitAction = 'stackUpdateComplete';
           else if(stack.action === 'IMPORT') waitAction = 'stackImportComplete';
+          console.log('STACKNAME', stack.stackName)
           wait = await cloudformation.waitFor(waitAction, {StackName: stack.name}).promise()
           if(wait) {
+            console.log('WAITEDDD')
             cli.action.stop()
             if(flags.upload){
               var stat = fs.statSync(flags.upload);
