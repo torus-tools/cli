@@ -73,14 +73,15 @@ class DeployCommand extends Command {
         let wait = false;
         cli.action.stop()
         cli.action.start('Generating Template')
-        let template = await Deploy.generateTemplate(args.domain, flags.index, flags.error, flags.www, false, flags.route53, false)
+        let template = await Deploy.generateTemplate(args.domain, flags.index, flags.error, flags.www, false, flags.route53, false, args.action)
         if(template) cli.action.stop()
         if(temp.TemplateBody === JSON.stringify(template.template)) wait = true;
         else {
           cli.action.start(`Deploying ${stackName}. action:${args.action}`)
-          let stack = args.action==='import'? await Deploy.deployStack(args.domain, template.template, template.existingResources, true) : await Deploy.deployStack(args.domain, template.template, template.existingResources, false);
+          let stack = args.action==='import'? await Deploy.deployStack(args.domain, template.template, template.existingResources, true).catch(err=>console.log(err)) : await Deploy.deployStack(args.domain, template.template, template.existingResources, false).catch(err=>console.log(err));
           let changeSetObj = stack;
-          if(!flags.upload && args.action !== 'create') fileUpload = true;
+          console.log(changeSetObj)
+          if(!flags.upload && args.action !== 'create') upload = true;
           changeSetObj['template'] = template.template;
           changeSetObj['existingResources'] = template.existingResources;
           fs.promises.writeFile(`arjan_config/changesets/${stack.changeSetName}.json`, JSON.stringify(changeSetObj));
@@ -193,9 +194,6 @@ class DeployCommand extends Command {
           }).catch((err) => console.log(err));
         }
       }
-    }
-    else if(args.action === 'import'){
-
     }
     else if(args.action === 'delete'){
       let stackName = args.domain.split('.').join('') + 'Stack';
