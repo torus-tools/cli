@@ -8,6 +8,7 @@ const Report = require('../report')
 const path = require("path");
 const webpack = require('webpack');
 const webpack_config = require('../../webpack.prod');
+const {createFakeScripts} = require('../scanDir')
 
 const ignorePaths = {
   "dep_pack":true, //must be ignored.
@@ -67,6 +68,7 @@ class OptimizeCommand extends Command {
     for(let f=1; f<this.argv.length; f++) if(!this.argv[f].startsWith('-')) files.push(this.argv[f])
     const {flags, args} = this.parse(OptimizeCommand)
     cli.action.start('setting up')
+    await createFakeScripts()
     await Build.createDir('./dep_pack')
     let config = await Build.createFile('./arjan_config/optimize_config.json', JSON.stringify(Optimize.optimizeConfig))
     let config_json = JSON.parse(config)

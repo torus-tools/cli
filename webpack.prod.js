@@ -1,6 +1,9 @@
+const ImageminPlugin = require('imagemin-webpack-plugin').default;
 const path = require('path');
 //const { CleanWebpackPlugin } = require('clean-webpack-plugin'); 
 //const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin')
@@ -12,6 +15,20 @@ plugins.push(
     chunkFilename: "[id].[contenthash].css"
   })
 )
+plugins.push(
+    new CopyWebpackPlugin({
+        patterns:[
+            {
+            from: 'img/**/**',
+            to: path.resolve(__dirname, 'dep_pack')
+            }
+        ]
+    }),
+)
+plugins.push(new ImageminPlugin({
+    test: /\.(jpe?g|png|gif|svg)$/i,
+    pngquant: {quality: '80-90'}
+}))
 const {scanFiles, getAltName} = require('./src/scanDir')
 //plugins.push(new CleanWebpackPlugin(buildPath))
 
@@ -28,7 +45,6 @@ module.exports = {
     mode: 'production',
     entry: getEntries,
     output: {
-        filename: '[name].js',
         path: buildPath
     },
 
