@@ -1,18 +1,15 @@
 require('dotenv').config()
-
-const {Command, flags} = require('@oclif/command');
 const AWS = require('aws-sdk');
-
-const {cli} = require('cli-ux');
-const Deploy = require('arjan-deploy');
-const Build = require('arjan-build')
-
-const fs = require('fs');
-const path = require("path");
-const open = require('open');
 const cloudformation = new AWS.CloudFormation({apiVersion: '2010-05-15'});
 const s3 = new AWS.S3({apiVersion: '2006-03-01'});
 const acm = new AWS.ACM({apiVersion: '2015-12-08'});
+const {Command, flags} = require('@oclif/command');
+const {cli} = require('cli-ux');
+const Deploy = require('arjan-deploy');
+const Build = require('arjan-build')
+const fs = require('fs');
+const path = require("path");
+const open = require('open');
 
 var ignorePaths = {
   "dep_pack": true, //must be ingored.
