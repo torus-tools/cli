@@ -1,15 +1,15 @@
+require('dotenv').config()
+const AWS = require('aws-sdk');
+const cloudformation = new AWS.CloudFormation({apiVersion: '2010-05-15'});
+const s3 = new AWS.S3({apiVersion: '2006-03-01'});
+const acm = new AWS.ACM({apiVersion: '2015-12-08'});
 const {Command, flags} = require('@oclif/command');
 const {cli} = require('cli-ux');
 const Deploy = require('arjan-deploy');
 const Build = require('arjan-build')
-const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require("path");
 const open = require('open');
-const cloudformation = new AWS.CloudFormation({apiVersion: '2010-05-15'});
-const s3 = new AWS.S3({apiVersion: '2006-03-01'});
-const acm = new AWS.ACM({apiVersion: '2015-12-08'});
-require('dotenv').config()
 
 var ignorePaths = {
   "dep_pack": true, //must be ingored.
@@ -80,7 +80,6 @@ class DeployCommand extends Command {
           cli.action.start(`Deploying ${stackName}. action:${args.action}`)
           let stack = args.action==='import'? await Deploy.deployStack(args.domain, template.template, template.existingResources, true).catch(err=>console.log(err)) : await Deploy.deployStack(args.domain, template.template, template.existingResources, false).catch(err=>console.log(err));
           let changeSetObj = stack;
-          console.log(changeSetObj)
           if(!flags.upload && args.action !== 'create') upload = true;
           changeSetObj['template'] = template.template;
           changeSetObj['existingResources'] = template.existingResources;
@@ -88,7 +87,7 @@ class DeployCommand extends Command {
           let waitAction = 'stackCreateComplete';
           if(stack.action === 'UPDATE') waitAction = 'stackUpdateComplete';
           else if(stack.action === 'IMPORT') waitAction = 'stackImportComplete';
-          wait = await cloudformation.waitFor(waitAction, {StackName: stack.name}).promise()
+          wait = await cloudformation.waitFor(waitAction, {StackName: stack.stackName}).promise()
           if(wait) {
             cli.action.stop()
             if(flags.upload){
