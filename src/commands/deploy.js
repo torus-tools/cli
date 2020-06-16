@@ -89,7 +89,6 @@ class DeployCommand extends Command {
           else if(stack.action === 'IMPORT') waitAction = 'stackImportComplete';
           wait = await cloudformation.waitFor(waitAction, {StackName: stack.stackName}).promise()
           if(wait) {
-            console.log('WAITEDDD')
             cli.action.stop()
             if(flags.upload){
               var stat = fs.statSync(flags.upload);
