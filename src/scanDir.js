@@ -11,6 +11,7 @@ const ignorePaths = {
   'lib':true,
   'src':true,
   'test':true,
+  'dist':true
 }
 
 

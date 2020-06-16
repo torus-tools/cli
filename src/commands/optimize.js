@@ -128,7 +128,7 @@ function scanDir(currentDirPath, output, callback) {
     if(!ignorePaths[filePath]) {
       if (stat.isFile()) callback(filePath, stat);
       else if (stat.isDirectory()) {
-        if(!fs.existsSync(`${output}/${filePath}`)) fs.mkdirSync(`${output}/${filePath}`)
+        //if(!fs.existsSync(`${output}/${filePath}`)) fs.mkdirSync(`${output}/${filePath}`)
         scanDir(filePath, output, callback)
       }
     }
@@ -155,9 +155,9 @@ function getFile(filePath, arrs){
     arrs.images.push(filePath);
     file_sizes[filePath] = {original:fileStat.size}
   }
-  else {
+  /* else {
     Optimize.copyFile(filePath, "./dep_pack")
-  }
+  } */
   arrs.file_sizes = file_sizes;
   return arrs
 }
