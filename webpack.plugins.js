@@ -8,7 +8,7 @@ const getHtmlPlugins =()=>{
     htmlPlugins.push(
     new HtmlWebpackPlugin({
       template: './'+filePath,
-      inject: true,
+      inject: 'body',
       chunks: [getAltName(filePath)],
       filename: filePath.includes('/') ? filePath.substr(filePath.lastIndexOf('/')+1, filePath.length) : filePath
     })

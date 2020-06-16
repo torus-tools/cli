@@ -5,6 +5,7 @@ const ignorePaths = {
   'node_modules':true,
   'dep_pack':true,
   'webpack.dev.js':true,
+  'webpack.prod.js':true,
   'webpack.loaders.js':true,
   'webpack.plugins.js':true,
   'lib':true,
