@@ -100,17 +100,17 @@ class DeployCommand extends Command {
                 dir = flags.upload;
                 files = await scanFiles(flags.upload).catch(err=>console.log(err))
               }
-              files.forEach((file, index)=> {
-                Deploy.uploadFile(args.domain, file, dir)
+              for(let f=0; f<files.length; f++){
+                Deploy.uploadFile(args.domain, files[f], dir)
                 .then(()=> {
                   //console.log(index, files.length)
-                  if(index >= files.length-1) {
+                  if(f >= files.length-1) {
                     upload = true;
                     if(url) open(url);
                   }
                 })
                 .catch(err => console.log(err))
-              })
+              }
             }
             else if(!flags.upload && stack.action === 'CREATE'){
               let fakeIndex = `<!DOCTYPE html><html><body><h1>Hello World</h1></body></html>`;
