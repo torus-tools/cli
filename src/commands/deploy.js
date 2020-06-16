@@ -1,15 +1,15 @@
+require('dotenv').config()
+const AWS = require('aws-sdk');
+const cloudformation = new AWS.CloudFormation({apiVersion: '2010-05-15'});
+const s3 = new AWS.S3({apiVersion: '2006-03-01'});
+const acm = new AWS.ACM({apiVersion: '2015-12-08'});
 const {Command, flags} = require('@oclif/command');
 const {cli} = require('cli-ux');
 const Deploy = require('arjan-deploy');
 const Build = require('arjan-build')
-const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require("path");
 const open = require('open');
-const cloudformation = new AWS.CloudFormation({apiVersion: '2010-05-15'});
-const s3 = new AWS.S3({apiVersion: '2006-03-01'});
-const acm = new AWS.ACM({apiVersion: '2015-12-08'});
-require('dotenv').config()
 
 var ignorePaths = {
   "dep_pack": true, //must be ingored.
@@ -80,14 +80,14 @@ class DeployCommand extends Command {
           cli.action.start(`Deploying ${stackName}. action:${args.action}`)
           let stack = args.action==='import'? await Deploy.deployStack(args.domain, template.template, template.existingResources, true) : await Deploy.deployStack(args.domain, template.template, template.existingResources, false);
           let changeSetObj = stack;
-          if(!flags.upload && args.action !== 'create') fileUpload = true;
+          if(!flags.upload && args.action !== 'create') upload = true;
           changeSetObj['template'] = template.template;
           changeSetObj['existingResources'] = template.existingResources;
           fs.promises.writeFile(`arjan_config/changesets/${stack.changeSetName}.json`, JSON.stringify(changeSetObj));
           let waitAction = 'stackCreateComplete';
           if(stack.action === 'UPDATE') waitAction = 'stackUpdateComplete';
           else if(stack.action === 'IMPORT') waitAction = 'stackImportComplete';
-          wait = await cloudformation.waitFor(waitAction, {StackName: stack.name}).promise()
+          wait = await cloudformation.waitFor(waitAction, {StackName: stack.stackName}).promise()
           if(wait) {
             cli.action.stop()
             if(flags.upload){
@@ -100,17 +100,17 @@ class DeployCommand extends Command {
                 dir = flags.upload;
                 files = await scanFiles(flags.upload).catch(err=>console.log(err))
               }
-              files.forEach((file, index)=> {
-                Deploy.uploadFile(args.domain, file, dir)
+              for(let f=0; f<files.length; f++){
+                Deploy.uploadFile(args.domain, files[f], dir)
                 .then(()=> {
                   //console.log(index, files.length)
-                  if(index >= files.length-1) {
+                  if(f >= files.length-1) {
                     upload = true;
                     if(url) open(url);
                   }
                 })
                 .catch(err => console.log(err))
-              })
+              }
             }
             else if(!flags.upload && stack.action === 'CREATE'){
               let fakeIndex = `<!DOCTYPE html><html><body><h1>Hello World</h1></body></html>`;
