@@ -4,7 +4,7 @@ const path = require('path');
 const ignorePaths = {
   'node_modules':true,
   'dep_pack':true,
-  'webpack.config.js':true,
+  'webpack.dev.js':true,
   'webpack.loaders.js':true,
   'webpack.plugins.js':true,
   'lib':true,

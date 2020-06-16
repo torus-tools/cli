@@ -18,19 +18,29 @@
     "arjan-optimize": "^0.6.4",
     "cli-ux": "^5.4.6",
     "dotenv": "^8.2.0",
-    "open": "^7.0.4"
+    "open": "^7.0.4",
+    "path": "^0.12.7",
+    "terser": "^4.7.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.10.2",
+    "@babel/preset-env": "^7.10.2",
     "@oclif/dev-cli": "^1.22.2",
     "@oclif/test": "^1.2.5",
+    "babel-loader": "^8.1.0",
     "chai": "^4.2.0",
+    "clean-webpack-plugin": "^3.0.0",
     "css-loader": "^3.6.0",
     "globby": "^10.0.2",
     "html-loader": "^1.1.0",
     "html-webpack-plugin": "^4.3.0",
+    "http-server": "^0.12.3",
+    "mini-css-extract-plugin": "^0.9.0",
     "mocha": "^7.1.2",
     "nyc": "^14.1.1",
+    "optimize-css-assets-webpack-plugin": "^5.0.3",
     "style-loader": "^1.2.1",
+    "terser-webpack-plugin": "^3.0.5",
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^3.11.0"
@@ -63,6 +73,6 @@
     "prepack": "oclif-dev manifest && oclif-dev readme",
     "test": "nyc mocha --forbid-only \"test/**/*.test.js\"",
     "version": "oclif-dev readme && git add README.md",
-    "start:dev": "webpack-dev-server --config webpack.config.js --mode development --open"
+    "start:dev": "webpack-dev-server --config webpack.dev.js --mode development --open"
   }
 }
