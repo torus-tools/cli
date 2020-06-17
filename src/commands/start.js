@@ -9,8 +9,9 @@ const {createFakeScripts} = require('../scanDir')
 
 const port = 8080;
 const options = {
+  clientLogLevel: 'silent',
   port: 8080,
-  open: true
+  open: true,
 };
 
 class StartCommand extends Command {
