@@ -10,3 +10,4 @@ locales/
 optimize_config.json
 blog/
 arjan_config/
+node_modules/.cache/

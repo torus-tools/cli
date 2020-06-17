@@ -32,14 +32,56 @@ module.exports = {
     },
     module: {
         rules: [
+            //JS
             {
-                test: /\.css$/,
-                use: [
-                  MiniCssExtractPlugin.loader,
-                    "css-loader"
-                ]
+              test: /\.js$/,
+              exclude: [
+                /node_modules/,
+                /src/,
+                /test/,
+              ],
+              loader: 'babel-loader',
+              options: {
+                  presets: ['@babel/preset-env']
+              }
+            },
+            //CSS
+            {
+              test: /\.css$/,
+              use: [
+                MiniCssExtractPlugin.loader,
+                "css-loader"
+              ],
+            },
+            //SASS
+            {
+              test: /\.s[c|a]ss$/,
+              use: [
+                MiniCssExtractPlugin.loader,
+                "css-loader",
+                {
+                  loader: 'sass-loader',
+                  options: {
+                    //sourceMap,
+                  },
+                },
+              ],
+            },
+            //LESS
+            {
+              test: /\.less$/,
+              use: [
+                MiniCssExtractPlugin.loader,
+                "css-loader",
+                {
+                  loader: 'less-loader',
+                  options: {
+                    //sourceMap,
+                  },
+                },
+              ],
             }
-        ]
+          ]
     },
     plugins
 };

@@ -7,9 +7,11 @@ const {cli} = require('cli-ux');
 const Report = require('../report')
 const path = require("path");
 const webpack = require('webpack');
-const webpack_config = require('../../webpack.prod');
+const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
+var webpack_config = require('../../webpack.prod');
 const {createFakes, injectStylesheets} = require('../scanDir')
-const compiler = webpack(webpack_config);
+
 
 const ignorePaths = {
   "dep_pack":true, //must be ignored.
@@ -29,7 +31,8 @@ const ignorePaths = {
   "test":true,
   'webpack.dev.js': true,
   'webpack.loaders.js': true,
-  'webpack.plugins.js': true,
+  'webpack.plugins.dev.js': true,
+  'webpack.plugins.prod.js': true,
   'webpack.prod.js': true
 }
 
@@ -69,7 +72,9 @@ class OptimizeCommand extends Command {
     }
   ]
   async run() {
-    let files = [];
+    let files = []
+    let minimizer = []
+    let arrs = {stylesheets:[], htmlfiles:[], scripts:[], images:[], file_sizes:{}}
     for(let f=1; f<this.argv.length; f++) if(!this.argv[f].startsWith('-')) files.push(this.argv[f])
     const {flags, args} = this.parse(OptimizeCommand)
     cli.action.start('setting up')
@@ -77,11 +82,19 @@ class OptimizeCommand extends Command {
     let config_json = JSON.parse(config)
     await Build.createDir(flags.output)
     for(let f in OptimizeCommand.flags) if(!flags[f]) flags[f] = config_json[f]
-    let arrs = {stylesheets:[], htmlfiles:[], scripts:[], images:[], file_sizes:{}}
+    if(flags.css || flags.js){
+      if(flags.css) minimizer.push(new TerserPlugin({cache: true,parallel: true}))
+      if(flags.js) minimizer.push(new OptimizeCssAssetsPlugin({}))
+      webpack_config.optimization = {
+        minimize: true,
+        minimizer: minimizer
+      }
+    } 
+    const compiler = webpack(webpack_config);
     if(args.files && args.files !== '/') for(file of files) arrs = getFile(file, arrs)
     else arrs = await scanFiles().catch(err => console.log(err))
-    await createFakes(flags.input)
     let file_sizes = arrs.file_sizes;
+    await createFakes(flags.input)
     await injectStylesheets(arrs.htmlfiles, 'js')
     .then(()=>{
       cli.action.stop()
@@ -92,7 +105,7 @@ class OptimizeCommand extends Command {
         cli.action.stop()
         Object.keys(file_sizes).map(file => {
           if(fs.existsSync('dep_pack/'+file))file_sizes[file].compressed = fs.statSync('dep_pack/'+file).size
-          else file_sizes[file].compressed = 0
+          else file_sizes[file].compressed = file_sizes[file].original
         })
         let report = formatReport(file_sizes)
         console.log(report)
@@ -114,7 +127,7 @@ class OptimizeCommand extends Command {
   }
 }
 
-function writeFile(filePath, contents){
+/* function writeFile(filePath, contents){
   return new Promise((resolve, reject) => {
     fs.promises.writeFile(filePath, contents)
     .then(() => {
@@ -123,7 +136,7 @@ function writeFile(filePath, contents){
       .catch(err => reject(err))
     }).catch(err => reject(err))
   })
-}
+} */
 
 function scanFiles(){
   let arrs = {stylesheets:[], htmlfiles:[], scripts:[], images:[], file_sizes:{}}
@@ -186,11 +199,15 @@ OptimizeCommand.flags = {
   }),
   output: flags.string({
     char: 'o',                    
-    description: 'desired output directory. Default is dep_pack',      
+    description: 'desired output directory. Default is dep_pack.',      
   }),
   css: flags.boolean({
     char: 'c',
     description: 'minifiy css using cssnano',
+  }),
+  js: flags.boolean({
+    char: 'j',                    
+    description: 'compress javascript with terser.',        
   }),
   /* 
   responsive: flags.boolean({
