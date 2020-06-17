@@ -8,7 +8,7 @@ const Report = require('../report')
 const path = require("path");
 const webpack = require('webpack');
 const webpack_config = require('../../webpack.prod');
-const {createFakes} = require('../scanDir')
+const {createFakes, injectStylesheets} = require('../scanDir')
 
 const ignorePaths = {
   "dep_pack":true, //must be ignored.
@@ -68,26 +68,24 @@ class OptimizeCommand extends Command {
     for(let f=1; f<this.argv.length; f++) if(!this.argv[f].startsWith('-')) files.push(this.argv[f])
     const {flags, args} = this.parse(OptimizeCommand)
     cli.action.start('setting up')
-    
-    await createFakes(flags.input)
-    await Build.createDir(flags.output)
-
     let config = await Build.createFile('./arjan_config/optimize_config.json', JSON.stringify(Optimize.optimizeConfig))
     let config_json = JSON.parse(config)
+    await Build.createDir(flags.output)
     for(let f in OptimizeCommand.flags) if(!flags[f]) flags[f] = config_json[f]
     let arrs = {stylesheets:[], htmlfiles:[], scripts:[], images:[], file_sizes:{}}
     if(args.files && args.files !== '/') for(file of files) arrs = getFile(file, arrs)
     else arrs = await scanFiles().catch(err => console.log(err))
+    await createFakes(flags.input)
     let file_sizes = arrs.file_sizes;
-    
+    await injectStylesheets(arrs.htmlfiles, 'js')//.then(res=>console.log(res))
     cli.action.stop()
     
-    cli.action.start('Building deployment package')
+  /*   cli.action.start('Building deployment package')
     const compiler = webpack(webpack_config);
     compiler.run((err, stats) => { 
       console.log(stats)
       cli.action.stop()
-    });
+    }); */
     
     /* for(let h in arrs.htmlfiles) {
       let html = await fs.promises.readFile(arrs.htmlfiles[h], 'utf8')

@@ -15,7 +15,6 @@ const ignorePaths = {
   'dist':true
 }
 
-
 function scanFiles(){
   let arrs = {html:[], css:[], js:[]};
     scanDir("./", (filePath, ext) => arrs[ext].push(filePath))
@@ -39,7 +38,7 @@ function scanDir(currentDirPath, callback) {
   });
 }
 
-//create the appropriate filestructure for each file
+/* //create the appropriate filestructure for each file
 function createFakePaths(files){
   return new Promise((resolve, reject) => {
     Build.createDir('./lib')
@@ -78,41 +77,55 @@ function createFakeScripts(){
       }
     }).catch(err => reject(err))
   })
-}
+} */
 
 function createFakes(input){
-  let files = scanFiles()
-  for(let f in files.html){
-    let filename = input?input+'/':''+files.html[f].substr(0,files.html[f].lastIndexOf('.')) + '.js';
-    Build.createFile(filename, '')
-    .then(()=> {if(f>=files.html.length-1)resolve(true)}).catch(err => reject(err))
-  }
+  return new Promise((resolve, reject) => {
+    let files = scanFiles()
+    for(let f in files.html){
+      console.log(files.html[f])
+      let pathBase = input?input+'/':'';
+      let jsPath = pathBase+files.html[f].substr(0,files.html[f].lastIndexOf('.')) + '.js';
+      Build.createFile(jsPath, '')
+      .then(()=> {if(f>=files.html.length-1)resolve(true)}).catch(err => reject(err))
+    }
+  })
 }
 
-function injectStylesheets(){
-  let files = scanFiles()
-  let file_styles = {}
-  for(let f in files.html){
-    file_styles[files.html[f]]=[];
-    let document = fs.readFileSync(files.html[f])
-    let docarr = document.split('href=')
-    for(let i=1; i<docarr.length; i++){
-      let delim = docarr[i].substr(0,1)
-      let link = docarr[i].split(delim)
-      if(link.endsWith('.css')){
-        file_styles[files.html[f]].push(link)
-        //injectStyle
+function injectStylesheets(files, input){
+  return new Promise((resolve, reject)=>{
+    let file_styles = {}
+    for(let f in files){
+      file_styles[files[f]]=[];
+      let document = fs.readFileSync(files[f], 'utf8')
+      let docarr = document.split('href=')
+      for(let i=1; i<docarr.length; i++){
+        let delim = docarr[i].substr(0,1)
+        let link = docarr[i].split(delim)[1]
+        if(link.endsWith('.css') && !link.startsWith('http')){
+          file_styles[files[f]].push(link)
+        }
       }
+      //inject styles
+      console.log(file_styles[files[f]])
+      injectStyle(files[f], input, file_styles[files[f]])
+      .then(()=>{if(f>=files.length-1)resolve(file_styles)})
+      .catch(err=>reject(err))
     }
-  }
-  return file_styles
+  })
 }
 
 function injectStyle(htmlPath, input, sheets){
-  let jsPath = input?input+'/':''+files.html[f].substr(0,files.html[f].lastIndexOf('.')) + '.js';
-  let script = fs.readFileSync(jsPath)
-  let sheetstring = sheets.map(style => `require('../${style}')`).join('\n')
-  fs.writeFileSync(jsPath, sheetstring+'\n'+script)
+  return new Promise((resolve, reject) => {
+    let pathBase = input?input+'/':'';
+    let jsPath = pathBase+htmlPath.substr(0,htmlPath.lastIndexOf('.')) + '.js';
+    console.log(jsPath)
+    let ender = '//END_STYLE_INJECT'
+    let script = fs.readFileSync(jsPath, 'utf8')
+    let sheetstring = sheets.map(style => `require('../${style}')`).join('\n')+'\n//END_STYLE_INJECT\n';
+    let contents = script.includes(ender)?sheetstring+script.split(ender)[1]:sheetstring+script;
+    fs.promises.writeFile(jsPath, contents).then(()=> resolve(true))
+  })
 }
 
 //function windowify(){}
@@ -123,7 +136,6 @@ module.exports = {
   scanFiles,
   scanDir,
   getAltName,
-  createFakePaths,
-  createFakeScripts,
   createFakes,
+  injectStylesheets
 }
