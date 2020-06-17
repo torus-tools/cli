@@ -5,7 +5,6 @@ const getHtmlPlugins =()=>{
   let files = scanFiles()
   htmlPlugins = []; 
   for(let filePath of files.html){
-    console.log("FilEPATH ", filePath)
     htmlPlugins.push(
     new HtmlWebpackPlugin({
       template: './'+filePath,

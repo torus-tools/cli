@@ -9,6 +9,7 @@ const path = require("path");
 const webpack = require('webpack');
 const webpack_config = require('../../webpack.prod');
 const {createFakes, injectStylesheets} = require('../scanDir')
+const compiler = webpack(webpack_config);
 
 const ignorePaths = {
   "dep_pack":true, //must be ignored.
@@ -25,7 +26,11 @@ const ignorePaths = {
   ".yo-repository":true,
   "bin":true,
   "src":true,
-  "test":true
+  "test":true,
+  'webpack.dev.js': true,
+  'webpack.loaders.js': true,
+  'webpack.plugins.js': true,
+  'webpack.prod.js': true
 }
 
 function formatReport(files){
@@ -77,15 +82,22 @@ class OptimizeCommand extends Command {
     else arrs = await scanFiles().catch(err => console.log(err))
     await createFakes(flags.input)
     let file_sizes = arrs.file_sizes;
-    await injectStylesheets(arrs.htmlfiles, 'js')//.then(res=>console.log(res))
-    cli.action.stop()
-    
-    cli.action.start('Building deployment package')
-    const compiler = webpack(webpack_config);
-    compiler.run((err, stats) => { 
-      console.log(stats)
+    await injectStylesheets(arrs.htmlfiles, 'js')
+    .then(()=>{
       cli.action.stop()
-    });
+      cli.action.start('Building deployment package')
+      compiler.run((err, stats) => {
+        if(err) console.log(err) 
+        if(stats.errors) console.log(stats.errors)
+        cli.action.stop()
+        Object.keys(file_sizes).map(file => {
+          if(fs.existsSync('dep_pack/'+file))file_sizes[file].compressed = fs.statSync('dep_pack/'+file).size
+          else file_sizes[file].compressed = 0
+        })
+        let report = formatReport(file_sizes)
+        console.log(report)
+      });
+    })
     
     /* for(let h in arrs.htmlfiles) {
       let html = await fs.promises.readFile(arrs.htmlfiles[h], 'utf8')
@@ -98,8 +110,7 @@ class OptimizeCommand extends Command {
         cli.action.stop(Report.getScoreColor(1-filesize/file_sizes[arrs.htmlfiles[h]].original, .1)+filesize+" bytes \x1b[0m")
       }
     } */
-    let report = formatReport(file_sizes)
-    console.log(report)
+    
   }
 }
 

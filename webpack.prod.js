@@ -17,13 +17,10 @@ const getEntries = () =>{
   let files = scanFiles()
   //for(let filePath of files.html) entries[getAltName(filePath)] = 'filePath.substr(0,filePath.lastIndexOf('.')) + '.js'
   for(let script of files.js) {
-      console.log('SCRIPT', script)
       let base = script.substr(script.indexOf('/'), script.length)
       let name = base.substr(0, base.lastIndexOf('.'))
-      console.log('NAME', name)
       entries[name] = './'+script
   }
-      console.log(entries)
   return entries;
 }
 
