@@ -80,12 +80,12 @@ class OptimizeCommand extends Command {
     await injectStylesheets(arrs.htmlfiles, 'js')//.then(res=>console.log(res))
     cli.action.stop()
     
-  /*   cli.action.start('Building deployment package')
+    cli.action.start('Building deployment package')
     const compiler = webpack(webpack_config);
     compiler.run((err, stats) => { 
       console.log(stats)
       cli.action.stop()
-    }); */
+    });
     
     /* for(let h in arrs.htmlfiles) {
       let html = await fs.promises.readFile(arrs.htmlfiles[h], 'utf8')
