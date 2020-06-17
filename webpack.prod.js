@@ -2,10 +2,15 @@ const path = require('path');
 
 const buildPath = path.resolve(__dirname, 'dep_pack/js');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-//var plugins = require('./webpack.plugins')
-
 const {scanFiles, getAltName} = require('./src/scanDir')
 //plugins.push(new CleanWebpackPlugin(buildPath))
+var plugins = require('./webpack.plugins')
+plugins.push(
+    new MiniCssExtractPlugin({
+        filename: "../css/[name].css",
+        chunkFilename: "[id].[contenthash].css"
+    })
+)
 
 const getEntries = () =>{
   let entries = {}
@@ -39,10 +44,5 @@ module.exports = {
             }
         ]
     },
-    plugins:[
-        new MiniCssExtractPlugin({
-            filename: "../css/[name].css",
-            chunkFilename: "[id].[contenthash].css"
-        })
-    ]
+    plugins
 };
