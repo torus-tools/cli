@@ -8,7 +8,7 @@ const Report = require('../report')
 const path = require("path");
 const webpack = require('webpack');
 const webpack_config = require('../../webpack.prod');
-const {createFakeScripts} = require('../scanDir')
+const {createFakes} = require('../scanDir')
 
 const ignorePaths = {
   "dep_pack":true, //must be ignored.
@@ -68,16 +68,20 @@ class OptimizeCommand extends Command {
     for(let f=1; f<this.argv.length; f++) if(!this.argv[f].startsWith('-')) files.push(this.argv[f])
     const {flags, args} = this.parse(OptimizeCommand)
     cli.action.start('setting up')
-    await createFakeScripts()
-    await Build.createDir('./dep_pack')
+    
+    await createFakes(flags.input)
+    await Build.createDir(flags.output)
+
     let config = await Build.createFile('./arjan_config/optimize_config.json', JSON.stringify(Optimize.optimizeConfig))
     let config_json = JSON.parse(config)
     for(let f in OptimizeCommand.flags) if(!flags[f]) flags[f] = config_json[f]
     let arrs = {stylesheets:[], htmlfiles:[], scripts:[], images:[], file_sizes:{}}
     if(args.files && args.files !== '/') for(file of files) arrs = getFile(file, arrs)
-    else arrs = await scanFiles().catch(err => console.log)
+    else arrs = await scanFiles().catch(err => console.log(err))
     let file_sizes = arrs.file_sizes;
+    
     cli.action.stop()
+    
     cli.action.start('Building deployment package')
     const compiler = webpack(webpack_config);
     compiler.run((err, stats) => { 
@@ -157,9 +161,6 @@ function getFile(filePath, arrs){
     arrs.images.push(filePath);
     file_sizes[filePath] = {original:fileStat.size}
   }
-  /* else {
-    Optimize.copyFile(filePath, "./dep_pack")
-  } */
   arrs.file_sizes = file_sizes;
   return arrs
 }
@@ -170,6 +171,23 @@ Extra documentation goes here
 `
 
 OptimizeCommand.flags = {
+  input: flags.string({
+    char: 'i',                    
+    description: 'Name of the input directory that contains all the scripts for your project. Default is js. To use the root use ',      
+  }),
+  output: flags.string({
+    char: 'o',                    
+    description: 'desired output directory. Default is dep_pack',      
+  }),
+  css: flags.boolean({
+    char: 'c',
+    description: 'minifiy css using cssnano',
+  }),
+  /* 
+  responsive: flags.boolean({
+    char: 'r',                    
+    description: 'resizes images efficiently for each type of device (sm, md, lg), then replaces each image instance in the html files with a picture tag.'    
+  }), 
   img: flags.boolean({
     char: 'i',                    
     description: 'compress images and if possible maintain the format. otherwise its converted to png.',        
@@ -178,26 +196,10 @@ OptimizeCommand.flags = {
     char: 'w',                    
     description: 'saves a webp version of each image, then replaces each image instance in the html files with a picture tag.',        
   }),
-  /* responsive: flags.boolean({
-    char: 'r',                    
-    description: 'resizes images efficiently for each type of device (sm, md, lg), then replaces each image instance in the html files with a picture tag.'    
-  }), */
-  html: flags.boolean({
-    char: 'h',                    
-    description: 'compress html using html-minifier',        
-  }),
-  css: flags.boolean({
-    char: 'c',
-    description: 'minifiy css using cssnano',
-  }),
-  /* unusedcss: flags.boolean({
+  unusedcss: flags.boolean({
     char: 'u',
     description: 'remove unused css classes',
   }), */
-  js: flags.boolean({
-    char: 'j',
-    description: 'minify js using uglify js'
-  })
 }
 
 module.exports = OptimizeCommand

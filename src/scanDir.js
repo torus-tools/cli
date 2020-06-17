@@ -80,6 +80,43 @@ function createFakeScripts(){
   })
 }
 
+function createFakes(input){
+  let files = scanFiles()
+  for(let f in files.html){
+    let filename = input?input+'/':''+files.html[f].substr(0,files.html[f].lastIndexOf('.')) + '.js';
+    Build.createFile(filename, '')
+    .then(()=> {if(f>=files.html.length-1)resolve(true)}).catch(err => reject(err))
+  }
+}
+
+function injectStylesheets(){
+  let files = scanFiles()
+  let file_styles = {}
+  for(let f in files.html){
+    file_styles[files.html[f]]=[];
+    let document = fs.readFileSync(files.html[f])
+    let docarr = document.split('href=')
+    for(let i=1; i<docarr.length; i++){
+      let delim = docarr[i].substr(0,1)
+      let link = docarr[i].split(delim)
+      if(link.endsWith('.css')){
+        file_styles[files.html[f]].push(link)
+        //injectStyle
+      }
+    }
+  }
+  return file_styles
+}
+
+function injectStyle(htmlPath, input, sheets){
+  let jsPath = input?input+'/':''+files.html[f].substr(0,files.html[f].lastIndexOf('.')) + '.js';
+  let script = fs.readFileSync(jsPath)
+  let sheetstring = sheets.map(style => `require('../${style}')`).join('\n')
+  fs.writeFileSync(jsPath, sheetstring+'\n'+script)
+}
+
+//function windowify(){}
+
 const getAltName =(filePath)=> filePath.substr(0, filePath.lastIndexOf(".")).replace(/\//g, '_')
 
 module.exports = {
@@ -87,5 +124,6 @@ module.exports = {
   scanDir,
   getAltName,
   createFakePaths,
-  createFakeScripts
+  createFakeScripts,
+  createFakes,
 }
