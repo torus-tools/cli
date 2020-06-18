@@ -2,10 +2,8 @@ const path = require('path');
 const buildPath = path.resolve(__dirname, 'dep_pack/js');
 
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-const ImageminPlugin = require('imagemin-webpack-plugin').default;
-const imageminMozjpeg = require('imagemin-mozjpeg');
-
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+
 const {scanFiles, getAltName} = require('./src/scanDir')
 
 //plugins.push(new CleanWebpackPlugin(buildPath))
@@ -22,16 +20,6 @@ plugins.push(
             to: path.resolve(__dirname, 'dep_pack')
             }
         ]
-    }),
-    new ImageminPlugin({ 
-        test: /\.(jpe?g|png|gif|svg)$/i,
-        pngquant: ({quality: [50-90]}),
-        plugins: [
-            imageminMozjpeg({
-              quality: 50,
-              progressive: true
-            })
-          ] 
     })
 )
 
