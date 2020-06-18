@@ -9,6 +9,8 @@ const path = require("path");
 const webpack = require('webpack');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const ImageminPlugin = require('imagemin-webpack-plugin').default;
+const imageminMozjpeg = require('imagemin-mozjpeg');
 var webpack_config = require('../../webpack.prod');
 const {createFakes, injectStylesheets} = require('../scanDir')
 
@@ -89,6 +91,20 @@ class OptimizeCommand extends Command {
         minimize: true,
         minimizer: minimizer
       }
+    }
+    if(flags.img){
+      webpack_config.plugins.push(
+        new ImageminPlugin({ 
+          test: /\.(jpe?g|png|gif|svg)$/i,
+          pngquant: ({quality: [50-90]}),
+          plugins: [
+              imageminMozjpeg({
+                quality: 50,
+                progressive: true
+              })
+            ] 
+          })
+      )
     } 
     const compiler = webpack(webpack_config);
     if(args.files && args.files !== '/') for(file of files) arrs = getFile(file, arrs)
@@ -208,16 +224,15 @@ OptimizeCommand.flags = {
   js: flags.boolean({
     char: 'j',                    
     description: 'compress javascript with terser.',        
-  }),
-  /* 
+  }), 
   responsive: flags.boolean({
     char: 'r',                    
     description: 'resizes images efficiently for each type of device (sm, md, lg), then replaces each image instance in the html files with a picture tag.'    
   }), 
-  img: flags.boolean({
-    char: 'i',                    
+  img: flags.boolean({                    
     description: 'compress images and if possible maintain the format. otherwise its converted to png.',        
   }),
+  /*
   webp: flags.boolean({
     char: 'w',                    
     description: 'saves a webp version of each image, then replaces each image instance in the html files with a picture tag.',        
