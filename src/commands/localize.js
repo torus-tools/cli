@@ -169,6 +169,7 @@ async function localize(filePath, language, flags, cli){
     }).catch(err => console.log(err)) 
   }
   else if(flags.import){
+    let localename = getLocalname(filePath);
     cli.action.start(`Importing CSV file content into arjan_config/locales/${language}/${localename}.json`)
     let csv = await fs.promises.readFile(`arjan_config/exports/csv/${language}/${localename}.csv`, 'utf8')
     let obj = await Localize.csvToJson(language, csv).catch(err => console.log(err))
