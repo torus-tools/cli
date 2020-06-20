@@ -48,9 +48,9 @@ class AuditCommand extends Command {
   }
 }
 
-AuditCommand.description = `Describe the command here
+AuditCommand.description = `Deploy your static site 
 ...
-Extra documentation goes here
+Deploy modern static sites to the AWS Cloud using Cloudformation. 
 `
 
 AuditCommand.flags = {
