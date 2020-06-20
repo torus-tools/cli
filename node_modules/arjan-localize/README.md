@@ -1,6 +1,7 @@
 <img src="https://github.com/arjan-tools/site/blob/master/img/arjan_localize_logo.svg" alt="Arjan Localize" width="200" style="max-width:100%;">
 
 [![License](http://img.shields.io/:license-mit-blue.svg?style=flat-square)](http://gkpty.mit-license.org)
+[![Build Status](https://travis-ci.com/arjan-tools/localize.svg?branch=master)](https://travis-ci.com/arjan-tools/localize)
 
 # Arjan Localize
 
