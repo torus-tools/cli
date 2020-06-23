@@ -139,6 +139,7 @@ function createPath(files, origin, output){
 }
 
 async function localize(filePath, language, flags, cli){
+  let localename = getLocalname(filePath);
   let fileContent = await fs.promises.readFile(filePath, 'utf8')
   let wait = false;
   if(flags.create) {
@@ -160,8 +161,8 @@ async function localize(filePath, language, flags, cli){
   } 
   else if(flags.update) {
     cli.action.start(`Updating contents of ${filePath}`)
-    let json = await fs.promises.readFile(`./arjan_config/locales/${language}/${filePath}`, 'utf8').catch(err => console.log(err))
-    let html = await Localize.TranslateHtml(fileContent, json).catch(err => console.log(err))
+    let json = await fs.promises.readFile(`./arjan_config/locales/${language}/${localename}.json`, 'utf8').catch(err => console.log(err))
+    let html = await Localize.TranslateHtml(fileContent, JSON.parse(json)).catch(err => console.log(err))
     await fs.promises.writeFile(filePath, html)
     .then(()=>{
       wait = true;
@@ -171,7 +172,7 @@ async function localize(filePath, language, flags, cli){
   else if(flags.import){
     cli.action.start(`Importing CSV file content into arjan_config/locales/${language}/${localename}.json`)
     let csv = await fs.promises.readFile(`arjan_config/exports/csv/${language}/${localename}.csv`, 'utf8')
-    let obj = await Localize.csvToJson(language, csv).catch(err => console.log(err))
+    let obj = await Localize.csvToJson(csv).catch(err => console.log(err))
     await fs.promises.writeFile(`./arjan_config/locales/${language}/${localename}.json`, obj)
     .then(()=>{
       wait = true;
@@ -180,7 +181,6 @@ async function localize(filePath, language, flags, cli){
   }
   else wait = true;
   if(flags.export && wait) {
-    let localename = getLocalname(filePath);
     cli.action.start(`Exporting ./arjan_config/locales/${language}/${localename}.json to a CSV file`)
     let fromjson = await fs.promises.readFile(`./arjan_config/locales/${language}/${localename}.json`).catch(err => console.log(err))
     let fromcsv = await Localize.jsonToCsv(language, fromjson).catch(err => console.log(err))
