@@ -214,9 +214,9 @@ class DeployCommand extends Command {
   }
 }
 
-DeployCommand.description = `Deploy your static sites 
+DeployCommand.description = `Deploy static sites to AWS
 ...
-Deploy static sites to the AWS Cloud using Cloudformation with a single command.
+Deploy static sites to the AWS Cloud using Cloudformation templates.
 `
 DeployCommand.args = [
   {

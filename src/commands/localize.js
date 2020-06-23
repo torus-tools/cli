@@ -225,7 +225,7 @@ function localizeAndTranslate(html, filePath, from, translations){
 
 LocalizeCommand.description = `Localize and translate HTML files
 ...
-Automatically localize and translate you site in up to 54 available languages with a single command. 
+Automatically localize and translate your HTML sites. Uses Amazon translate for translations. 
 
 `
 LocalizeCommand.flags = {
