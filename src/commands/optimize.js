@@ -214,7 +214,7 @@ function getFile(filePath, arrs){
 
 OptimizeCommand.description = `Optimize static assets 
 ...
-Uses Webpack to minify you assets, compress your pictures, and more. 
+Uses Webpack to minify your html/css/js files, compress your pictures and more. 
 `
 
 OptimizeCommand.flags = {
