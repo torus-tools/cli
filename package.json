@@ -1,7 +1,7 @@
 {
   "name": "arjan-cli",
   "description": "Mutli CLI for arjan tools",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "author": "Gabriel Kardonski @gkpty",
   "bin": {
     "arjan": "./bin/run"
@@ -13,9 +13,9 @@
     "@oclif/plugin-help": "^3.0.0",
     "arjan-audit": "^0.5.1",
     "arjan-build": "^0.1.0",
-    "arjan-deploy": "^0.7.3",
-    "arjan-localize": "^1.1.6",
-    "arjan-optimize": "^0.6.4",
+    "arjan-deploy": "^0.7.4",
+    "arjan-localize": "^1.1.8",
+    "arjan-optimize": "^0.6.6",
     "cli-ux": "^5.4.6",
     "copy-webpack-plugin": "^6.0.2",
     "dotenv": "^8.2.0",

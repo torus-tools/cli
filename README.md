@@ -19,7 +19,7 @@ $ npm install -g arjan-cli
 $ arjan COMMAND
 running command...
 $ arjan (-v|--version|version)
-arjan-cli/0.2.3 linux-x64 node-v12.13.1
+arjan-cli/0.2.4 linux-x64 node-v14.4.0
 $ arjan --help [COMMAND]
 USAGE
   $ arjan COMMAND
@@ -62,7 +62,7 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/audit.js](https://github.com/arjan-tools/cli/blob/v0.2.3/src/commands/audit.js)_
+_See code: [src/commands/audit.js](https://github.com/arjan-tools/cli/blob/v0.2.4/src/commands/audit.js)_
 
 ## `arjan deploy DOMAIN ACTION [SETUP]`
 
@@ -102,7 +102,7 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/deploy.js](https://github.com/arjan-tools/cli/blob/v0.2.3/src/commands/deploy.js)_
+_See code: [src/commands/deploy.js](https://github.com/arjan-tools/cli/blob/v0.2.4/src/commands/deploy.js)_
 
 ## `arjan help [COMMAND]`
 
@@ -141,7 +141,7 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/init.js](https://github.com/arjan-tools/cli/blob/v0.2.3/src/commands/init.js)_
+_See code: [src/commands/init.js](https://github.com/arjan-tools/cli/blob/v0.2.4/src/commands/init.js)_
 
 ## `arjan localize LANGUAGE [FILES]`
 
@@ -178,7 +178,7 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/localize.js](https://github.com/arjan-tools/cli/blob/v0.2.3/src/commands/localize.js)_
+_See code: [src/commands/localize.js](https://github.com/arjan-tools/cli/blob/v0.2.4/src/commands/localize.js)_
 
 ## `arjan optimize [FILES]`
 
@@ -206,7 +206,7 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/optimize.js](https://github.com/arjan-tools/cli/blob/v0.2.3/src/commands/optimize.js)_
+_See code: [src/commands/optimize.js](https://github.com/arjan-tools/cli/blob/v0.2.4/src/commands/optimize.js)_
 
 ## `arjan start`
 
@@ -249,5 +249,5 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/upload.js](https://github.com/arjan-tools/cli/blob/v0.2.3/src/commands/upload.js)_
+_See code: [src/commands/upload.js](https://github.com/arjan-tools/cli/blob/v0.2.4/src/commands/upload.js)_
 <!-- commandsstop -->
