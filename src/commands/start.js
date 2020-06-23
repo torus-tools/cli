@@ -7,21 +7,19 @@ const fs = require('fs');
 const path = require('path');
 const {createFakeScripts} = require('../scanDir')
 
-const port = 8080;
-const options = {
-  clientLogLevel: 'silent',
-  port: 8080,
-  open: true,
-};
-
 class StartCommand extends Command {
   async run() {
     const {flags} = this.parse(StartCommand)
+    const options = {
+      clientLogLevel: 'silent',
+      port: flags.port,
+      open: true,
+    };
     const server = new WebpackDevServer(webpack(config), options);
     createFakeScripts().then(() => {
-      server.listen(port, 'localhost', (err) =>{
+      server.listen(flags.port, 'localhost', (err) =>{
         if (err) console.log(err);
-        console.log('WebpackDevServer listening at localhost:', port);
+        console.log('WebpackDevServer listening at localhost:', flags.port);
       });
     })
   }
@@ -33,7 +31,11 @@ Extra documentation goes here
 `
 
 StartCommand.flags = {
-  name: flags.string({char: 'n', description: 'name to print'}),
+  port: flags.string({
+    char: 'p',                    
+    description: 'number of the desired port',
+    default: 8080   
+  }), 
 }
 
 module.exports = StartCommand

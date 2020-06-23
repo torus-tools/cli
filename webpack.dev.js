@@ -13,10 +13,6 @@ const getEntries = () =>{
 module.exports = {
   mode: 'development',
   entry: getEntries,
-  devServer: {
-    port: 8080,
-    open: true
-  },
   module: {
     rules: [
       //JS

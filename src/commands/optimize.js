@@ -17,6 +17,7 @@ const CopyWebpackPlugin = require("copy-webpack-plugin");
 const imageminMozjpeg = require('imagemin-mozjpeg');
 var webpack_config = require('../../webpack.prod');
 const {createFakes, injectStylesheets} = require('../scanDir')
+const { build } = require('@oclif/command/lib/flags')
 
 
 const ignorePaths = {
@@ -145,6 +146,15 @@ class OptimizeCommand extends Command {
       compiler.run((err, stats) => {
         if(err) console.log(err) 
         if(stats.errors) console.log(stats.errors)
+        if(flags.webp){
+          for(let h in arrs.htmlfiles) {
+            let builtPath = flags.output+'/'+arrs.htmlfiles[h]
+            let html = fs.readFileSync(builtPath, 'utf8')
+            Optimize.replaceWebp(arrs.images, html).then((output_html)=>{
+              fs.writeFileSync(builtPath, output_html)
+            })
+          }
+        }
         cli.action.stop()
         Object.keys(file_sizes).map(file => {
           if(fs.existsSync('dep_pack/'+file))file_sizes[file].compressed = fs.statSync('dep_pack/'+file).size
