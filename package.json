@@ -1,7 +1,7 @@
 {
   "name": "arjan-cli",
   "description": "Mutli CLI for arjan tools",
-  "version": "0.2.9",
+  "version": "0.3.0",
   "author": "Gabriel Kardonski @gkpty",
   "bin": {
     "arjan": "./bin/run"
@@ -13,20 +13,43 @@
     "@oclif/plugin-help": "^3.0.0",
     "arjan-audit": "^0.5.1",
     "arjan-build": "^0.1.0",
-    "arjan-deploy": "^0.7.3",
-    "arjan-localize": "^1.1.7",
-    "arjan-optimize": "^0.6.5",
+    "arjan-deploy": "^0.7.4",
+    "arjan-localize": "^1.1.8",
+    "arjan-optimize": "^0.6.6",
     "cli-ux": "^5.4.6",
+    "copy-webpack-plugin": "^6.0.2",
     "dotenv": "^8.2.0",
-    "open": "^7.0.4"
+    "imagemin": "^7.0.1",
+    "open": "^7.0.4",
+    "path": "^0.12.7",
+    "terser": "^4.7.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.10.2",
+    "@babel/preset-env": "^7.10.2",
     "@oclif/dev-cli": "^1.22.2",
     "@oclif/test": "^1.2.5",
+    "babel-loader": "^8.1.0",
     "chai": "^4.2.0",
-    "globby": "^10.0.2",
+    "clean-webpack-plugin": "^3.0.0",
+    "css-loader": "^3.6.0",
+    "html-webpack-plugin": "^4.3.0",
+    "http-server": "^0.12.3",
+    "imagemin-webp-webpack-plugin": "^3.3.2",
+    "mini-css-extract-plugin": "^0.9.0",
+    "imagemin-gifsicle": "^7.0.0",
+    "imagemin-mozjpeg": "^9.0.0",
+    "imagemin-pngquant": "^9.0.0",
+    "imagemin-svgo": "^8.0.0",
+    "imagemin-webpack-plugin": "^2.4.2",
     "mocha": "^7.1.2",
-    "nyc": "^14.1.1"
+    "nyc": "^14.1.1",
+    "optimize-css-assets-webpack-plugin": "^5.0.3",
+    "style-loader": "^1.2.1",
+    "terser-webpack-plugin": "^3.0.5",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.11",
+    "webpack-dev-server": "^3.11.0"
   },
   "engines": {
     "node": ">=8.0.0"
@@ -55,6 +78,8 @@
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "oclif-dev manifest && oclif-dev readme",
     "test": "nyc mocha --forbid-only \"test/**/*.test.js\"",
-    "version": "oclif-dev readme && git add README.md"
+    "version": "oclif-dev readme && git add README.md",
+    "start:dev": "webpack-dev-server --config webpack.dev.js --mode development --open",
+    "build": "webpack --config webpack.prod.js --mode production"
   }
 }
