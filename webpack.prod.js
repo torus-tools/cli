@@ -1,14 +1,25 @@
 const path = require('path');
-
 const buildPath = path.resolve(__dirname, 'dep_pack/js');
+
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+
 const {scanFiles, getAltName} = require('./src/scanDir')
+
 //plugins.push(new CleanWebpackPlugin(buildPath))
 var plugins = require('./webpack.plugins.prod')
 plugins.push(
     new MiniCssExtractPlugin({
         filename: "../css/[name].css",
         chunkFilename: "[id].[contenthash].css"
+    }),
+    new CopyWebpackPlugin({
+        patterns:[
+            {
+            from: 'img/**/**',
+            to: path.resolve(__dirname, 'dep_pack')
+            }
+        ]
     })
 )
 
@@ -81,7 +92,7 @@ module.exports = {
                 },
               ],
             }
-          ]
+        ]
     },
     plugins
 };
