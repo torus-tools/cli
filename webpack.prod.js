@@ -4,7 +4,7 @@ const buildPath = path.resolve(__dirname, 'dep_pack/js');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const {scanFiles, getAltName} = require('./src/scanDir')
 //plugins.push(new CleanWebpackPlugin(buildPath))
-var plugins = require('./webpack.plugins')
+var plugins = require('./webpack.plugins.prod')
 plugins.push(
     new MiniCssExtractPlugin({
         filename: "../css/[name].css",
