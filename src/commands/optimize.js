@@ -9,6 +9,12 @@ const path = require("path");
 const webpack = require('webpack');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const ImageminPlugin = require('imagemin-webpack-plugin').default;
+const ImageminWebpWebpackPlugin= require("imagemin-webp-webpack-plugin");
+const ImageminWebP = require("imagemin-webp");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
+
+const imageminMozjpeg = require('imagemin-mozjpeg');
 var webpack_config = require('../../webpack.prod');
 const {createFakes, injectStylesheets} = require('../scanDir')
 
@@ -89,7 +95,44 @@ class OptimizeCommand extends Command {
         minimize: true,
         minimizer: minimizer
       }
-    } 
+    }
+    webpack_config.plugins.push(
+      new CopyWebpackPlugin({
+        patterns:[
+          {
+            from: 'img/**/**',
+            to: path.resolve(__dirname, 'dep_pack')
+          },
+        ]
+      })
+    )
+    if(flags.img){
+      webpack_config.plugins.push(
+        new ImageminPlugin({ 
+          test: /\.(jpe?g|png|gif|svg)$/i,
+          pngquant: ({quality: [50-80]}),
+          plugins: [
+            imageminMozjpeg({
+              quality: 65,
+              progressive: true
+            }),
+            flags.webp?ImageminWebP({quality: 65}):null
+          ] 
+        })
+      )
+    }
+    if(flags.webp){
+      webpack_config.plugins.push(
+        new ImageminWebpWebpackPlugin({
+          config: [{
+            test: /\.(jpe?g|png)/,
+            options: {
+              quality: 65
+            }
+          }]
+        })
+      )
+    }
     const compiler = webpack(webpack_config);
     if(args.files && args.files !== '/') for(file of files) arrs = getFile(file, arrs)
     else arrs = await scanFiles().catch(err => console.log(err))
@@ -106,7 +149,9 @@ class OptimizeCommand extends Command {
         Object.keys(file_sizes).map(file => {
           if(fs.existsSync('dep_pack/'+file))file_sizes[file].compressed = fs.statSync('dep_pack/'+file).size
           else file_sizes[file].compressed = file_sizes[file].original
+          if(flags.webp) if(file.endsWith('jpg')||file.endsWith('jpeg')||file.endsWith('png')) file_sizes[file].compressed = fs.statSync('dep_pack/'+file.substr(0,file.lastIndexOf('.'))+'.webp').size
         })
+        console.log(file_sizes)
         let report = formatReport(file_sizes)
         console.log(report)
       });
@@ -208,20 +253,19 @@ OptimizeCommand.flags = {
   js: flags.boolean({
     char: 'j',                    
     description: 'compress javascript with terser.',        
-  }),
-  /* 
+  }), 
   responsive: flags.boolean({
     char: 'r',                    
     description: 'resizes images efficiently for each type of device (sm, md, lg), then replaces each image instance in the html files with a picture tag.'    
   }), 
-  img: flags.boolean({
-    char: 'i',                    
+  img: flags.boolean({                    
     description: 'compress images and if possible maintain the format. otherwise its converted to png.',        
   }),
   webp: flags.boolean({
     char: 'w',                    
     description: 'saves a webp version of each image, then replaces each image instance in the html files with a picture tag.',        
   }),
+  /*
   unusedcss: flags.boolean({
     char: 'u',
     description: 'remove unused css classes',
