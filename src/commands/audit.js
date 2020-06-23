@@ -48,9 +48,9 @@ class AuditCommand extends Command {
   }
 }
 
-AuditCommand.description = `Deploy your static site 
+AuditCommand.description = `Audit your sites performance during development
 ...
-Deploy modern static sites to the AWS Cloud using Cloudformation. 
+Audit your sites performance and SEO using Google's lighhouse 6. 
 `
 
 AuditCommand.flags = {
