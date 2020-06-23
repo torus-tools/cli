@@ -1,3 +1,3 @@
-const {TranslateSite} = require('../index')
+/* const {TranslateSite} = require('../index')
 
-TranslateSite('es', 'en');
+TranslateSite('es', 'en'); */

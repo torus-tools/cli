@@ -1,4 +1,5 @@
 const img_formats = [
+  'svg',
   'jpg',
   'jpeg',
   'jfif',
