@@ -5,6 +5,10 @@ en/
 exports/
 img/
 index.html
+localize.html
+optimize.html
+audit.html
+deploy.html
 js/
 locales/
 optimize_config.json
