@@ -8,16 +8,15 @@ module.exports = function compressImage(file, output, imageArr, svgoConfig){
   return new Promise(async (resolve, reject) => {
     svgo = new SVGO(svgoConfig);
     let fileExtension = file.substr(file.lastIndexOf(".")+1)
-    //console.log('EXTENSION ', fileExtension)
     if(fileExtension === 'svg'){
       imageArr.push(file)
       let content = await fs.promises.readFile(file, 'utf8')
       let response = await svgo.optimize(content, {path: file}).catch((err) => reject(err))
       fs.promises.writeFile(`${output}/${file}`, response.data)
       .then(()=> {
-        let info = fs.statSync(file)
+        let info = fs.statSync(`${output}/${file}`)
         //console.log(`compressed ${file} using svgo`)
-        resolve(info)
+        resolve(info.size)
       }).catch(err => reject(err));
     }
     else if(img_formats.includes(fileExtension)){
