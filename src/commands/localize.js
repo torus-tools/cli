@@ -223,9 +223,10 @@ function localizeAndTranslate(html, filePath, from, translations){
   })
 }
 
-LocalizeCommand.description = `Describe the command here
+LocalizeCommand.description = `Localize and translate HTML files
 ...
-Extra documentation goes here
+Automatically localize and translate your HTML sites. Uses Amazon translate for translations. 
+
 `
 LocalizeCommand.flags = {
   translate: flags.string({

@@ -48,9 +48,9 @@ class AuditCommand extends Command {
   }
 }
 
-AuditCommand.description = `Describe the command here
+AuditCommand.description = `Audit your sites performance during development
 ...
-Extra documentation goes here
+Audit your sites performance and SEO using Google's lighhouse 6. 
 `
 
 AuditCommand.flags = {
