@@ -19,7 +19,7 @@ $ npm install -g arjan-cli
 $ arjan COMMAND
 running command...
 $ arjan (-v|--version|version)
-arjan-cli/0.2.4 linux-x64 node-v14.4.0
+arjan-cli/0.3.1 linux-x64 node-v14.4.0
 $ arjan --help [COMMAND]
 USAGE
   $ arjan COMMAND
@@ -39,7 +39,7 @@ USAGE
 
 ## `arjan audit`
 
-Describe the command here
+Audit your sites performance during development
 
 ```
 USAGE
@@ -59,14 +59,14 @@ OPTIONS
 
 DESCRIPTION
   ...
-  Extra documentation goes here
+  Audit your sites performance and SEO using Google's lighhouse 6.
 ```
 
-_See code: [src/commands/audit.js](https://github.com/arjan-tools/cli/blob/v0.2.4/src/commands/audit.js)_
+_See code: [src/commands/audit.js](https://github.com/arjan-tools/cli/blob/v0.3.1/src/commands/audit.js)_
 
 ## `arjan deploy DOMAIN ACTION [SETUP]`
 
-Describe the command here
+Deploy static sites to AWS
 
 ```
 USAGE
@@ -99,10 +99,10 @@ OPTIONS
 
 DESCRIPTION
   ...
-  Extra documentation goes here
+  Deploy static sites to the AWS Cloud using Cloudformation templates.
 ```
 
-_See code: [src/commands/deploy.js](https://github.com/arjan-tools/cli/blob/v0.2.4/src/commands/deploy.js)_
+_See code: [src/commands/deploy.js](https://github.com/arjan-tools/cli/blob/v0.3.1/src/commands/deploy.js)_
 
 ## `arjan help [COMMAND]`
 
@@ -119,7 +119,7 @@ OPTIONS
   --all  see all commands in CLI
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.0.1/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.1.0/src/commands/help.ts)_
 
 ## `arjan init [PROFILE] [REGION]`
 
@@ -141,11 +141,11 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/init.js](https://github.com/arjan-tools/cli/blob/v0.2.4/src/commands/init.js)_
+_See code: [src/commands/init.js](https://github.com/arjan-tools/cli/blob/v0.3.1/src/commands/init.js)_
 
 ## `arjan localize LANGUAGE [FILES]`
 
-Describe the command here
+Localize and translate HTML files
 
 ```
 USAGE
@@ -175,14 +175,14 @@ OPTIONS
 
 DESCRIPTION
   ...
-  Extra documentation goes here
+  Automatically localize and translate your HTML sites. Uses Amazon translate for translations.
 ```
 
-_See code: [src/commands/localize.js](https://github.com/arjan-tools/cli/blob/v0.2.4/src/commands/localize.js)_
+_See code: [src/commands/localize.js](https://github.com/arjan-tools/cli/blob/v0.3.1/src/commands/localize.js)_
 
 ## `arjan optimize [FILES]`
 
-Describe the command here
+Optimize static assets 
 
 ```
 USAGE
@@ -193,20 +193,29 @@ ARGUMENTS
          (default).
 
 OPTIONS
-  -c, --css   minifiy css using cssnano
-  -h, --html  compress html using html-minifier
-  -i, --img   compress images and if possible maintain the format. otherwise its converted to png.
-  -j, --js    minify js using uglify js
+  -c, --css            minifiy css using cssnano
 
-  -w, --webp  saves a webp version of each image, then replaces each image instance in the html files with a picture
-              tag.
+  -i, --input=input    Name of the input directory that contains all the scripts for your project. Default is js. To use
+                       the root use
+
+  -j, --js             compress javascript with terser.
+
+  -o, --output=output  desired output directory. Default is dep_pack.
+
+  -r, --responsive     resizes images efficiently for each type of device (sm, md, lg), then replaces each image
+                       instance in the html files with a picture tag.
+
+  -w, --webp           saves a webp version of each image, then replaces each image instance in the html files with a
+                       picture tag.
+
+  --img                compress images and if possible maintain the format. otherwise its converted to png.
 
 DESCRIPTION
   ...
-  Extra documentation goes here
+  Uses Webpack to minify your html/css/js files, compress your pictures and more.
 ```
 
-_See code: [src/commands/optimize.js](https://github.com/arjan-tools/cli/blob/v0.2.4/src/commands/optimize.js)_
+_See code: [src/commands/optimize.js](https://github.com/arjan-tools/cli/blob/v0.3.1/src/commands/optimize.js)_
 
 ## `arjan start`
 
@@ -217,15 +226,14 @@ USAGE
   $ arjan start
 
 OPTIONS
-  -n, --name=name  name to print
+  -p, --port=port  [default: 8080] number of the desired port
 
 DESCRIPTION
   ...
   Extra documentation goes here
 ```
 
-_See code: [src/commands/start.js](https://github.com/arjan-tools/cli/blob/v0.2.3/src/commands/start.js)_
-
+_See code: [src/commands/start.js](https://github.com/arjan-tools/cli/blob/v0.3.1/src/commands/start.js)_
 
 ## `arjan upload DOMAIN [FILES]`
 
@@ -249,5 +257,5 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/upload.js](https://github.com/arjan-tools/cli/blob/v0.2.4/src/commands/upload.js)_
+_See code: [src/commands/upload.js](https://github.com/arjan-tools/cli/blob/v0.3.1/src/commands/upload.js)_
 <!-- commandsstop -->
