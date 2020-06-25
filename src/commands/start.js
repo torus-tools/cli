@@ -1,7 +1,7 @@
 const {Command, flags} = require('@oclif/command')
 const webpack = require('webpack');
 const WebpackDevServer = require('webpack-dev-server');
-const config = require('../../webpack.dev');
+const config = require('../webpack_config/webpack.dev');
 const Build = require('arjan-build');
 const fs = require('fs');
 const path = require('path');

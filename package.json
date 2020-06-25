@@ -1,7 +1,7 @@
 {
   "name": "arjan-cli",
   "description": "Mutli CLI for arjan tools",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "author": "Gabriel Kardonski @gkpty",
   "bin": {
     "arjan": "./bin/run"
@@ -43,14 +43,13 @@
     "imagemin-mozjpeg": "^9.0.0",
     "imagemin-pngquant": "^9.0.0",
     "imagemin-svgo": "^8.0.0",
-    "imagemin-webpack-plugin": "^2.4.2",
+    "imagemin-webpack-plugin": "^2.4.2"
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1.22.2",
     "@oclif/test": "^1.2.5",
     "mocha": "^7.1.2",
     "nyc": "^14.1.1"
-    
   },
   "engines": {
     "node": ">=8.0.0"
