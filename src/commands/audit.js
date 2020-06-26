@@ -17,7 +17,10 @@ function formatReport(audit, threshold){
   let blankLine = "|" + " ".repeat(i) + "|\n";
   let sepparator = "|" + "-".repeat(i) + "|\n";
   let header = sepparator + blankLine + Report.getHeading("audit report") + blankLine;
-  let scores = sepparator + blankLine + Report.getReportItem(true, i, 'lighthouse 6 score', Report.getScore(audit.lh6_score, true, true), Report.getScoreColor(audit.lh6_score, threshold)) + Report.getReportItem(true, i, 'lighthouse 5 score', Report.getScore(audit.lh5_score, true, true), Report.getScoreColor(audit.lh5_score, threshold)) + blankLine;
+  let scores = sepparator + blankLine + Report.getReportItem(true, i, 'Performance lh6', Report.getScore(audit.lh6_score, true, true), Report.getScoreColor(audit.lh6_score, threshold)) + Report.getReportItem(true, i, 'Performance lh5', Report.getScore(audit.lh5_score, true, true), Report.getScoreColor(audit.lh5_score, threshold)) +
+  Report.getReportItem(true, i, 'Accesibility', Report.getScore(audit.accesibility, true, true), Report.getScoreColor(audit.accesibility, threshold)) +
+  Report.getReportItem(true, i, 'SEO', Report.getScore(audit.seo, true, true), Report.getScoreColor(audit.seo, threshold)) +
+  Report.getReportItem(true, i, 'Best Practices', Report.getScore(audit['best-practices'], true, true), Report.getScoreColor(audit['best-practices'], threshold)) + blankLine
   let mainMetrics = sepparator + Report.getHeading("main metrics") + blankLine;
   for(let m in audit.main_metrics) mainMetrics += Report.getReportItem(false, i, audit.main_metrics[m].title, Report.getScore(audit.main_metrics[m].score, true, true), Report.getScoreColor(audit.main_metrics[m].score, threshold));
   let recommendations = '\nRECOMMENDATIONS\n\n';
