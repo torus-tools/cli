@@ -3,6 +3,7 @@ const Audit = require('arjan-audit')
 const {createFile} = require('arjan-build')
 const {cli} = require('cli-ux');
 const Report = require('../report')
+const fs = require('fs')
 
 const defaults = {
   "dir":"./",
@@ -43,11 +44,9 @@ class AuditCommand extends Command {
       if(!flags[f]) flags[f] = config_json[f]
     }
     cli.action.start('Running Lighthouse Audit')
-    Audit(flags.dir, flags.file, flags.port, flags.threshold).then(data => {
-      //console.log(data)
-      console.log(formatReport(data, flags.threshold))
-      cli.action.stop()
-    })
+    let audit = await Audit(flags.dir, flags.file, flags.port, flags.threshold)
+    console.log(formatReport(audit, flags.threshold))
+    if(audit)cli.action.stop()
   }
 }
 
