@@ -49,7 +49,7 @@ class UploadCommand extends Command {
     let dir = './'
     if(flags.dir) dir = flags.dir;
     if(!args.files || args.files === '/') files = await scanFiles(dir)
-    for(let file of files) await uploadFile(args.domain, file)
+    for(let file of files) await uploadFile(args.domain, file, flags.dir)
     cli.action.stop()
   }
 }
