@@ -4,7 +4,7 @@ const {cli} = require('cli-ux');
 const fs = require('fs');
 const path = require("path");
 
-var ignorePaths = JSON.parse(fs.readFileSync('./arjan_config/arjan_ignore.json'));
+var ignorePaths = fs.existsSync('./arjan_config/arjan_ignore.json')?JSON.parse(fs.readFileSync('./arjan_config/arjan_ignore.json')):{};
 
 function scanFiles(dir){
   let arrs = [];

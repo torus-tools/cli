@@ -6,7 +6,7 @@ const path = require("path");
 const {cli} = require('cli-ux');
 const open = require('open');
 
-var ignorePaths = JSON.parse(fs.readFileSync('./arjan_config/arjan_ignore.json'));
+var ignorePaths = fs.existsSync('./arjan_config/arjan_ignore.json')?JSON.parse(fs.readFileSync('./arjan_config/arjan_ignore.json')):{};
 ignorePaths['dep_pack'] = true;
 
 function getPaths(from, to, filePath){

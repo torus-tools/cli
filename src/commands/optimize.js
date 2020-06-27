@@ -17,9 +17,9 @@ const CopyWebpackPlugin = require("copy-webpack-plugin");
 const imageminMozjpeg = require('imagemin-mozjpeg');
 var webpack_config = require('../../webpack.prod');
 const {createFakes, injectStylesheets} = require('../scanDir')
-const { build } = require('@oclif/command/lib/flags')
+//const { build } = require('@oclif/command/lib/flags')
 
-var ignorePaths = JSON.parse(fs.readFileSync('./arjan_config/arjan_ignore.json'));
+var ignorePaths = fs.existsSync('./arjan_config/arjan_ignore.json')?JSON.parse(fs.readFileSync('./arjan_config/arjan_ignore.json')):{};
 
 function formatReport(files){
   let i = 40;
