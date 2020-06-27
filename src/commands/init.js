@@ -7,9 +7,10 @@ const open = require('open')
 const ignorePaths = {
   '.env':true,
   '.git':true,
+  '.github':true,
   '.gitignore':true,
   'package.json':true,
-  'package_lock.json':true,
+  'package-lock.json':true,
   'node_modules':true,
   'dep_pack':true,
   'arjan_config':true,
