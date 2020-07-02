@@ -4,11 +4,7 @@ dep_pack/
 en/
 exports/
 img/
-index.html
-localize.html
-optimize.html
-audit.html
-deploy.html
+video/
 js/
 locales/
 optimize_config.json
@@ -16,3 +12,4 @@ blog/
 arjan_config/
 node_modules/.cache/
 lib/
+*.html
