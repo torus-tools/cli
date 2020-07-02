@@ -29,6 +29,7 @@ USAGE
 # Commands
 <!-- commands -->
 * [`arjan audit`](#arjan-audit)
+* [`arjan delete`](#arjan-delete)
 * [`arjan deploy DOMAIN ACTION [SETUP]`](#arjan-deploy-domain-action-setup)
 * [`arjan help [COMMAND]`](#arjan-help-command)
 * [`arjan init [PROFILE] [REGION]`](#arjan-init-profile-region)
@@ -63,6 +64,24 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/audit.js](https://github.com/arjan-tools/cli/blob/v0.3.1/src/commands/audit.js)_
+
+## `arjan delete`
+
+Describe the command here
+
+```
+USAGE
+  $ arjan delete
+
+OPTIONS
+  -n, --name=name  name to print
+
+DESCRIPTION
+  ...
+  Extra documentation goes here
+```
+
+_See code: [src/commands/delete.js](https://github.com/arjan-tools/cli/blob/v0.3.1/src/commands/delete.js)_
 
 ## `arjan deploy DOMAIN ACTION [SETUP]`
 
