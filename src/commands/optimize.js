@@ -15,7 +15,7 @@ const ImageminWebP = require("imagemin-webp");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 const imageminMozjpeg = require('imagemin-mozjpeg');
-var webpack_config = require('../../webpack.prod');
+var webpack_config = require('../webpack_config/webpack.prod');
 const {createFakes, injectStylesheets} = require('../scanDir')
 //const { build } = require('@oclif/command/lib/flags')
 
@@ -80,7 +80,7 @@ class OptimizeCommand extends Command {
         patterns:[
           {
             from: 'img/**/**',
-            to: path.resolve(__dirname, 'dep_pack')
+            to: path.resolve(process.env.ROOT, 'dep_pack')
           },
         ]
       })
