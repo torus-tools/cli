@@ -47,8 +47,8 @@ module.exports = function auditReport(audit, threshhold){
           if(audit[i].details) formatted.improvements[i].details = audit[i].details
         }
         break;
-      default:
-        console.log(`ScoreDisplayMode ${audit[i].scoreDisplayMode} cannot be included in improvements`)
+      /* default:
+        console.log(`ScoreDisplayMode ${audit[i].scoreDisplayMode} cannot be included in improvements`) */
     }
   }
   //nullable_metrics

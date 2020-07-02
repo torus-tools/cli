@@ -19,7 +19,7 @@ $ npm install -g arjan-cli
 $ arjan COMMAND
 running command...
 $ arjan (-v|--version|version)
-arjan-cli/0.3.1 linux-x64 node-v14.4.0
+arjan-cli/0.3.4 linux-x64 node-v14.4.0
 $ arjan --help [COMMAND]
 USAGE
   $ arjan COMMAND
@@ -29,7 +29,7 @@ USAGE
 # Commands
 <!-- commands -->
 * [`arjan audit`](#arjan-audit)
-* [`arjan delete`](#arjan-delete)
+* [`arjan delete DOMAIN [FILES]`](#arjan-delete-domain-files)
 * [`arjan deploy DOMAIN ACTION [SETUP]`](#arjan-deploy-domain-action-setup)
 * [`arjan help [COMMAND]`](#arjan-help-command)
 * [`arjan init [PROFILE] [REGION]`](#arjan-init-profile-region)
@@ -63,25 +63,28 @@ DESCRIPTION
   Audit your sites performance and SEO using Google's lighhouse 6.
 ```
 
-_See code: [src/commands/audit.js](https://github.com/arjan-tools/cli/blob/v0.3.1/src/commands/audit.js)_
+_See code: [src/commands/audit.js](https://github.com/arjan-tools/cli/blob/v0.3.4/src/commands/audit.js)_
 
-## `arjan delete`
+## `arjan delete DOMAIN [FILES]`
 
 Describe the command here
 
 ```
 USAGE
-  $ arjan delete
+  $ arjan delete DOMAIN [FILES]
 
-OPTIONS
-  -n, --name=name  name to print
+ARGUMENTS
+  DOMAIN  root domain of your site
+
+  FILES   path of the file/s you want to upload. Providing none or / will upload all the files in your current
+          directory.
 
 DESCRIPTION
   ...
   Extra documentation goes here
 ```
 
-_See code: [src/commands/delete.js](https://github.com/arjan-tools/cli/blob/v0.3.1/src/commands/delete.js)_
+_See code: [src/commands/delete.js](https://github.com/arjan-tools/cli/blob/v0.3.4/src/commands/delete.js)_
 
 ## `arjan deploy DOMAIN ACTION [SETUP]`
 
@@ -121,7 +124,7 @@ DESCRIPTION
   Deploy static sites to the AWS Cloud using Cloudformation templates.
 ```
 
-_See code: [src/commands/deploy.js](https://github.com/arjan-tools/cli/blob/v0.3.1/src/commands/deploy.js)_
+_See code: [src/commands/deploy.js](https://github.com/arjan-tools/cli/blob/v0.3.4/src/commands/deploy.js)_
 
 ## `arjan help [COMMAND]`
 
@@ -160,7 +163,7 @@ DESCRIPTION
   Extra documentation goes here
 ```
 
-_See code: [src/commands/init.js](https://github.com/arjan-tools/cli/blob/v0.3.1/src/commands/init.js)_
+_See code: [src/commands/init.js](https://github.com/arjan-tools/cli/blob/v0.3.4/src/commands/init.js)_
 
 ## `arjan localize LANGUAGE [FILES]`
 
@@ -197,7 +200,7 @@ DESCRIPTION
   Automatically localize and translate your HTML sites. Uses Amazon translate for translations.
 ```
 
-_See code: [src/commands/localize.js](https://github.com/arjan-tools/cli/blob/v0.3.1/src/commands/localize.js)_
+_See code: [src/commands/localize.js](https://github.com/arjan-tools/cli/blob/v0.3.4/src/commands/localize.js)_
 
 ## `arjan optimize [FILES]`
 
@@ -234,7 +237,7 @@ DESCRIPTION
   Uses Webpack to minify your html/css/js files, compress your pictures and more.
 ```
 
-_See code: [src/commands/optimize.js](https://github.com/arjan-tools/cli/blob/v0.3.1/src/commands/optimize.js)_
+_See code: [src/commands/optimize.js](https://github.com/arjan-tools/cli/blob/v0.3.4/src/commands/optimize.js)_
 
 ## `arjan start`
 
@@ -245,14 +248,15 @@ USAGE
   $ arjan start
 
 OPTIONS
-  -p, --port=port  [default: 8080] number of the desired port
+  -i, --index=index  [default: index.html] index document. usually index.html
+  -p, --port=port    [default: 8080] number of the desired port
 
 DESCRIPTION
   ...
   Extra documentation goes here
 ```
 
-_See code: [src/commands/start.js](https://github.com/arjan-tools/cli/blob/v0.3.1/src/commands/start.js)_
+_See code: [src/commands/start.js](https://github.com/arjan-tools/cli/blob/v0.3.4/src/commands/start.js)_
 
 ## `arjan upload DOMAIN [FILES]`
 
@@ -269,12 +273,12 @@ ARGUMENTS
           directory.
 
 OPTIONS
-  -d, --dir  path of a directory you want to upload to your site
+  -d, --dir=dir  path of a directory you want to upload to your site
 
 DESCRIPTION
   ...
   Extra documentation goes here
 ```
 
-_See code: [src/commands/upload.js](https://github.com/arjan-tools/cli/blob/v0.3.1/src/commands/upload.js)_
+_See code: [src/commands/upload.js](https://github.com/arjan-tools/cli/blob/v0.3.4/src/commands/upload.js)_
 <!-- commandsstop -->
