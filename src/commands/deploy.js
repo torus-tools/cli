@@ -52,10 +52,28 @@ class DeployCommand extends Command {
         flags.https = true;
       }
     }
-    if(args.action === 'create' || args.action === 'update' || args.action === 'import'){
+    if(args.action === 'delete'){
+      let answer = await cli.prompt(`Are you sure you want to delete the stack for ${args.domain}? enter the domain to confirm.`)
+      if(answer === args.domain){
+        cli.action.start(`Deleting content stored in the ${args.domain} bucket`)
+        Deploy.deleteObjects(args.domain).then(()=>{
+          cli.action.stop()
+          let stackName = args.domain.split('.').join('') + 'Stack';
+          cli.action.start(`Deleting ${stackName}`)
+          cloudformation.deleteStack({StackName: stackName}).promise()
+          .then(()=> {
+            cli.action.stop('Success')
+            console.log('Your cloudformation stack is being deleted')
+          }).catch(err => console.log(err))
+        }).catch(err => console.log(err))
+      }
+    }
+    //if(args.action === 'create' || args.action === 'update' || args.action === 'import'){
+    else {  
       cli.action.start('Setting up...')
       await Build.createDir('arjan_config/changesets')
       let url = null;
+      //let url = `http://${args.domain}.s3-website-${process.env.AWS_REGION}.amazonaws.com`;
       let upload = null;
       let newTemplate = await Deploy.generateTemplate(args.domain, flags.index, flags.error, flags.www, flags.cdn, flags.route53, flags.https)
       let temp = {TemplateBody:{}};
@@ -79,12 +97,20 @@ class DeployCommand extends Command {
           changeSetObj['template'] = template.template;
           changeSetObj['existingResources'] = template.existingResources;
           fs.promises.writeFile(`arjan_config/changesets/${stack.changeSetName}.json`, JSON.stringify(changeSetObj));
+          /* switch(stack.action){
+            case 'UPDATE': waitAction = 'stackUpdateComplete' 
+            break;
+            case 'IMPORT': waitAction = 'stackImportComplete' 
+            break;
+            default: waitAction = 'stackCreateComplete'
+          } */
           let waitAction = 'stackCreateComplete';
           if(stack.action === 'UPDATE') waitAction = 'stackUpdateComplete';
           else if(stack.action === 'IMPORT') waitAction = 'stackImportComplete';
           wait = await cloudformation.waitFor(waitAction, {StackName: stack.stackName}).promise()
           if(wait) {
             cli.action.stop()
+            cli.action.start('Uploading files')
             if(flags.upload){
               var stat = fs.statSync(flags.upload);
               let files = [];
@@ -100,6 +126,7 @@ class DeployCommand extends Command {
                 .then(()=> {
                   //console.log(index, files.length)
                   if(f >= files.length-1) {
+                    cli.action.stop()
                     upload = true;
                     if(url) open(url);
                   }
@@ -114,6 +141,7 @@ class DeployCommand extends Command {
               let errorParams = {Bucket: args.domain, Key: 'error.html', Body: fakeError, ContentType: 'text/html'};
               s3.putObject(errorParams).promise().catch(err => console.log(err))
               s3.putObject(indexParams).promise().then(()=> {
+                cli.action.stop()
                 upload = true
                 if(url) open(url)
               }).catch(err => console.log(err))
@@ -127,6 +155,7 @@ class DeployCommand extends Command {
                 let answer = await cli.prompt('Have you finished updating your nameservers?')
                 if(answer === 'y' || answer === 'Y' || answer === 'yes'|| answer === 'Yes') {
                   wait = true;
+                  console.log(`depending on your Domain name registrar you should be able to access your site at http://${args.domain} in a couple of minutes.`)
                   if(upload && !url) open(`http://${args.domain}`);
                 }
                 else console.log('Exiting.') //exit the cli
@@ -139,7 +168,21 @@ class DeployCommand extends Command {
             }
           }
         }
-        if(wait && flags.https){
+        if(wait && flags.cdn){
+          cli.action.start('Deploying the cloudfront distribution')
+          let data = await Deploy.generateTemplate(args.domain, flags.index, flags.error, flags.www, flags.cdn, flags.route53, flags.https).catch(err=>console.log(err))
+          let stack = await Deploy.deployStack(args.domain, data.template, data.existingResources, false).catch(err=>console.log(err))
+          if(stack){
+            cli.action.stop()
+            console.log('Cloudfront distribution in progress.. It may take while...')
+            console.log('In the meantime your site is fully functional :)')
+          }
+          let changeSetObj = stack;
+          changeSetObj['template'] = data.template;
+          changeSetObj['existingResources'] = data.existingResources;
+          fs.promises.writeFile(`arjan_config/changesets/${stack.changeSetName}.json`, JSON.stringify(changeSetObj)).catch(err=>console.log(err))
+        }
+        /* if(wait && flags.https){
           let certExists = await Deploy.certificateExists()
           let certwait = false;
           let certArn = null;
@@ -186,25 +229,8 @@ class DeployCommand extends Command {
             console.log('Cloudfront distribution in progress.. It may take while...')
             console.log('In the meantime your site is fully functional :)')
           }).catch((err) => console.log(err));
-        }
+        } */
       }
-    }
-    else if(args.action === 'import'){
-
-    }
-    else if(args.action === 'delete'){
-      let stackName = args.domain.split('.').join('') + 'Stack';
-      cli.action.start('Removing any digital certificates associated to the domain')
-      Deploy.deleteCertificate(args.domain).then(data => {
-        cli.action.stop();
-        console.log("\x1b[33mIf any, please delete all additional route53 records you may have created and not attached to your cloudformation stack", "\x1b[0m");
-        cli.action.start(`Deleting ${stackName}`)
-        cloudformation.deleteStack({StackName: stackName}).promise()
-        .then(()=> {
-          cli.action.stop('Success')
-          console.log('Your cloudformation stack is being deleted')
-        }).catch(err => console.log(err))
-      }).catch(err => console.log(err))
     }
   }
 }
