@@ -1,3 +1,4 @@
+const path = require('path')
 const plugins = require('./webpack.plugins.dev')
 const {scanFiles, getAltName} = require('../scanDir')
 
@@ -13,6 +14,10 @@ const getEntries = () =>{
 module.exports = {
   mode: 'development',
   entry: getEntries,
+
+  resolveLoader: {
+    modules: [path.resolve(__dirname, '../../node_modules')],
+  },
   module: {
     rules: [
       //JS
@@ -25,7 +30,7 @@ module.exports = {
         ],
         loader: 'babel-loader',
         options: {
-            presets: ['@babel/preset-env']
+            presets: [path.resolve(__dirname, '../../node_modules/@babel/preset-env')]
         }
       },
       //CSS
