@@ -38,6 +38,9 @@ const getEntries = () =>{
 module.exports = {
     mode:'production',
     entry: getEntries,
+    resolveLoader: {
+      modules: [path.resolve(__dirname, '../../node_modules')],
+    },
     output: {
         path: buildPath
     },
@@ -53,7 +56,7 @@ module.exports = {
               ],
               loader: 'babel-loader',
               options: {
-                  presets: ['@babel/preset-env']
+                  presets: [path.resolve(__dirname, '../../node_modules/@babel/preset-env')]
               }
             },
             //CSS

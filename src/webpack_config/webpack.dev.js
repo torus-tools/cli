@@ -14,7 +14,6 @@ const getEntries = () =>{
 module.exports = {
   mode: 'development',
   entry: getEntries,
-
   resolveLoader: {
     modules: [path.resolve(__dirname, '../../node_modules')],
   },
