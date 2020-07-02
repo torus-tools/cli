@@ -53,18 +53,20 @@ class DeployCommand extends Command {
       }
     }
     if(args.action === 'delete'){
-      let stackName = args.domain.split('.').join('') + 'Stack';
-      cli.action.start('Removing any digital certificates associated to the domain')
-      Deploy.deleteCertificate(args.domain).then(data => {
-        cli.action.stop();
-        console.log("\x1b[33mIf any, please delete all additional route53 records you may have created and not attached to your cloudformation stack", "\x1b[0m");
-        cli.action.start(`Deleting ${stackName}`)
-        cloudformation.deleteStack({StackName: stackName}).promise()
-        .then(()=> {
-          cli.action.stop('Success')
-          console.log('Your cloudformation stack is being deleted')
+      let answer = await cli.prompt(`Are you sure you want to delete the stack for ${args.domain}? enter the domain to confirm.`)
+      if(answer === args.domain){
+        cli.action.start(`Deleting content stored in the ${args.domain} bucket`)
+        Deploy.deleteObjects(args.domain).then(()=>{
+          cli.action.stop()
+          let stackName = args.domain.split('.').join('') + 'Stack';
+          cli.action.start(`Deleting ${stackName}`)
+          cloudformation.deleteStack({StackName: stackName}).promise()
+          .then(()=> {
+            cli.action.stop('Success')
+            console.log('Your cloudformation stack is being deleted')
+          }).catch(err => console.log(err))
         }).catch(err => console.log(err))
-      }).catch(err => console.log(err))
+      }
     }
     //if(args.action === 'create' || args.action === 'update' || args.action === 'import'){
     else {  
@@ -168,17 +170,17 @@ class DeployCommand extends Command {
         }
         if(wait && flags.cdn){
           cli.action.start('Deploying the cloudfront distribution')
-          Deploy.generateTemplate(args.domain, flags.index, flags.error, flags.www, flags.cdn, flags.route53, flags.https)
-          .then((data)=> Deploy.deployStack(args.domain, data.template, data.existingResources, false))
-          .then((stack) => {
+          let data = await Deploy.generateTemplate(args.domain, flags.index, flags.error, flags.www, flags.cdn, flags.route53, flags.https).catch(err=>console.log(err))
+          let stack = await Deploy.deployStack(args.domain, data.template, data.existingResources, false).catch(err=>console.log(err))
+          if(stack){
             cli.action.stop()
-            let changeSetObj = stack;
-            changeSetObj['template'] = data.template;
-            changeSetObj['existingResources'] = data.existingResources;
-            fs.promises.writeFile(`arjan_config/changesets/${stack.changeSetName}.json`, JSON.stringify(changeSetObj));
             console.log('Cloudfront distribution in progress.. It may take while...')
             console.log('In the meantime your site is fully functional :)')
-          }).catch((err) => console.log(err));
+          }
+          let changeSetObj = stack;
+          changeSetObj['template'] = data.template;
+          changeSetObj['existingResources'] = data.existingResources;
+          fs.promises.writeFile(`arjan_config/changesets/${stack.changeSetName}.json`, JSON.stringify(changeSetObj)).catch(err=>console.log(err))
         }
         /* if(wait && flags.https){
           let certExists = await Deploy.certificateExists()
