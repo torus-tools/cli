@@ -1,6 +1,6 @@
 const {Command, flags} = require('@oclif/command')
 const {createDir, createFile} = require('arjan-build')
-const fs = require('fs')
+const {cli} = require('cli-ux');
 const open = require('open')
 
 const regionSet = [
