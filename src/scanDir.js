@@ -2,19 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const Build = require('arjan-build')
 
-const ignorePaths = {
-  'node_modules':true,
-  'dep_pack':true,
-  'webpack.dev.js':true,
-  'webpack.prod.js':true,
-  'webpack.loaders.js':true,
-  'webpack.plugins.dev.js': true,
-  'webpack.plugins.prod.js': true,
-  'lib':true,
-  'src':true,
-  'test':true,
-  'dist':true
-}
+var ignorePaths = fs.existsSync('./arjan_config/arjan_ignore.json')?JSON.parse(fs.readFileSync('./arjan_config/arjan_ignore.json')):{};
 
 function scanFiles(){
   let arrs = {html:[], css:[], js:[]};

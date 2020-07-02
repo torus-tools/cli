@@ -6,12 +6,8 @@ const path = require("path");
 const {cli} = require('cli-ux');
 const open = require('open');
 
-var ignorePaths = {
-  "dep_pack": true, //must be ingored.
-  "arjan_config": true,
-  "node_modules":true,
-  ".git":true
-}
+var ignorePaths = fs.existsSync('./arjan_config/arjan_ignore.json')?JSON.parse(fs.readFileSync('./arjan_config/arjan_ignore.json')):{};
+ignorePaths['dep_pack'] = true;
 
 function getPaths(from, to, filePath){
   return new Promise((resolve, reject) => {
