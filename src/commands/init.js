@@ -101,9 +101,9 @@ class InitCommand extends Command {
   }
 }
 
-InitCommand.description = `Describe the command here
+InitCommand.description = `Initialize your project
 ...
-Extra documentation goes here
+Creates the necessary setup files for Arjan.
 `
 
 InitCommand.args = [

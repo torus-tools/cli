@@ -222,7 +222,7 @@ function getFile(filePath, arrs){
 
 OptimizeCommand.description = `Optimize static assets 
 ...
-Uses Webpack to minify your html/css/js files, compress your pictures and more. 
+Arjan uses webpack to minify your HTML/CSS/JS files and compress your images. 
 `
 
 OptimizeCommand.flags = {
@@ -242,10 +242,10 @@ OptimizeCommand.flags = {
     char: 'j',                    
     description: 'compress javascript with terser.',        
   }), 
-  responsive: flags.boolean({
+/*   responsive: flags.boolean({
     char: 'r',                    
     description: 'resizes images efficiently for each type of device (sm, md, lg), then replaces each image instance in the html files with a picture tag.'    
-  }), 
+  }),  */
   img: flags.boolean({                    
     description: 'compress images and if possible maintain the format. otherwise its converted to png.',        
   }),

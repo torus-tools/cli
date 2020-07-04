@@ -50,9 +50,9 @@ class AuditCommand extends Command {
   }
 }
 
-AuditCommand.description = `Audit your sites performance during development
+AuditCommand.description = `Audit your site's performance
 ...
-Audit your sites performance and SEO using Google's lighhouse 6. 
+Arjan uses uses Lighthouse 5 & 6 and saves the audits locally in HTML. 
 `
 
 AuditCommand.flags = {

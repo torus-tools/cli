@@ -53,9 +53,9 @@ class UploadCommand extends Command {
   }
 }
 
-UploadCommand.description = `Describe the command here
+UploadCommand.description = `Upload files
 ...
-Extra documentation goes here
+Upload files/directories to an AWS S3 bucket.
 `
 
 UploadCommand.flags = {

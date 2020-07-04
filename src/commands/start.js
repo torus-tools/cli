@@ -26,9 +26,9 @@ class StartCommand extends Command {
   }
 }
 
-StartCommand.description = `Describe the command here
+StartCommand.description = `Starts a dev server with live reload
 ...
-Extra documentation goes here
+Uses webpack and the HTML webpack plugin.
 `
 
 StartCommand.flags = {

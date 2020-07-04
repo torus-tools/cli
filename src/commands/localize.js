@@ -221,13 +221,13 @@ function localizeAndTranslate(html, filePath, from, translations){
 
 LocalizeCommand.description = `Localize and translate HTML files
 ...
-Automatically localize and translate your HTML sites. Uses Amazon translate for translations. 
+Automatically localize and translate your HTML sites. Uses Amazon Neural Machine translations. 
 
 `
 LocalizeCommand.flags = {
   translate: flags.string({
     char: 't',                    
-    description: 'desired translation language. You may apply this flag multiple times to translate into multiple languages.',
+    description: 'Desired translation language. You may apply this flag multiple times to translate into multiple languages.',
     required: false,
     multiple: true     
   }),  
