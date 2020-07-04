@@ -1,3 +1,5 @@
+<img src="https://s3.amazonaws.com/images.pub/img/arjan_cli_github.png" alt="Arjan CLI" width="300" style="max-width:100%;">
+
 arjancli
 ========
 
