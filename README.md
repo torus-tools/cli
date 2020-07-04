@@ -224,9 +224,6 @@ OPTIONS
 
   -o, --output=output  desired output directory. Default is dep_pack.
 
-  -r, --responsive     resizes images efficiently for each type of device (sm, md, lg), then replaces each image
-                       instance in the html files with a picture tag.
-
   -w, --webp           saves a webp version of each image, then replaces each image instance in the html files with a
                        picture tag.
 
