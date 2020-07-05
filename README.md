@@ -2,8 +2,7 @@
 
 arjancli
 ========
-
-Mutli CLI for arjan tools
+Multi command line interface for Arjan Tools.
 
 [![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
 [![Version](https://img.shields.io/npm/v/arjancli.svg)](https://npmjs.org/package/arjancli)
