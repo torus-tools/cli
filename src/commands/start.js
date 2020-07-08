@@ -12,12 +12,13 @@ class StartCommand extends Command {
   async run() {
     const {flags} = this.parse(StartCommand)
     const options = {
-      clientLogLevel: 'silent',
       port: flags.port,
+      host: '0.0.0.0',
+      disableHostCheck: true
     };
     const server = new WebpackDevServer(webpack(config), options);
     createFakeScripts().then(() => {
-      server.listen(flags.port, 'localhost', (err) =>{
+      server.listen(flags.port, options.host, (err) =>{
         if (err) console.log(err);
         else open(`http://localhost:${flags.port}/${flags.index}`)
         console.log('WebpackDevServer listening at localhost:', flags.port);
