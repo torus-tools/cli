@@ -1,7 +1,9 @@
-arjancli
+<img src="https://s3.amazonaws.com/images.pub/img/arjan_cli_github.png" alt="Arjan CLI" width="300" style="max-width:100%;">
+
+Arjan CLI
 ========
 
-Mutli CLI for arjan tools
+Mutli command line interface for Arjan Tools
 
 [![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
 [![Version](https://img.shields.io/npm/v/arjancli.svg)](https://npmjs.org/package/arjancli)
