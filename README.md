@@ -35,6 +35,7 @@ USAGE
 * [`arjan init [PROFILE] [REGION]`](#arjan-init-profile-region)
 * [`arjan localize LANGUAGE [FILES]`](#arjan-localize-language-files)
 * [`arjan optimize [FILES]`](#arjan-optimize-files)
+* [`arjan stack`](#arjan-stack)
 * [`arjan start`](#arjan-start)
 * [`arjan upload DOMAIN [FILES]`](#arjan-upload-domain-files)
 
@@ -238,6 +239,24 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/optimize.js](https://github.com/arjan-tools/cli/blob/v0.3.4/src/commands/optimize.js)_
+
+## `arjan stack`
+
+Describe the command here
+
+```
+USAGE
+  $ arjan stack
+
+OPTIONS
+  -n, --name=name  name to print
+
+DESCRIPTION
+  ...
+  Extra documentation goes here
+```
+
+_See code: [src/commands/stack.js](https://github.com/arjan-tools/cli/blob/v0.3.4/src/commands/stack.js)_
 
 ## `arjan start`
 
