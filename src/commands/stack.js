@@ -6,10 +6,19 @@ const acm = new AWS.ACM({apiVersion: '2015-12-08'});
 const {Command, flags} = require('@oclif/command');
 const {cli} = require('cli-ux');
 const Deploy = require('arjan-deploy');
-const Build = require('arjan-build')
-const fs = require('fs');
-const path = require("path");
+//const Stack = require('torus-stack')
 const open = require('open');
+const deployStack = require('arjan-deploy/lib/deployStack');
+const Listr = require('listr');
+
+function stuff(word){
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(word)
+    }, 1000);
+  })
+}
+
 
 class StackCommand extends Command {
   async run() {
@@ -49,23 +58,90 @@ class StackCommand extends Command {
       }
     }
     else { 
-      // import/create/update the stack
-      cli.action.start('Setting up...')
-      await Build.createDir('arjan_config/changesets')
-      url = `http://${args.domain}.s3-website-${process.env.AWS_REGION}.amazonaws.com`;
-      
-      if(!flags.upload && stack.action === 'CREATE'){
-        let fakeIndex = `<!DOCTYPE html><html><body><h1>Hello World</h1></body></html>`;
-        let fakeError = `<!DOCTYPE html><html><body><h1>Error</h1></body></html>`;
-        let indexParams = {Bucket: args.domain, Key: 'index.html', Body: fakeIndex, ContentType: 'text/html'};
-        let errorParams = {Bucket: args.domain, Key: 'error.html', Body: fakeError, ContentType: 'text/html'};
-        s3.putObject(errorParams).promise().catch(err => console.log(err))
-        s3.putObject(indexParams).promise().then(()=> {
-          cli.action.stop()
-          upload = true
-          if(url) open(url)
-        }).catch(err => console.log(err))   
-      }
+      const tasks = new Listr([
+        {
+          title: 'Setting Up',
+          task: (ctx) => stuff(ctx).then((res) => {
+            //console.log(res)
+            //console.log(ctx)
+          })
+        },
+        {
+          title: 'Generating templates',
+          task: (ctx) => {
+              return new Listr([
+                  {
+                      title: 'Partial Template',
+                      task: () => stuff({partial_template:'hello'}).then(data => {
+                          ctx.partial_template = data
+                      })
+                  },
+                  {
+                      title: 'Full Template',
+                      task: () => stuff({full_template:'hi'}).then(data => {
+                        ctx.full_template = data
+                    })
+                  }
+              ], {concurrent: true});
+          }
+        },
+        {
+            title: 'Importing existing resources',
+            enabled: ctx => ctx.full_template && ctx.full_template.existing_resources,
+            task: (ctx) => stuff(ctx).then((res) => {
+              //console.log('RES ', res)
+              //console.log('CTX ', ctx)
+            })
+        },
+        {
+          title: 'Deploying partial stack',
+          //enabled: ctx => ctx.full_template.existing_resources,
+          task: (ctx, task) => stuff(ctx).then((res) => {
+            task.title = `deploying storage bucket ${flags.route53?'and DNS':''}`
+            //console.log(res)
+            //console.log(ctx)
+          })
+        },
+        {
+          title: 'Deploying full stack',
+          task: (ctx, task) => stuff(ctx).then((res) => {
+            task.title = `deploying CDN, uploading content, updating DNS`
+            return new Listr([
+              {
+                  title: 'Updating Nameservers',
+                  task: () => stuff(['1', '2']).then(data => {
+                      ctx.nameservers = data
+                      //console.log(ctx.nameservers)
+                  })
+              },
+              {
+                  title: 'Uploading Content',
+                  task: () => stuff('done')
+              },
+              {
+                title: 'Deploying CDN',
+                task: () => {
+                  return new Listr([
+                    {
+                        title: 'Deploying CDN',
+                        task: () => stuff('cdn').then(data => {
+                            ctx.cdn = true
+                        })
+                    },
+                    {
+                        title: 'Creating DNS records',
+                        task: () => stuff({full_template:'hi', existing_resources:{"hi":"hello"}}).then(data => {
+                          ctx.full_template = data
+                      })
+                    }
+                  ]);
+                }
+              },
+            ], {concurrent: true});
+          })
+        }
+      ]);
+      await tasks.run().catch(err => console.log(err))
     }
   }
 }
