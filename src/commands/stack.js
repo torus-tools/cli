@@ -111,7 +111,6 @@ class StackCommand extends Command {
                   title: 'Updating Nameservers',
                   task: () => stuff(['1', '2']).then(data => {
                       ctx.nameservers = data
-                      //console.log(ctx.nameservers)
                   })
               },
               {
@@ -141,7 +140,7 @@ class StackCommand extends Command {
           })
         }
       ]);
-      await tasks.run().catch(err => console.log(err))
+      await tasks.run().then(data => console.log(data.nameservers)).catch(err => console.log(err))
     }
   }
 }
