@@ -81,7 +81,7 @@ class StackCommand extends Command {
 
     notifier.notify({
       title: 'Deployment Complete',
-      message: `Torus has finished deploying the website for ${domain}`
+      message: `Torus has finished deploying the website for ${args.domain}`
     })
 
     /* if(args.action === 'delete'){
