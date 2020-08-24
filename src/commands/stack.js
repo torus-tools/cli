@@ -40,7 +40,7 @@ const supported_providers = {
 class StackCommand extends Command {
   async run() {
     console.time('Time Elapsed')
-    cli.action.start('Setting Up')
+    cli.action.start('Setting Up', 'starting')
     for(let a in this.argv) if(this.argv[a].startsWith('-') && !this.argv[a].includes('=')) this.argv[a]+='=true'
 
     const {args, flags} = this.parse(StackCommand)
@@ -73,15 +73,17 @@ class StackCommand extends Command {
       }
     }
 
-    console.log(config)
-    console.log(stack)
+    //console.log(config)
+    //console.log(stack)
 
     cli.action.stop()
     console.timeEnd('Time Elapsed')
 
     notifier.notify({
       title: 'Deployment Complete',
-      message: `Torus has finished deploying the website for ${args.domain}`
+      message: `Torus has finished deploying the website for ${args.domain}`,
+      icon: path.join(__dirname, '../../img/arjan_deploy_logo.svg'), // Absolute path (doesn't work on balloons)
+      sound: true, // Only Notification Center or Windows Toasters
     })
 
     /* if(args.action === 'delete'){
