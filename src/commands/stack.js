@@ -4,31 +4,88 @@ const cloudformation = new AWS.CloudFormation({apiVersion: '2010-05-15'});
 const s3 = new AWS.S3({apiVersion: '2006-03-01'});
 const acm = new AWS.ACM({apiVersion: '2015-12-08'});
 const {Command, flags} = require('@oclif/command');
+
 const {cli} = require('cli-ux');
+
+const notifier = require('node-notifier')
+
 const Deploy = require('arjan-deploy');
 const Build = require('arjan-build')
 const fs = require('fs');
 const path = require("path");
 const open = require('open');
 
+
+const torus_config = {
+  index:"index.html",
+  error:"error.html",
+  last_deployment:"",
+  providers: {
+    domain: 'godaddy',
+    bucket: 'aws',
+    cdn: 'aws',
+    dns: 'aws',
+    https: 'aws'
+  }
+}
+
+const supported_providers = {
+  domain:['aws', 'godaddy'],
+  dns:['aws', 'godaddy'],
+  bucket: ['aws'],
+  cdn: ['aws'],
+  https: ['aws']
+}
+
 class StackCommand extends Command {
   async run() {
+    console.time('Time Elapsed')
+    cli.action.start('Setting Up')
+    for(let a in this.argv) if(this.argv[a].startsWith('-') && !this.argv[a].includes('=')) this.argv[a]+='=true'
+
     const {args, flags} = this.parse(StackCommand)
+    var stack = {}
+    var config = torus_config
+
     if(args.setup){
-      if(args.setup === 'dev') flags.bucket = true;
+      if(args.setup === 'dev') stack['bucket'] = true;
       else if(args.setup === 'test') {
-        flags.www = true;
-        flags.route53 = true;
+        stack['bucket'] = true;
+        stack['www'] = true;
+        stack['dns'] = true;
       }
       else if(args.setup === 'prod'){
-        flags.www = true;
-        flags.route53 = true;
-        flags.cdn = true;
-        flags.https = true;
+        stack['bucket'] = true;
+        stack['www'] = true;
+        stack['dns'] = true;
+        stack['cdn'] = true;
+        stack['https'] = true;
       }
     }
-    if(args.action === 'delete'){
-      //delete the stack
+
+    if(flags.index) config.index = flags.index
+    if(flags.error) config.error = flags.error
+
+    for(let f in flags) {
+      if(torus_config.providers[f]) {
+        stack[f] = true
+        if(supported_providers[f].includes(flags[f])) config.providers[f] = flags[f]
+      }
+    }
+
+    console.log(config)
+    console.log(stack)
+
+    cli.action.stop()
+    console.timeEnd('Time Elapsed')
+
+    notifier.notify({
+      title: 'Deployment Complete',
+      message: `Torus has finished deploying the website for ${domain}`
+    })
+
+    /* if(args.action === 'delete'){
+      // DELETE STACK
       console.log('Warning: this will delete all of the contnet, DNS records and resources associated to the stack for '+ args.domain)
       let answer = await cli.prompt(`Are you sure you want to delete the stack for ${args.domain}? enter the domain to confirm.`)
       if(answer === args.domain){
@@ -49,24 +106,69 @@ class StackCommand extends Command {
       }
     }
     else { 
-      // import/create/update the stack
-      cli.action.start('Setting up...')
-      await Build.createDir('arjan_config/changesets')
-      url = `http://${args.domain}.s3-website-${process.env.AWS_REGION}.amazonaws.com`;
-      
-      if(!flags.upload && stack.action === 'CREATE'){
-        let fakeIndex = `<!DOCTYPE html><html><body><h1>Hello World</h1></body></html>`;
-        let fakeError = `<!DOCTYPE html><html><body><h1>Error</h1></body></html>`;
-        let indexParams = {Bucket: args.domain, Key: 'index.html', Body: fakeIndex, ContentType: 'text/html'};
-        let errorParams = {Bucket: args.domain, Key: 'error.html', Body: fakeError, ContentType: 'text/html'};
-        s3.putObject(errorParams).promise().catch(err => console.log(err))
-        s3.putObject(indexParams).promise().then(()=> {
-          cli.action.stop()
-          upload = true
-          if(url) open(url)
-        }).catch(err => console.log(err))   
+      // CREATE/UPDATE/IMPORT STACK
+      console.log('Setting up . . .')
+      const start_time = new Date().getTime()
+      var end_time = start_time
+      var time_elapsed = 0
+
+      let template = null
+      let partialStack = {
+        bucket: false,
+        www: false,
+        dns: false
       }
-    }
+      let stackId = await stackExists.aws(domain)
+      let templateString = ''
+      if(stackId) {
+        let temp = await cloudformation.getTemplate({StackName: stackId}).promise().catch(err => console.log(err))
+        templateString = temp.TemplateBody
+        template = JSON.parse(templateString)
+      }
+      for(let key in partialStack) if(stack[key]) partialStack[key] = true
+      
+      console.log('finished setting up')
+      console.log('generating templates . . .')
+
+      const partTemplate = await generateTemplate(domain, partialStack, config, template, overwrite).catch(err => {throw new Error(err)})
+      const partialTemplate = JSON.parse(JSON.stringify(partTemplate))
+      const fullTemplate = await generateTemplate(domain, stack, config, template, overwrite).catch(err => {throw new Error(err)})
+      if(partialTemplate && fullTemplate) console.log('finished generating templates')
+      //console.log(JSON.stringify(partialTemplate))
+      //console.log(JSON.stringify(fullTemplate))
+
+      if(stackId && JSON.stringify(fullTemplate.template) === templateString) return('no changes detected')
+      else {
+        //import then update or create
+        if(fullTemplate.existingResources.length > 1){
+          console.log('importing existing resources . . .')
+          let importsTemplate = initialTemplate
+          for(elem of fullTemplate.existingResources) importsTemplate.Resources[elem['LogicalResourceId']] = fullTemplate.template.Resources[elem['LogicalResourceId']]
+          deployTemplate(domain, importsTemplate, fullTemplate.existingResources, true)
+          //wait for stackImport complete
+          .then(()=> {
+            console.log('finished importing resources')
+            deployParts(domain, stack, config, partialTemplate, partialStack, fullTemplate, importsTemplate, content)
+            .then(data => {
+              end_time = new Date().getTime()
+              time_elapsed = (end_time - start_time)/1000
+              console.log('Time Elapsed: ', time_elapsed)
+              return data
+            }).catch(err=> {throw new Error(err)})
+          }).catch(err=> {throw new Error(err)})
+        }
+        //update or create
+        else{
+          deployParts(domain, stack, config, partialTemplate, partialStack, fullTemplate, template, content)
+          .then(data => {
+            end_time = new Date().getTime()
+            time_elapsed = (end_time - start_time)/1000
+            console.log('Time Elapsed: ', time_elapsed)
+            return data
+          }).catch(err=> {throw new Error(err)})
+        } 
+      }
+    } */
   }
 }
 
@@ -96,35 +198,41 @@ StackCommand.args = [
 ]
 
 StackCommand.flags = {
-  www: flags.boolean({
-    char: 'w',                    
-    description: 'creates a www s3 bucket that reroutes requests to the index.',        
+  bucket: flags.string({
+    char: 'b',                    
+    description: 'creates an s3 bucket with a public policy',        
   }),
-  route53: flags.boolean({
-    char: 'r',                    
+  www: flags.string({
+    char: 'w',                    
+    description: 'creates an s3 bucket with a public policy',        
+  }),
+  domain: flags.string({                  
+    description: 'change the default domain name registrar being used',        
+  }),
+  dns: flags.string({
+    char: 'd',                    
     description: 'creates a Hosted Zone in route 53. Have your current DNS provider page open and ready to add a custom DNS.',        
   }),
-  cdn: flags.boolean({
+  cdn: flags.string({
     char: 'c',                    
     description: 'creates a CloudFront distribution for your site.',        
   }),
-  https: flags.boolean({
+  https: flags.string({
     char: 'h',                    
     description: 'creates and validates a TLS certificate for your site. If you arent using a route53 DNS you must create a CNAME record manually in your DNS.',        
   }),
   index: flags.string({
     char: 'i',
     description: 'name of the index document. default is index.html',
-    default: 'index.html', 
   }),
   error: flags.string({
     char: 'e',
     description: 'name of the error document',
-    default: 'error.html', 
   }),
-  upload: flags.string({
+  upload: flags.boolean({
     char: 'u',
-    description: 'name of a specific file or directory to add to your site. To add all files/dirs from your root use / or *'
+    description: 'upload directory content into the site',
+    default: true
   })
 }
 
