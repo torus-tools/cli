@@ -37,10 +37,11 @@ const supported_providers = {
   https: ['aws']
 }
 
+
 class StackCommand extends Command {
   async run() {
     console.time('Time Elapsed')
-    cli.action.start('Setting Up', 'starting')
+    cli.action.start('Setting Up')
     for(let a in this.argv) if(this.argv[a].startsWith('-') && !this.argv[a].includes('=')) this.argv[a]+='=true'
 
     const {args, flags} = this.parse(StackCommand)
@@ -73,29 +74,23 @@ class StackCommand extends Command {
       }
     }
 
-    //console.log(config)
-    //console.log(stack)
+    console.log(config)
+    console.log(stack)
 
-    cli.action.stop()
-    console.timeEnd('Time Elapsed')
+    if(args.action === 'delete'){
 
-    notifier.notify({
-      title: 'Deployment Complete',
-      message: `Torus has finished deploying the website for ${args.domain}`,
-      icon: path.join(__dirname, '../../img/arjan_deploy_logo.svg'), // Absolute path (doesn't work on balloons)
-      sound: true, // Only Notification Center or Windows Toasters
-    })
-
-    /* if(args.action === 'delete'){
       // DELETE STACK
-      console.log('Warning: this will delete all of the contnet, DNS records and resources associated to the stack for '+ args.domain)
-      let answer = await cli.prompt(`Are you sure you want to delete the stack for ${args.domain}? enter the domain to confirm.`)
+      cli.action.stop()
+      this.warn('Warning: this will delete all of the contnet, DNS records and resources associated to the stack for '+ args.domain)
+      let answer = await cli.prompt(`To proceed please enter the domain name ${args.domain}`)
       if(answer === args.domain){
         cli.action.start(`Deleting content stored in the ${args.domain} bucket`)
+        
         //delete records then set records to true. if content true delete stack
         //delete content then set content to true. if records is true delete stack
 
         Deploy.deleteObjects(args.domain).then(()=>{
+          //if deleteobjects is true delete the stack
           cli.action.stop()
           let stackName = args.domain.split('.').join('') + 'Stack';
           cli.action.start(`Deleting ${stackName}`)
@@ -106,14 +101,11 @@ class StackCommand extends Command {
           }).catch(err => console.log(err))
         }).catch(err => console.log(err))
       }
+
     }
     else { 
-      // CREATE/UPDATE/IMPORT STACK
-      console.log('Setting up . . .')
-      const start_time = new Date().getTime()
-      var end_time = start_time
-      var time_elapsed = 0
 
+      // CREATE/UPDATE/IMPORT STACK
       let template = null
       let partialStack = {
         bucket: false,
@@ -129,48 +121,58 @@ class StackCommand extends Command {
       }
       for(let key in partialStack) if(stack[key]) partialStack[key] = true
       
-      console.log('finished setting up')
-      console.log('generating templates . . .')
+      cli.action.stop()
+      cli.action.start('Generating templates')
 
       const partTemplate = await generateTemplate(domain, partialStack, config, template, overwrite).catch(err => {throw new Error(err)})
       const partialTemplate = JSON.parse(JSON.stringify(partTemplate))
       const fullTemplate = await generateTemplate(domain, stack, config, template, overwrite).catch(err => {throw new Error(err)})
-      if(partialTemplate && fullTemplate) console.log('finished generating templates')
+      if(partialTemplate && fullTemplate) cli.action.stop()
+
       //console.log(JSON.stringify(partialTemplate))
       //console.log(JSON.stringify(fullTemplate))
 
-      if(stackId && JSON.stringify(fullTemplate.template) === templateString) return('no changes detected')
+      if(stackId && JSON.stringify(fullTemplate.template) === templateString) {
+        this.warn('No changes detected')
+        this.exit()
+      }
       else {
         //import then update or create
         if(fullTemplate.existingResources.length > 1){
-          console.log('importing existing resources . . .')
+          cli.action.start('Importing existing resources')
           let importsTemplate = initialTemplate
           for(elem of fullTemplate.existingResources) importsTemplate.Resources[elem['LogicalResourceId']] = fullTemplate.template.Resources[elem['LogicalResourceId']]
           deployTemplate(domain, importsTemplate, fullTemplate.existingResources, true)
-          //wait for stackImport complete
           .then(()=> {
-            console.log('finished importing resources')
-            deployParts(domain, stack, config, partialTemplate, partialStack, fullTemplate, importsTemplate, content)
+            cli.action.stop()
+            deployParts(domain, stack, config, partialTemplate, partialStack, fullTemplate, importsTemplate, content, cli)
             .then(data => {
-              end_time = new Date().getTime()
-              time_elapsed = (end_time - start_time)/1000
-              console.log('Time Elapsed: ', time_elapsed)
-              return data
-            }).catch(err=> {throw new Error(err)})
-          }).catch(err=> {throw new Error(err)})
+              console.timeEnd('Time Elapsed')
+              notifier.notify({
+                title: 'Deployment Complete',
+                message: `Torus has finished deploying the website for ${args.domain}`,
+                icon: path.join(__dirname, '../../img/arjan_deploy_logo.svg'), // Absolute path (doesn't work on balloons)
+                sound: true, // Only Notification Center or Windows Toasters
+              })
+            }).catch(err=> this.error(new Error(err)))
+          }).catch(err=> this.error(new Error(err)))
         }
         //update or create
         else{
           deployParts(domain, stack, config, partialTemplate, partialStack, fullTemplate, template, content)
           .then(data => {
-            end_time = new Date().getTime()
-            time_elapsed = (end_time - start_time)/1000
-            console.log('Time Elapsed: ', time_elapsed)
-            return data
-          }).catch(err=> {throw new Error(err)})
+            console.timeEnd('Time Elapsed')
+            notifier.notify({
+              title: 'Deployment Complete',
+              message: `Torus has finished deploying the website for ${args.domain}`,
+              icon: path.join(__dirname, '../../img/arjan_deploy_logo.svg'), // Absolute path (doesn't work on balloons)
+              sound: true, // Only Notification Center or Windows Toasters
+            })
+          }).catch(err=> this.error(new Error(err)))
         } 
       }
-    } */
+    }
+
   }
 }
 
