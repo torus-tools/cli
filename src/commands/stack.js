@@ -1,3 +1,6 @@
+//const globalEnv = readEnv()
+//initEnv(globalEnv)
+
 require('dotenv').config()
 const AWS = require('aws-sdk');
 const cloudformation = new AWS.CloudFormation({apiVersion: '2010-05-15'});
@@ -14,6 +17,7 @@ const Build = require('arjan-build')
 const fs = require('fs');
 const path = require("path");
 const open = require('open');
+const deleteObjects = require('arjan-deploy/lib/deleteObjects');
 
 
 const torus_config = {
@@ -37,17 +41,34 @@ const supported_providers = {
   https: ['aws']
 }
 
+function deleteObjectsAndRecords(cli){
+  return new Promise((resolve, reject) => {
+    let done = false
+    cli.action.start('deleting objects')
+    deleteAllRecords.then(()=>{
+      if(done) {
+        cli.action.stop()
+        resolve('All Done!')
+      }
+      else done=true
+    }).catch(err=>reject(err))
+    deleteObjects(cli).then(()=>{
+      if(done) resolve('All Done!')
+      else done=true
+    }).catch(err=>reject(err))
+  })
+}
+
 
 class StackCommand extends Command {
   async run() {
     console.time('Time Elapsed')
     cli.action.start('Setting Up')
     for(let a in this.argv) if(this.argv[a].startsWith('-') && !this.argv[a].includes('=')) this.argv[a]+='=true'
-
     const {args, flags} = this.parse(StackCommand)
     var stack = {}
+    //torus config should read from the file at torus/config.json. if the file doesnt exist it should create the file by reading from globalConfig and building it
     var config = torus_config
-
     if(args.setup){
       if(args.setup === 'dev') stack['bucket'] = true;
       else if(args.setup === 'test') {
@@ -78,30 +99,21 @@ class StackCommand extends Command {
     console.log(stack)
 
     if(args.action === 'delete'){
-
       // DELETE STACK
       cli.action.stop()
       this.warn('Warning: this will delete all of the contnet, DNS records and resources associated to the stack for '+ args.domain)
       let answer = await cli.prompt(`To proceed please enter the domain name ${args.domain}`)
       if(answer === args.domain){
-        cli.action.start(`Deleting content stored in the ${args.domain} bucket`)
-        
-        //delete records then set records to true. if content true delete stack
-        //delete content then set content to true. if records is true delete stack
-
-        Deploy.deleteObjects(args.domain).then(()=>{
-          //if deleteobjects is true delete the stack
-          cli.action.stop()
+        deleteObjectsAndRecords(cli).then(() => {
           let stackName = args.domain.split('.').join('') + 'Stack';
           cli.action.start(`Deleting ${stackName}`)
-          cloudformation.deleteStack({StackName: stackName}).promise()
-          .then(()=> {
+          cloudformation.deleteStack({StackName: stackName}).promise().then(()=> {
             cli.action.stop('Success')
             console.log('Your cloudformation stack is being deleted')
           }).catch(err => console.log(err))
         }).catch(err => console.log(err))
       }
-
+      else this.exit()
     }
     else { 
 
@@ -159,7 +171,7 @@ class StackCommand extends Command {
         }
         //update or create
         else{
-          deployParts(domain, stack, config, partialTemplate, partialStack, fullTemplate, template, content)
+          deployParts(domain, stack, config, partialTemplate, partialStack, fullTemplate, template, content, cli)
           .then(data => {
             console.timeEnd('Time Elapsed')
             notifier.notify({
