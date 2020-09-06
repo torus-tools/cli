@@ -81,7 +81,7 @@
     "prepack": "oclif-dev manifest && oclif-dev readme",
     "test": "nyc mocha --forbid-only \"test/**/*.test.js\"",
     "version": "oclif-dev readme && git add README.md",
-    "start:dev": "webpack-dev-server --config webpack.dev.js --mode development --open",
+    "start:dev": "webpack-dev-server --config src/webpack_config/webpack.dev.js --mode development --open --host 0.0.0.0 --port 3000",
     "build": "webpack --config webpack.prod.js --mode production"
   }
 }
