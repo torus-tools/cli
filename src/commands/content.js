@@ -7,6 +7,7 @@ const path = require("path");
 const Content = require('@torus-tools/content');
 const { getFiles } = require('@torus-tools/content/lib/storage/upload');
 const Report = require('../report')
+const colors = require('colors')
 
 /* var ignorePaths = fs.existsSync('./arjan_config/arjan_ignore.json')?JSON.parse(fs.readFileSync('./arjan_config/arjan_ignore.json')):{};
 
@@ -48,11 +49,11 @@ class ContentCommand extends Command {
     if(!flags.domain) flags.domain = fs.existsSync('./torus/config.json')? JSON.parse(fs.readFileSync('./torus/config.json'))['domain']: this.error('Please use the -d flag and provide a valid domain for your site. -d=yoursite.com')
     let filesArr = []
     for(let a=1; a<this.argv.length; a++) if(!this.argv[a].startsWith('-')) filesArr.push(this.argv[a]) 
-    const files = filesArr.length>0? filesArr: null
+    var files = filesArr.length>0? filesArr: null
     const customBar = cli.progress({
-      format: 'PROGRESS | {bar} | {value}/{total} Files',
       barCompleteChar: '\u2588',
       barIncompleteChar: '\u2591',
+      format: 'Downloading | '+colors.green('{bar}')+' | Files: {value}/{total} | ETA: {eta}s'
     })
     if(args.action === 'list') {
       let data = await Content.listContent(flags.domain).catch(err=>this.error(err))
@@ -64,24 +65,21 @@ class ContentCommand extends Command {
       this.log(body)
     }
     else if(args.action === 'download') {
-      this.log(`Downloading files from ${flags.domain} into ${flags.output}`)
       await Content.downloadContent(flags.domain, flags.output, files, customBar)
     }
-    /*
-    else if(action === 'upload'){
-      cli.action.start('uploading files')
-      //if(!files) files = await getFiles
-      //await uploadFile(args.domain, files, flags.dir)
-      cli.action.stop()
-    }
-    else if(action === 'delete'){
-      let answer = await cli.prompt(`Are you sure you want to delete ${args.files?files.join(', '):'all the files'} in ${args.domain}`)
-      cli.action.start('Deleting files')
+    else if(args.action === 'delete'){
+      let answer = await cli.prompt(`Are you sure you want to delete ${args.files?files.join(', '):'all the files'} in the ${flags.domain} bucket`)
       if(answer === 'y' || answer === 'Y' || answer === 'yes'|| answer === 'Yes'){
-        await Content.deleteContent(args.domain, files)
-        .then(() => cli.action.stop()).catch(err => console.log(err))
+        cli.action.start('Deleting files')
+        await Content.deleteContent(flags.domain, files).catch(err => this.error(err))
+        cli.action.stop()
       }
-    } */
+      else this.exit()
+    }
+    else if(args.action === 'upload'){
+      if(!files) files = await Content.listFiles()
+      await Content.uploadContent(flags.domain, files, flags.reset, !flags.all, flags.input, cli)
+    }
   }
 }
 
@@ -98,7 +96,7 @@ ContentCommand.flags = {
   input: flags.string({
     char: 'i',                    
     description: 'Path of the root directory of your project (if different to the current working driectory).',
-    default: './'      
+    default: null      
   }), 
   output: flags.string({
     char: 'o',                    
