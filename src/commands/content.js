@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require("path");
 const Content = require('@torus-tools/content');
 const { getFiles } = require('@torus-tools/content/lib/storage/upload');
+const Report = require('../report')
 
 /* var ignorePaths = fs.existsSync('./arjan_config/arjan_ignore.json')?JSON.parse(fs.readFileSync('./arjan_config/arjan_ignore.json')):{};
 
@@ -31,11 +32,6 @@ class ContentCommand extends Command {
   static strict = false
   static args = [
     {
-      name: 'domain',
-      description: 'root domain of your site',
-      required: true
-    },
-    {
       name: 'action',
       description: 'given action to carry out with the content of your site',
       options: ['list', 'download', 'upload', 'delete'],
@@ -48,13 +44,22 @@ class ContentCommand extends Command {
   ]
   async run() {
     await createFile('.torusignore', '').catch(err=>{throw new Error(err)})
-    const {flags} = this.parse(ContentCommand)
+    const {args, flags} = this.parse(ContentCommand)
+    if(!flags.domain) flags.domain = fs.existsSync('./torus/config.json')? JSON.parse(fs.readFileSync('./torus/config.json'))['domain']: this.error('Please use the -d flag and provide a valid domain for your site. -d=yoursite.com')
     let filesArr = []
-    for(let a=2; a<this.argv.length; a++) if(!this.argv[a].startsWith('-')) filesArr.push(this.argv[a]) 
+    for(let a=1; a<this.argv.length; a++) if(!this.argv[a].startsWith('-')) filesArr.push(this.argv[a]) 
     const files = filesArr.length>0? filesArr: null
-    console.log(filesArr, flags)
-    /* if(action === 'list') await Content.listContent(args.domain)
-    else if(action === 'download') await Content.downloadContent(args.domain, flags.output, files, cli)
+    if(args.action === 'list') {
+      let data = await Content.listContent(flags.domain).catch(err=>this.error(err))
+      var contents = flags.sort ? data.Contents.sort((a, b) => b.LastModified - a.LastModified) : data.Contents
+      let space = 70
+      let body = Report.sepparator(space) + Report.getHeading('Bucket Contents', space) + Report.sepparator(space) + Report.blankLine(space) + Report.getReportItem(true, space, 'KEY', 'LAST MODIFIED', ' ')
+      for(let obj of contents) body+=Report.getReportItem(false, space, obj.Key, obj.LastModified.toLocaleDateString('en-US')+' '+obj.LastModified.toLocaleTimeString('en-US'), '.')
+      body+=Report.blankLine(space)+Report.sepparator(space)
+      this.log(body)
+    }
+    else if(args.action === 'download') await Content.downloadContent(flags.domain, flags.output, files, cli)
+    /*
     else if(action === 'upload'){
       cli.action.start('uploading files')
       //if(!files) files = await getFiles
@@ -78,6 +83,10 @@ By default only modified files are uploaded; to upload all files provide the --a
 `
 
 ContentCommand.flags = {
+  domain: flags.string({
+    char: 'd',                    
+    description: 'Root domain of your site (i.e. yoursite.com).',      
+  }),
   input: flags.string({
     char: 'i',                    
     description: 'Path of the root directory of your project (if different to the current working driectory).',
@@ -96,6 +105,10 @@ ContentCommand.flags = {
     char: 'r',                    
     description: 'Reset the cache in all edge locations for the given files.',
   }),  
+  sort: flags.boolean({
+    char: 's',                    
+    description: 'Sorts listed files by last modified date.',
+  }), 
 }
 
 module.exports = ContentCommand
