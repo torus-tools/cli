@@ -49,6 +49,11 @@ class ContentCommand extends Command {
     let filesArr = []
     for(let a=1; a<this.argv.length; a++) if(!this.argv[a].startsWith('-')) filesArr.push(this.argv[a]) 
     const files = filesArr.length>0? filesArr: null
+    const customBar = cli.progress({
+      format: 'PROGRESS | {bar} | {value}/{total} Files',
+      barCompleteChar: '\u2588',
+      barIncompleteChar: '\u2591',
+    })
     if(args.action === 'list') {
       let data = await Content.listContent(flags.domain).catch(err=>this.error(err))
       var contents = flags.sort ? data.Contents.sort((a, b) => b.LastModified - a.LastModified) : data.Contents
@@ -58,7 +63,10 @@ class ContentCommand extends Command {
       body+=Report.blankLine(space)+Report.sepparator(space)
       this.log(body)
     }
-    else if(args.action === 'download') await Content.downloadContent(flags.domain, flags.output, files, cli)
+    else if(args.action === 'download') {
+      this.log(`Downloading files from ${flags.domain} into ${flags.output}`)
+      await Content.downloadContent(flags.domain, flags.output, files, customBar)
+    }
     /*
     else if(action === 'upload'){
       cli.action.start('uploading files')
