@@ -12,6 +12,7 @@
     "@oclif/config": "^1.15.1",
     "@oclif/plugin-help": "^3.0.0",
     "@torus-tools/content": "0.0.1",
+    "@torus-tools/domains": "0.0.13",
     "@torus-tools/stack": "0.0.1",
     "cli-ux": "^5.4.6",
     "dotenv": "^8.2.0",

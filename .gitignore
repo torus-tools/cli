@@ -13,3 +13,5 @@ arjan_config/
 node_modules/.cache/
 lib/
 *.html
+torus/
+.torusignore

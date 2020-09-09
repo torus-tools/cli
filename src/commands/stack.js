@@ -4,13 +4,15 @@ require('dotenv').config()
 const {Command, flags} = require('@oclif/command');
 const AWS = require('aws-sdk');
 const cloudformation = new AWS.CloudFormation({apiVersion: '2010-05-15'});
-const {cli} = require('cli-ux');
+const {cli, config} = require('cli-ux');
 const notifier = require('node-notifier')
 const path = require('path');
 const open = require('open');
-const deleteObjects = require('arjan-deploy/lib/deleteObjects');
+const {deleteContent} = require('@torus-tools/content');
+const domains = require('@torus-tools/domains')
 const Stack = require('@torus-tools/stack');
 const fs = require('fs');
+const colors = require('colors')
 
 const torus_config = {
   domain:'loclaizehtml.com',
@@ -34,28 +36,28 @@ const supported_providers = {
   https: ['aws']
 }
 
-function deleteObjectsAndRecords(cli){
+function deleteObjectsAndRecords(domain, config, cli){
   return new Promise((resolve, reject) => {
     let done = false
-    cli.action.start('deleting objects')
-    deleteAllRecords.then(()=>{
-      if(done) {
-        cli.action.stop()
-        resolve('All Done!')
-      }
+    cli.action.start('Deleting content')
+    deleteContent(domain).then(()=>{
+      cli.action.stop()
+      if(done) resolve('All Done!')
       else done=true
     }).catch(err=>reject(err))
-    deleteObjects(cli).then(()=>{
-      if(done) {
+    if(config.providers.dns === 'aws'){
+      cli.action.start('Deleting resource records')
+      domains.aws.deleteAllRecords(domain).then(()=>{
         cli.action.stop()
-        resolve('All Done!')
-      }
-      else done=true
-    }).catch(err=>reject(err))
+        if(done) resolve('All Done!')
+        else done=true
+      }).catch(err=>reject(err))
+    }
+    else done=true
   })
 }
 
-function DeployParts(domain, stack, config, partialTemplate, partialStack, fullTemplate, importsTemplate, content, cli){
+/* function DeployParts(domain, stack, config, partialTemplate, partialStack, fullTemplate, importsTemplate, content, cli){
   deployParts(domain, stack, config, partialTemplate, partialStack, fullTemplate, importsTemplate, content, cli)
   .then(data => {
     console.timeEnd('Time Elapsed')
@@ -66,7 +68,7 @@ function DeployParts(domain, stack, config, partialTemplate, partialStack, fullT
       sound: true, // Only Notification Center or Windows Toasters
     })
   }).catch(err=> this.error(new Error(err)))
-}
+} */
 
 
 class StackCommand extends Command {
@@ -76,6 +78,7 @@ class StackCommand extends Command {
     for(let a in this.argv) if(this.argv[a].startsWith('-') && !this.argv[a].includes('=')) this.argv[a]+='=true'
     const {args, flags} = this.parse(StackCommand)
     var stack = {}
+    let stackName = args.domain.split('.').join('') + 'Stack'
     //torus config should read from the file at torus/config.json. if the file doesnt exist it should create the file by reading from globalConfig and building it
     var config = torus_config
     if(args.setup){
@@ -102,32 +105,29 @@ class StackCommand extends Command {
       }
     }
     cli.action.stop()
-
     if(args.action === 'pull'){
       cli.action.start('Updating torus/template.json')
-      let stackName = args.domain.split('.').join('') + 'Stack'
       let template = await cloudformation.getTemplate({StackName: stackName}).promise().catch(()=>this.err(err))
       if(template) await fs.promises.writeFile('./torus/template.json', template.TemplateBody, 'utf8').catch(err=>this.error(err))
       cli.action.stop()
     }
-
-    /* if(args.action === 'delete'){
-      // DELETE STACK
+    else if(args.action === 'delete'){
       cli.action.stop()
-      this.warn('Warning: this will delete all of the contnet, DNS records and resources associated to the stack for '+ args.domain)
-      let answer = await cli.prompt(`To proceed please enter the domain name ${args.domain}`)
+      this.warn(colors.yellow('This will delete all of the contnet, DNS records and resources associated to the stack for '+ args.domain))
+      let answer = await cli.prompt(`To proceed please enter the domain name ${args.domain}`.red)
       if(answer === args.domain){
-        deleteObjectsAndRecords(cli).then(() => {
-          let stackName = args.domain.split('.').join('') + 'Stack';
+        deleteObjectsAndRecords(args.domain, config, cli).then(() => {
           cli.action.start(`Deleting ${stackName}`)
           cloudformation.deleteStack({StackName: stackName}).promise().then(()=> {
-            cli.action.stop('Success')
-            console.log('Your cloudformation stack is being deleted')
-          }).catch(err => console.log(err))
-        }).catch(err => console.log(err))
+            cli.action.stop()
+            this.log(colors.cyan('Stack deletion initiated'))
+          }).catch(err => this.error(err))
+        }).catch(err => this.error(err))
       }
       else this.exit()
     }
+
+    /*
     else { 
 
       // CREATE/UPDATE/IMPORT STACK
@@ -218,7 +218,8 @@ StackCommand.flags = {
     description: 'creates an s3 bucket with a public policy',        
   }),
   domain: flags.string({                  
-    description: 'change the default domain name registrar being used',        
+    description: 'change the domain name registrar being used',
+    char: 'r'        
   }),
   dns: flags.string({
     char: 'd',                    
