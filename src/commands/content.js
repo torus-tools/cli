@@ -77,7 +77,7 @@ class ContentCommand extends Command {
       else this.exit()
     }
     else if(args.action === 'upload'){
-      if(!files) files = await Content.listFiles()
+      if(!files) files = await Content.listFiles(null, flags.input)
       await Content.uploadContent(flags.domain, files, flags.reset, !flags.all, flags.input, cli)
     }
   }
@@ -95,8 +95,7 @@ ContentCommand.flags = {
   }),
   input: flags.string({
     char: 'i',                    
-    description: 'Path of the root directory of your project (if different to the current working driectory).',
-    default: null      
+    description: 'Path of the root directory of your project (if different to the current working driectory).'    
   }), 
   output: flags.string({
     char: 'o',                    
