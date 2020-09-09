@@ -9,8 +9,11 @@ const notifier = require('node-notifier')
 const path = require('path');
 const open = require('open');
 const deleteObjects = require('arjan-deploy/lib/deleteObjects');
+const Stack = require('@torus-tools/stack');
+const fs = require('fs');
 
 const torus_config = {
+  domain:'loclaizehtml.com',
   index:'index.html',
   error:'error.html',
   last_deployment:'',
@@ -24,7 +27,7 @@ const torus_config = {
 }
 
 const supported_providers = {
-  domain:['aws', 'godaddy'],
+  domain:['aws', 'godaddy', 'other'],
   dns:['aws', 'godaddy'],
   bucket: ['aws'],
   cdn: ['aws'],
@@ -98,10 +101,17 @@ class StackCommand extends Command {
         if(supported_providers[f].includes(flags[f])) config.providers[f] = flags[f]
       }
     }
-    console.log(config)
-    console.log(stack)
+    cli.action.stop()
 
-    if(args.action === 'delete'){
+    if(args.action === 'pull'){
+      cli.action.start('Updating torus/template.json')
+      let stackName = args.domain.split('.').join('') + 'Stack'
+      let template = await cloudformation.getTemplate({StackName: stackName}).promise().catch(()=>this.err(err))
+      if(template) await fs.promises.writeFile('./torus/template.json', template.TemplateBody, 'utf8').catch(err=>this.error(err))
+      cli.action.stop()
+    }
+
+    /* if(args.action === 'delete'){
       // DELETE STACK
       cli.action.stop()
       this.warn('Warning: this will delete all of the contnet, DNS records and resources associated to the stack for '+ args.domain)
@@ -168,7 +178,7 @@ class StackCommand extends Command {
           DeployParts(domain, stack, config, partialTemplate, partialStack, fullTemplate, template, content, cli)
         } 
       }
-    }
+    } */
 
   }
 }
@@ -179,15 +189,15 @@ Deploy static sites to the AWS Cloud using Cloudformation templates.
 `
 StackCommand.args = [
   {
-    name: 'domain',
-    required: true,
-    description: 'name of the site i.e. yoursite.com'
-  },
-  {
     name: 'action',
     required: true,
     description: 'choose an action to perform. you can create, update, import your stack or upload files to your bucket.',
-    options: ['create', 'update', 'import', 'delete']
+    options: ['create', 'update', 'import', 'delete', 'pull']
+  },
+  {
+    name: 'domain',
+    required: true,
+    description: 'name of the site i.e. yoursite.com'
   },
   {
     name: 'setup',
