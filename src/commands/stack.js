@@ -20,7 +20,7 @@ const torus_config = {
   error:'error.html',
   last_deployment:'',
   providers: {
-    domain: 'godaddy',
+    domain: 'other',
     bucket: 'aws',
     cdn: 'aws',
     dns: 'aws',
@@ -74,27 +74,24 @@ function deleteObjectsAndRecords(domain, config, cli){
 class StackCommand extends Command {
   async run() {
     console.time('Time Elapsed')
-    cli.action.start('Setting Up')
     for(let a in this.argv) if(this.argv[a].startsWith('-') && !this.argv[a].includes('=')) this.argv[a]+='=true'
     const {args, flags} = this.parse(StackCommand)
     var stack = {}
     let stackName = args.domain.split('.').join('') + 'Stack'
     //torus config should read from the file at torus/config.json. if the file doesnt exist it should create the file by reading from globalConfig and building it
     var config = torus_config
-    if(args.setup){
-      if(args.setup === 'dev') stack['bucket'] = true;
-      else if(args.setup === 'test') {
-        stack['bucket'] = true;
-        stack['www'] = true;
-        stack['dns'] = true;
-      }
-      else if(args.setup === 'prod'){
-        stack['bucket'] = true;
-        stack['www'] = true;
-        stack['dns'] = true;
-        stack['cdn'] = true;
-        stack['https'] = true;
-      }
+    if(args.setup === 'dev') stack['bucket'] = true;
+    else if(args.setup === 'test') {
+      stack['bucket'] = true;
+      stack['www'] = true;
+      stack['dns'] = true;
+    }
+    else if(args.setup === 'prod'){
+      stack['bucket'] = true;
+      stack['www'] = true;
+      stack['dns'] = true;
+      stack['cdn'] = true;
+      stack['https'] = true;
     }
     if(flags.index) config.index = flags.index
     if(flags.error) config.error = flags.error
@@ -104,7 +101,6 @@ class StackCommand extends Command {
         if(supported_providers[f].includes(flags[f])) config.providers[f] = flags[f]
       }
     }
-    cli.action.stop()
     if(args.action === 'pull'){
       cli.action.start('Updating torus/template.json')
       let template = await cloudformation.getTemplate({StackName: stackName}).promise().catch(()=>this.err(err))
@@ -126,18 +122,17 @@ class StackCommand extends Command {
       }
       else this.exit()
     }
-
-    /*
-    else { 
-
-      // CREATE/UPDATE/IMPORT STACK
+    else {
+      // CREATE/UPDATE/IMPORT STACKS
+      console.time('Elapsed Time')
+      cli.action.start('setting up')
       let template = null
       let partialStack = {
         bucket: false,
         www: false,
         dns: false
       }
-      let stackId = await stackExists.aws(domain)
+      let stackId = await Stack.stackExists(args.domain)
       let templateString = ''
       if(stackId) {
         let temp = await cloudformation.getTemplate({StackName: stackId}).promise().catch(err => console.log(err))
@@ -145,41 +140,33 @@ class StackCommand extends Command {
         template = JSON.parse(templateString)
       }
       for(let key in partialStack) if(stack[key]) partialStack[key] = true
-      
       cli.action.stop()
-      cli.action.start('Generating templates')
-
-      const partTemplate = await generateTemplate(domain, partialStack, config, template, overwrite).catch(err => {throw new Error(err)})
-      const partialTemplate = JSON.parse(JSON.stringify(partTemplate))
-      const fullTemplate = await generateTemplate(domain, stack, config, template, overwrite).catch(err => {throw new Error(err)})
-      if(partialTemplate && fullTemplate) cli.action.stop()
-
-      //console.log(JSON.stringify(partialTemplate))
-      //console.log(JSON.stringify(fullTemplate))
-
-      if(stackId && JSON.stringify(fullTemplate.template) === templateString) {
-        this.warn('No changes detected')
-        this.exit()
-      }
+      cli.action.start('generating templates')
+      let partialRecords = stack.cdn? false : true
+      var partTemplate = args.action==='push'? JSON.parse(fs.readFileSync('./torus/template.json', utf8)): await Stack.generateTemplate(args.domain, partialStack, config, template, partialRecords, flags.overwrite).catch(err => {throw new Error(err)})
+      var partialTemplate = JSON.parse(JSON.stringify(partTemplate))
+      var fullTemplate = args.action==='push'? partialTemplate : await Stack.generateTemplate(args.domain, stack, config, template, true, flags.overwrite).catch(err => {throw new Error(err)})
+      cli.action.stop()
+      if(stackId && JSON.stringify(fullTemplate.template) === templateString) this.error('No changes detected')
       else {
-        //import then update or create
-        if(fullTemplate.existingResources.length > 1){
-          cli.action.start('Importing existing resources')
-          let importsTemplate = initialTemplate
-          for(elem of fullTemplate.existingResources) importsTemplate.Resources[elem['LogicalResourceId']] = fullTemplate.template.Resources[elem['LogicalResourceId']]
-          deployTemplate(domain, importsTemplate, fullTemplate.existingResources, true)
-          .then(()=> {
-            cli.action.stop()
-            DeployParts(domain, stack, config, partialTemplate, partialStack, fullTemplate, importsTemplate, content, cli)
-          }).catch(err=> this.error(new Error(err)))
+        let impo = null
+        if(!stackId && fullTemplate.existingResources.length > 0){
+          cli.action.start('importing resources')
+          impo = await Stack.deployTemplate(args.domain, fullTemplate, true)
+          cli.action.stop()
         }
-        //update or create
-        else{
-          DeployParts(domain, stack, config, partialTemplate, partialStack, fullTemplate, template, content, cli)
-        } 
+        let parts = await Stack.deployParts(args.domain, stack, config, partialTemplate, partialStack, fullTemplate, impo?impo.template:template, flags.publish, cli)
+        if(parts){
+          console.timeEnd('Elapsed Time')
+          notifier.notify({
+            title: 'Deployment Complete',
+            message: `Torus has finished deploying the stack for ${args.domain}`,
+            icon: path.join(__dirname, '../../img/arjan_deploy_logo.svg'), // Absolute path (doesn't work on balloons)
+            sound: true, // Only Notification Center or Windows Toasters
+          })
+        }
       }
-    } */
-
+    }
   }
 }
 
@@ -192,7 +179,7 @@ StackCommand.args = [
     name: 'action',
     required: true,
     description: 'choose an action to perform. you can create, update, import your stack or upload files to your bucket.',
-    options: ['create', 'update', 'import', 'delete', 'pull']
+    options: ['create', 'update', 'import', 'delete', 'pull', 'push']
   },
   {
     name: 'domain',
@@ -241,9 +228,13 @@ StackCommand.flags = {
     char: 'e',
     description: 'name of the error document',
   }),
-  upload: flags.boolean({
-    char: 'u',
-    description: 'upload directory content into the site',
+  overwrite: flags.boolean({
+    char: 'o',
+    description: 'overwrite all existing resources with newly generated resources',
+  }),
+  publish: flags.boolean({
+    char: 'p',
+    description: 'Publish the sites content',
     default: true
   })
 }
