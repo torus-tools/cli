@@ -103,7 +103,7 @@ class StackCommand extends Command {
     }
     if(args.action === 'pull'){
       cli.action.start('Updating torus/template.json')
-      let template = await cloudformation.getTemplate({StackName: stackName}).promise().catch(()=>this.err(err))
+      let template = await cloudformation.getTemplate({StackName: stackName}).promise().catch(err=>this.error(err))
       if(template) await fs.promises.writeFile('./torus/template.json', template.TemplateBody, 'utf8').catch(err=>this.error(err))
       cli.action.stop()
     }
