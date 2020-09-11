@@ -161,6 +161,7 @@ class StackCommand extends Command {
         //console.log('TEMPLATE 2 ', template)
         let parts = await Stack.deployParts(args.domain, stack, config, partialTemplate, partialStack, fullTemplate, impo?impo.template:template, flags.publish, cli)
         if(parts){
+          //save the cloudformation full Template
           colors.yellow(console.timeEnd('Elapsed Time'))
           notifier.notify({
             title: 'Deployment Complete',
