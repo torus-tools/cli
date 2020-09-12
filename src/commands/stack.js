@@ -139,6 +139,7 @@ class StackCommand extends Command {
         templateString = temp.TemplateBody
         template = JSON.parse(templateString)
       }
+      //console.log('TEMPLATE ', template)
       for(let key in partialStack) if(stack[key]) partialStack[key] = true
       cli.action.stop()
       cli.action.start('generating templates')
@@ -147,23 +148,30 @@ class StackCommand extends Command {
       var partialTemplate = JSON.parse(JSON.stringify(partTemplate))
       var fullTemplate = args.action==='push'? partialTemplate : await Stack.generateTemplate(args.domain, stack, config, template, true, flags.overwrite).catch(err => {throw new Error(err)})
       cli.action.stop()
+      //console.log(stack)
       if(stackId && JSON.stringify(fullTemplate.template) === templateString) this.error('No changes detected')
       else {
+        //console.log('TEMPLATE 1 ', template)
         let impo = null
         if(!stackId && fullTemplate.existingResources.length > 0){
           cli.action.start('importing resources')
           impo = await Stack.deployTemplate(args.domain, fullTemplate, true)
           cli.action.stop()
         }
+        //console.log('TEMPLATE 2 ', template)
         let parts = await Stack.deployParts(args.domain, stack, config, partialTemplate, partialStack, fullTemplate, impo?impo.template:template, flags.publish, cli)
         if(parts){
-          console.timeEnd('Elapsed Time')
+          //save the cloudformation full Template
+          colors.yellow(console.timeEnd('Elapsed Time'))
           notifier.notify({
             title: 'Deployment Complete',
             message: `Torus has finished deploying the stack for ${args.domain}`,
             icon: path.join(__dirname, '../../img/arjan_deploy_logo.svg'), // Absolute path (doesn't work on balloons)
             sound: true, // Only Notification Center or Windows Toasters
           })
+          let url = stack.cdn?args.domain: parts
+          this.log('URL ', url)
+          await open(url)
         }
       }
     }
