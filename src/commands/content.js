@@ -1,11 +1,8 @@
 const {Command, flags} = require('@oclif/command')
-const {uploadFile} = require('arjan-deploy')
-const {createDir, createFile} = require('arjan-build')
+const {createFile} = require('@torus-tools/config')
 const {cli} = require('cli-ux');
 const fs = require('fs');
-const path = require("path");
 const Content = require('@torus-tools/content');
-const { getFiles } = require('@torus-tools/content/lib/storage/upload');
 const Report = require('../report')
 const colors = require('colors')
 
@@ -29,6 +26,7 @@ function scanDir(currentDirPath, callback) {
   });
 }
  */
+
 class ContentCommand extends Command {
   static strict = false
   static args = [
