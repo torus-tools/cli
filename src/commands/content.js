@@ -1,5 +1,5 @@
 const {Command, flags} = require('@oclif/command')
-const {createDir, createFile} = require('arjan-build')
+const {createFile} = require('@torus-tools/config')
 const {cli} = require('cli-ux');
 const fs = require('fs');
 const Content = require('@torus-tools/content');
