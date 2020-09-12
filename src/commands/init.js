@@ -36,10 +36,7 @@ class InitCommand extends Command {
     const {flags, args} = this.parse(InitCommand)
     if(flags.global) {
       let setups = {}
-      //let global_setup = global_defaults
-      //console.log(flags.providers)
       for(let p of flags.providers){
-        //console.log('PROVIDER ', p)
         let prov = await Config.getProviderSetup[p]()
         setups[p] = prov
         global_defaults+='\n\n'+prov.config
@@ -47,20 +44,26 @@ class InitCommand extends Command {
       let gc = await Config.createGlobalConfig(global_defaults)
       await open(gc.path)
       let i=0;
-      for(let p=0; p < flags.providers.length; p++){
-        if(i>=p){
-          let title = colors.underline.yellow(`${flags.providers[i]} setup\n`.toUpperCase())
-          this.log(title+setups[flags.providers[i]].setup+'\n'+colors.yellow(setups[flags.providers[i]].config))
-          await open(setups[flags.providers[i]].url)
-          const res = await cli.prompt(`Finished setting up ${flags.providers[i]}?`)
-          if(res === 'y' || res === 'Y' || res === 'yes' || res === 'Yes') i+=1
-          this.log('\n')
+      if(flags.providers.length >0){
+        for(let p=0; p < flags.providers.length; p++){
+          if(i>=p){
+            let title = colors.underline.yellow(`${flags.providers[i]} setup\n`.toUpperCase())
+            this.log(title+setups[flags.providers[i]].setup+'\n'+colors.yellow(setups[flags.providers[i]].config))
+            await open(setups[flags.providers[i]].url)
+            const res = await cli.prompt(`Finished setting up ${flags.providers[i]}?`)
+            if(res === 'y' || res === 'Y' || res === 'yes' || res === 'Yes') i+=1
+            this.log('\n')
+          }
         }
       }
+      else this.error('Please add atleast onew provider with the -p flag. valid providers include:\naws\ngodaddy')
     }
     else {
       if(!flags.domain) this.error('Please provide a valid domain with the -d flag')
-      //creates a torus directory
+      //read the global config
+      //overwrite params with provided flags
+
+      //creates a torus directory if it doesnt exist
       //creates the torus/config.json file
       //creates an empty .env file
       //create a .torusignore file
