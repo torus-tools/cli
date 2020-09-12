@@ -12,7 +12,8 @@ const {deleteContent} = require('@torus-tools/content');
 const domains = require('@torus-tools/domains')
 const Stack = require('@torus-tools/stack');
 const fs = require('fs');
-const colors = require('colors')
+const colors = require('colors');
+const createGlobalConfig = require('@torus-tools/config/lib/createGlobalConfig');
 
 const torus_config = {
   domain:'loclaizehtml.com',
@@ -76,31 +77,38 @@ class StackCommand extends Command {
     console.time('Time Elapsed')
     for(let a in this.argv) if(this.argv[a].startsWith('-') && !this.argv[a].includes('=')) this.argv[a]+='=true'
     const {args, flags} = this.parse(StackCommand)
+    const stackName = args.domain.split('.').join('') + 'Stack'
     var stack = {}
-    let stackName = args.domain.split('.').join('') + 'Stack'
-    //torus config should read from the file at torus/config.json. if the file doesnt exist it should create the file by reading from globalConfig and building it
+    
+    //var config = fs.existsSync('torus/config.json')? JSON.parse(fs.readFileSync('torus/config.json', 'utf8')): globalConfig()
     var config = torus_config
-    if(args.setup === 'dev') stack['bucket'] = true;
-    else if(args.setup === 'test') {
-      stack['bucket'] = true;
-      stack['www'] = true;
-      stack['dns'] = true;
-    }
-    else if(args.setup === 'prod'){
-      stack['bucket'] = true;
-      stack['www'] = true;
-      stack['dns'] = true;
-      stack['cdn'] = true;
-      stack['https'] = true;
-    }
     if(flags.index) config.index = flags.index
     if(flags.error) config.error = flags.error
+    switch(args.setup){
+      case 'test':
+        stack['bucket'] = true;
+        break
+      case 'dev':
+        stack['bucket'] = true;
+        stack['www'] = true;
+        stack['dns'] = true;
+        break
+      case 'prod':
+        stack['bucket'] = true;
+        stack['www'] = true;
+        stack['dns'] = true;
+        stack['cdn'] = true;
+        stack['https'] = true;
+        break
+    }
     for(let f in flags) {
       if(torus_config.providers[f]) {
         stack[f] = true
         if(supported_providers[f].includes(flags[f])) config.providers[f] = flags[f]
       }
     }
+    //write the config
+
     if(args.action === 'pull'){
       cli.action.start('Updating torus/template.json')
       let template = await cloudformation.getTemplate({StackName: stackName}).promise().catch(err=>this.error(err))
@@ -238,7 +246,7 @@ StackCommand.flags = {
   }),
   overwrite: flags.boolean({
     char: 'o',
-    description: 'overwrite all existing resources with newly generated resources',
+    description: 'By default, torus always reads your template in the cloud and only adds changes (updated resources or additional resources). If you want to eliminate the resources that arent prvoided in the CLI flags you can add this flag.',
   }),
   publish: flags.boolean({
     char: 'p',
