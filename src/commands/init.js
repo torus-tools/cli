@@ -3,6 +3,7 @@ const {createDir, createFile} = require('arjan-build')
 const {cli} = require('cli-ux');
 const open = require('open')
 const Config = require('@torus-tools/config')
+const colors = require('colors')
 
 /* const ignorePaths = {
   '.env':true,
@@ -35,10 +36,10 @@ class InitCommand extends Command {
     const {flags, args} = this.parse(InitCommand)
     if(flags.global) {
       let setups = {}
-      let global_setup = global_defaults
-      console.log(flags.providers)
+      //let global_setup = global_defaults
+      //console.log(flags.providers)
       for(let p of flags.providers){
-        console.log('PROVIDER ', p)
+        //console.log('PROVIDER ', p)
         let prov = await Config.getProviderSetup[p]()
         setups[p] = prov
         global_defaults+='\n\n'+prov.config
@@ -46,16 +47,14 @@ class InitCommand extends Command {
       let gc = await Config.createGlobalConfig(global_defaults)
       await open(gc.path)
       let i=0;
-      for(let p in flags.providers){
-        console.log(setups[flags.providers[p]])
-        while(i>=p){
-          await open(setups[flags.providers[p]].url)
-          this.log(setups[flags.providers[p]].setup+'\n'+colors.yellow(setups[flags.providers[p]].config))
-          const res = await cli.prompt(`Finished setting up ${flags.providers[p]}?`)
-          if(res === 'y' || res === 'Y' || res === 'yes' || res === 'Yes') {
-            i+=1
-            break
-          }
+      for(let p=0; p < flags.providers.length; p++){
+        if(i>=p){
+          let title = colors.underline.yellow(`${flags.providers[i]} setup\n`.toUpperCase())
+          this.log(title+setups[flags.providers[i]].setup+'\n'+colors.yellow(setups[flags.providers[i]].config))
+          await open(setups[flags.providers[i]].url)
+          const res = await cli.prompt(`Finished setting up ${flags.providers[i]}?`)
+          if(res === 'y' || res === 'Y' || res === 'yes' || res === 'Yes') i+=1
+          this.log('\n')
         }
       }
     }
