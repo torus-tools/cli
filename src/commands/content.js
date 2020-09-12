@@ -91,7 +91,7 @@ By default only modified files are uploaded; to upload all files provide the --a
 ContentCommand.flags = {
   domain: flags.string({
     char: 'd',                    
-    description: 'Root domain of your site (i.e. yoursite.com).',      
+    description: 'Domain of your site (i.e. yoursite.com).',      
   }),
   input: flags.string({
     char: 'i',                    
