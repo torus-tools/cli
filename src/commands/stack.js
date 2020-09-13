@@ -25,7 +25,7 @@ const torus_config = {
     bucket: 'aws',
     cdn: 'aws',
     dns: 'aws',
-    https: 'aws'
+    ssl: 'aws'
   }
 }
 
@@ -34,7 +34,7 @@ const supported_providers = {
   dns:['aws', 'godaddy'],
   bucket: ['aws'],
   cdn: ['aws'],
-  https: ['aws']
+  ssl: ['aws']
 }
 
 function deleteObjectsAndRecords(domain, config, cli){
@@ -98,7 +98,7 @@ class StackCommand extends Command {
         stack['www'] = true;
         stack['dns'] = true;
         stack['cdn'] = true;
-        stack['https'] = true;
+        stack['ssl'] = true;
         break
     }
     for(let f in flags) {
@@ -212,37 +212,47 @@ StackCommand.args = [
 ]
 
 StackCommand.flags = {
+  domain: flags.string({
+    char: 'd',                    
+    description: 'The domain of your site i.e. yoursite.com',        
+  }),
   bucket: flags.string({
     char: 'b',                    
-    description: 'creates an s3 bucket with a public policy',        
+    description: 'Enables a cloud storage bucket to be used as the websites origin. You can provide this flag without the =string to use aws s3.',
+    options: ['aws', 'true']         
   }),
   www: flags.string({
     char: 'w',                    
-    description: 'creates an s3 bucket with a public policy',        
+    description: 'creates a www reroute bucket.',
+    options: ['true']          
   }),
-  domain: flags.string({                  
-    description: 'change the domain name registrar being used',
-    char: 'r'        
+  registrar: flags.string({                  
+    description: 'The current domain name registrar of your sites domain. Using AWS or godaddy enables automatic namserver updates if the DNS provider is different to the registrar. Selecting other will require manual nameserver updates. true evaluates to other.',
+    char: 'r',
+    options: ['aws', 'godaddy', 'other', 'true']        
   }),
-  dns: flags.string({
-    char: 'd',                    
-    description: 'creates a Hosted Zone in route 53. Have your current DNS provider page open and ready to add a custom DNS.',        
+  dns: flags.string({                   
+    description: 'Desired DNS provider for your site. The aws option adds a route53 hosted zone to your stack. You can provide this flag without the =string to use aws.',
+    options: ['aws', 'godaddy', 'other', 'true']        
   }),
   cdn: flags.string({
     char: 'c',                    
-    description: 'creates a CloudFront distribution for your site.',        
+    description: 'Add a CDN to your site. CDNs enable faster website load times by caching your content around the globe (the edge). You can provide this flag without the =string to use aws Cloudfront.',
+    options: ['aws', 'true']         
   }),
-  https: flags.string({
-    char: 'h',                    
-    description: 'creates and validates a TLS certificate for your site. If you arent using a route53 DNS you must create a CNAME record manually in your DNS.',        
+  ssl: flags.string({
+    char: 's',                    
+    description: 'Enables https by creating and validating an SSL certificate for your site. You can provide this flag without the =string to use aws certificate manager.',        
+    options: ['aws', 'true'],
+    dependsOn: ['cdn']
   }),
   index: flags.string({
     char: 'i',
-    description: 'name of the index document. default is index.html',
+    description: 'name of the index document. Default is index.html',
   }),
   error: flags.string({
     char: 'e',
-    description: 'name of the error document',
+    description: 'name of the error document. Default is error.html',
   }),
   overwrite: flags.boolean({
     char: 'o',
