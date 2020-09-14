@@ -1,31 +1,13 @@
+const Config = require('@torus-tools/config')
+Config.setGlobalEnv()
+Config.setDotEnv()
+
 const {Command, flags} = require('@oclif/command')
 const {createFile} = require('@torus-tools/config')
 const {cli} = require('cli-ux');
-const fs = require('fs');
 const Content = require('@torus-tools/content');
 const Report = require('../report')
 const colors = require('colors')
-
-/* var ignorePaths = fs.existsSync('./arjan_config/arjan_ignore.json')?JSON.parse(fs.readFileSync('./arjan_config/arjan_ignore.json')):{};
-
-function scanFiles(dir){
-  let arrs = [];
-  return new Promise(async (resolve, reject) => {
-    scanDir(dir, (filePath, stat) => arrs.push(filePath))
-    resolve(arrs)
-  })
-}
-function scanDir(currentDirPath, callback) {
-  fs.readdirSync(currentDirPath).forEach((name)=>{
-    var filePath = path.join(currentDirPath, name);
-    var stat = fs.statSync(filePath);
-    if(!ignorePaths[filePath]) {
-      if (stat.isFile()) callback(filePath, stat);
-      else if (stat.isDirectory()) scanDir(filePath, callback)
-    }
-  });
-}
- */
 
 class ContentCommand extends Command {
   static strict = false
@@ -38,13 +20,16 @@ class ContentCommand extends Command {
     },
     {
       name: 'files',
-      description: 'path/s of the files/directories you want to upload. Providing none will select all files in your current working directory.',
+      description: 'local paths or object keys of the files/directories you want to upload/download to/from your bucket. For example suppose theres a directory img inside the cwd the path of image1.jpg would be img/image1.jpg. For local files the root is the current working directory unless specifiecd otherwise with the -i flag. By default, if no paths are provided all files/dirs in the root will be used.',
     }
   ]
   async run() {
     await createFile('.torusignore', '').catch(err=>{throw new Error(err)})
     const {args, flags} = this.parse(ContentCommand)
-    if(!flags.domain) flags.domain = fs.existsSync('./torus/config.json')? JSON.parse(fs.readFileSync('./torus/config.json'))['domain']: this.error('Please use the -d flag and provide a valid domain for your site. -d=yoursite.com')
+    
+    var config = await readProjectConfig().catch(err=> this.error(err))
+    if(!flags.domain) config.domain? config.domain: this.error('Please provide a valid domain for your site by using the -d flag i.e. -d=yoursite.com')
+    
     let filesArr = []
     for(let a=1; a<this.argv.length; a++) if(!this.argv[a].startsWith('-')) filesArr.push(this.argv[a]) 
     var files = filesArr.length>0? filesArr: null

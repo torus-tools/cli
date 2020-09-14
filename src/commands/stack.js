@@ -1,19 +1,20 @@
-//const globalEnv = readEnv()
-//initEnv(globalEnv)
-require('dotenv').config()
+const Config = require('@torus-tools/config')
+Config.setGlobalEnv()
+Config.setDotEnv()
+
 const {Command, flags} = require('@oclif/command');
+const {cli} = require('cli-ux');
+const notifier = require('node-notifier')
+const fs = require('fs');
+const path = require('path');
+const colors = require('colors')
+
 const AWS = require('aws-sdk');
 const cloudformation = new AWS.CloudFormation({apiVersion: '2010-05-15'});
-const {cli, config} = require('cli-ux');
-const notifier = require('node-notifier')
-const path = require('path');
-const open = require('open');
+
 const {deleteContent} = require('@torus-tools/content');
 const domains = require('@torus-tools/domains')
 const Stack = require('@torus-tools/stack');
-const fs = require('fs');
-const colors = require('colors');
-const createGlobalConfig = require('@torus-tools/config/lib/createGlobalConfig');
 
 const torus_config = {
   domain:'loclaizehtml.com',
@@ -79,9 +80,8 @@ class StackCommand extends Command {
     const {args, flags} = this.parse(StackCommand)
     const stackName = args.domain.split('.').join('') + 'Stack'
     var stack = {}
-    
-    //var config = fs.existsSync('torus/config.json')? JSON.parse(fs.readFileSync('torus/config.json', 'utf8')): globalConfig()
-    var config = torus_config
+    var config = await Config.getProjectConfig().catch(err=> this.error(err))
+    if(!flags.domain) config.domain? config.domain: this.error('Please provide a valid domain for your site by using the -d flag i.e. -d=yoursite.com')
     if(flags.index) config.index = flags.index
     if(flags.error) config.error = flags.error
     switch(args.setup){
@@ -108,7 +108,6 @@ class StackCommand extends Command {
       }
     }
     //write the config
-
     if(args.action === 'pull'){
       cli.action.start('Updating torus/template.json')
       let template = await cloudformation.getTemplate({StackName: stackName}).promise().catch(err=>this.error(err))
@@ -133,6 +132,9 @@ class StackCommand extends Command {
     else {
       // CREATE/UPDATE/IMPORT STACKS
       console.time('Elapsed Time')
+      //create/overwrite the project config. Perhaps it would also be good to add the stack in the config
+      //would also be goood to save the template in torus/template.json file after the import, partialStack, and fullStack executions
+      fs.promises.writeFile('./torus/config.json', JSON.stringify(config)).catch(err=>this.error(err))
       cli.action.start('setting up')
       let template = null
       let partialStack = {
@@ -179,7 +181,7 @@ class StackCommand extends Command {
           })
           let url = stack.cdn?args.domain: parts
           this.log('URL ', url)
-          await open(url)
+          cli.open(url)
         }
       }
     }
