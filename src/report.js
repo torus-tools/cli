@@ -15,8 +15,8 @@ function getScore(score, percent, truncate){
   return final_score;
 }
 
-function getReportItem(caps, i, item, score, color){
-  let beginSpace = 6
+function getReportItem(caps, i, item, score, spacer, color){
+  let border = 4
   let colored = "";
   let reset = "";
   if(color){
@@ -24,8 +24,7 @@ function getReportItem(caps, i, item, score, color){
     reset="\x1b[0m"
   }
   if(caps) item = item.toUpperCase();
-  let remainder = i - beginSpace - 2 - item.length - score.toString().length;
-  let line = "|"+ " ".repeat(beginSpace) + item +": "+ colored+ score +reset+ " ".repeat(remainder) + "|\n";
+  let line = "|"+ " ".repeat(border-1) + item +" "+spacer.repeat(i-(border*2)-item.length-score.toString().length)+" "+ colored+ score +reset+ " ".repeat(border-1) + "|\n";
   return line;
 }
 
@@ -34,12 +33,22 @@ function getRecommendation(item, threshold){
   let recommendation = getScoreColor(item.score, threshold) + item.title + colorReset+ ": " +item.description;
   return recommendation;
 }
-function getHeading(title){
-  let heading = "|" + " ".repeat((40-title.length)/2) + title.toUpperCase() + " ".repeat((40-title.length)/2) + "|\n";
+function getHeading(title, i){
+  let heading = "|" + " ".repeat((i-title.length)/2+1) + title.toUpperCase() + " ".repeat((i-title.length)/2) + "|\n";
   return heading;
 }
 
+function blankLine(i){
+  return "|" + " ".repeat(i) + "|\n";
+}
+
+function sepparator(i){
+  return "|" + "-".repeat(i) + "|\n";
+}
+
 module.exports = {
+  sepparator,
+  blankLine,
   getScoreColor,
   getScore,
   getReportItem,

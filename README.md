@@ -15,124 +15,61 @@ Mutli CLI for arjan tools
 # Usage
 <!-- usage -->
 ```sh-session
-$ npm install -g arjan-cli
-$ arjan COMMAND
+$ npm install -g @torus-tools/cli
+$ torus COMMAND
 running command...
-$ arjan (-v|--version|version)
-arjan-cli/0.3.4 linux-x64 node-v14.4.0
-$ arjan --help [COMMAND]
+$ torus (-v|--version|version)
+@torus-tools/cli/0.0.1 linux-x64 node-v14.4.0
+$ torus --help [COMMAND]
 USAGE
-  $ arjan COMMAND
+  $ torus COMMAND
 ...
 ```
 <!-- usagestop -->
 # Commands
 <!-- commands -->
-* [`arjan audit`](#arjan-audit)
-* [`arjan delete DOMAIN [FILES]`](#arjan-delete-domain-files)
-* [`arjan deploy DOMAIN ACTION [SETUP]`](#arjan-deploy-domain-action-setup)
-* [`arjan help [COMMAND]`](#arjan-help-command)
-* [`arjan init [PROFILE] [REGION]`](#arjan-init-profile-region)
-* [`arjan localize LANGUAGE [FILES]`](#arjan-localize-language-files)
-* [`arjan optimize [FILES]`](#arjan-optimize-files)
-* [`arjan start`](#arjan-start)
-* [`arjan upload DOMAIN [FILES]`](#arjan-upload-domain-files)
+* [`torus content ACTION [FILES]`](#torus-content-action-files)
+* [`torus help [COMMAND]`](#torus-help-command)
+* [`torus init`](#torus-init)
+* [`torus stack ACTION DOMAIN [SETUP]`](#torus-stack-action-domain-setup)
 
-## `arjan audit`
+## `torus content ACTION [FILES]`
 
-Audit your sites performance during development
+List/download/upload/delete all of your content (or the specified files).
 
 ```
 USAGE
-  $ arjan audit
-
-OPTIONS
-  -d, --dir=dir              Directory path to serve. default is root (relative to the path in which you run the
-                             command)
-
-  -f, --file=file            Path of the page you want to audit. default is index.html
-
-  -p, --port=port            Port used for the test server. Default is 8080.
-
-  -t, --threshold=threshold  [default: 0.8] Integer value from 0 to 1 that represents what you consider to be an
-                             acceptable lighthouse score for your site. Its very similar to what you would consider an
-                             acceptable school test grade.
-
-DESCRIPTION
-  ...
-  Audit your sites performance and SEO using Google's lighhouse 6.
-```
-
-_See code: [src/commands/audit.js](https://github.com/arjan-tools/cli/blob/v0.3.4/src/commands/audit.js)_
-
-## `arjan delete DOMAIN [FILES]`
-
-Describe the command here
-
-```
-USAGE
-  $ arjan delete DOMAIN [FILES]
+  $ torus content ACTION [FILES]
 
 ARGUMENTS
-  DOMAIN  root domain of your site
+  ACTION  (list|download|upload|delete) given action to carry out with the content of your site
 
-  FILES   path of the file/s you want to upload. Providing none or / will upload all the files in your current
-          directory.
-
-DESCRIPTION
-  ...
-  Extra documentation goes here
-```
-
-_See code: [src/commands/delete.js](https://github.com/arjan-tools/cli/blob/v0.3.4/src/commands/delete.js)_
-
-## `arjan deploy DOMAIN ACTION [SETUP]`
-
-Deploy static sites to AWS
-
-```
-USAGE
-  $ arjan deploy DOMAIN ACTION [SETUP]
-
-ARGUMENTS
-  DOMAIN  name of the site i.e. yoursite.com
-
-  ACTION  (create|update|import|delete) choose an action to perform. you can create, update, import your stack or upload
-          files to your bucket.
-
-  SETUP   (dev|test|prod|custom) [default: dev] setup for the site - dev, test, production or custom
+  FILES   path/s of the files/directories you want to upload. Providing none will select all files in your current
+          working directory.
 
 OPTIONS
-  -c, --cdn            creates a CloudFront distribution for your site.
-  -e, --error=error    [default: error.html] name of the error document
-
-  -h, --https          creates and validates a TLS certificate for your site. If you arent using a route53 DNS you must
-                       create a CNAME record manually in your DNS.
-
-  -i, --index=index    [default: index.html] name of the index document. default is index.html
-
-  -r, --route53        creates a Hosted Zone in route 53. Have your current DNS provider page open and ready to add a
-                       custom DNS.
-
-  -u, --upload=upload  name of a specific file or directory to add to your site. To add all files/dirs from your root
-                       use / or *
-
-  -w, --www            creates a www s3 bucket that reroutes requests to the index.
+  -a, --all            Upload all files. By default only updated files are uploaded.
+  -d, --domain=domain  Domain of your site (i.e. yoursite.com).
+  -i, --input=input    Path of the root directory of your project (if different to the current working driectory).
+  -o, --output=output  [default: ./] Path to save downloaded content into. Default is the current working directory.
+  -r, --reset          Reset the cache in all edge locations for the given files.
+  -s, --sort           Sorts listed files by last modified date.
 
 DESCRIPTION
   ...
-  Deploy static sites to the AWS Cloud using Cloudformation templates.
+  By default only modified files are uploaded; to upload all files provide the --all flag. To automatically update cache 
+  in cloudfront for the given files add the --reset flag.
 ```
 
-_See code: [src/commands/deploy.js](https://github.com/arjan-tools/cli/blob/v0.3.4/src/commands/deploy.js)_
+_See code: [src/commands/content.js](https://github.com/torus-tools/cli/blob/v0.0.1/src/commands/content.js)_
 
-## `arjan help [COMMAND]`
+## `torus help [COMMAND]`
 
-display help for arjan
+display help for torus
 
 ```
 USAGE
-  $ arjan help [COMMAND]
+  $ torus help [COMMAND]
 
 ARGUMENTS
   COMMAND  command to show help for
@@ -141,144 +78,84 @@ OPTIONS
   --all  see all commands in CLI
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.1.0/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.2.0/src/commands/help.ts)_
 
-## `arjan init [PROFILE] [REGION]`
+## `torus init`
 
 Describe the command here
 
 ```
 USAGE
-  $ arjan init [PROFILE] [REGION]
-
-ARGUMENTS
-  PROFILE  [default: default] AWS Profile
-  REGION   [default: us-east-1] AWS Region
+  $ torus init
 
 OPTIONS
-  -g, --global  Guides you through your first time setup. Including AWS IAM user creation.
+  -d, --domain=domain
+      Valid domain for your project
+
+  -g, --global
+      Global setup should by run atleast once after the first installation of torus
+
+  -p, --providers=aws|godaddy
+      desired cloud providers
+
+  -r, 
+  --region=us-east-2|us-east-1|us-west-1|us-west-2|af-south-1|ap-east-1|ap-south-1|ap-northeast-2|ap-southeast-1|ap-sout
+  heast-2|ap-northeast-1|ca-central-1|cn-north-1|cn-northwest-1|eu-central-1|eu-west-1|eu-west-2|eu-west-3|eu-north-1|me
+  -south-1|sa-east-1|us-gov-east-1|us-gov-west-1
+      [default: us-east-1] Desired AWS region
+
+  -u, --user=user
+      [default: torus_admin] Desired name for the AWS IAM user
 
 DESCRIPTION
   ...
   Extra documentation goes here
 ```
 
-_See code: [src/commands/init.js](https://github.com/arjan-tools/cli/blob/v0.3.4/src/commands/init.js)_
+_See code: [src/commands/init.js](https://github.com/torus-tools/cli/blob/v0.0.1/src/commands/init.js)_
 
-## `arjan localize LANGUAGE [FILES]`
+## `torus stack ACTION DOMAIN [SETUP]`
 
-Localize and translate HTML files
+Deploy static sites to AWS
 
 ```
 USAGE
-  $ arjan localize LANGUAGE [FILES]
+  $ torus stack ACTION DOMAIN [SETUP]
 
 ARGUMENTS
-  LANGUAGE  origin language of the file/s.
+  ACTION  (create|update|import|delete|pull|push) choose an action to perform. you can create, update, import your stack
+          or upload files to your bucket.
 
-  FILES     name of the file you want to translate -only html files accepted. Use all to translate all of your html
-            files (default).
+  DOMAIN  name of the site i.e. yoursite.com
+
+  SETUP   (dev|test|prod|custom) [default: dev] setup for the site - dev, test, production or custom
 
 OPTIONS
-  -b, --backwards            Update JSON locale accoridng to changes made in the HTML file. Must be used together with
-                             the update flag.
+  -b, --bucket=bucket  creates an s3 bucket with a public policy
+  -c, --cdn=cdn        creates a CloudFront distribution for your site.
 
-  -c, --create               Create locale/s for your site. When used with translate flags, it generates a translated
-                             version of the locale and the HTML.
+  -d, --dns=dns        creates a Hosted Zone in route 53. Have your current DNS provider page open and ready to add a
+                       custom DNS.
 
-  -e, --export               Creates a CSV file for your JSON locale.
+  -e, --error=error    name of the error document
 
-  -i, --import               Update JSON locale from changes made in the CSV file
+  -h, --https=https    creates and validates a TLS certificate for your site. If you arent using a route53 DNS you must
+                       create a CNAME record manually in your DNS.
 
-  -t, --translate=translate  desired translation language. You may apply this flag multiple times to translate into
-                             multiple languages.
+  -i, --index=index    name of the index document. default is index.html
 
-  -u, --update               Update HTML file accoridng to changes made in the JSON locale.
+  -o, --overwrite      overwrite all existing resources with newly generated resources
+
+  -p, --publish        Publish the sites content
+
+  -r, --domain=domain  change the domain name registrar being used
+
+  -w, --www=www        creates an s3 bucket with a public policy
 
 DESCRIPTION
   ...
-  Automatically localize and translate your HTML sites. Uses Amazon translate for translations.
+  Deploy static sites to the AWS Cloud using Cloudformation templates.
 ```
 
-_See code: [src/commands/localize.js](https://github.com/arjan-tools/cli/blob/v0.3.4/src/commands/localize.js)_
-
-## `arjan optimize [FILES]`
-
-Optimize static assets 
-
-```
-USAGE
-  $ arjan optimize [FILES]
-
-ARGUMENTS
-  FILES  path of the files you want to optimize. Ommit the argument or use / to translate all of your html files
-         (default).
-
-OPTIONS
-  -c, --css            minifiy css using cssnano
-
-  -i, --input=input    Name of the input directory that contains all the scripts for your project. Default is js. To use
-                       the root use
-
-  -j, --js             compress javascript with terser.
-
-  -o, --output=output  desired output directory. Default is dep_pack.
-
-  -r, --responsive     resizes images efficiently for each type of device (sm, md, lg), then replaces each image
-                       instance in the html files with a picture tag.
-
-  -w, --webp           saves a webp version of each image, then replaces each image instance in the html files with a
-                       picture tag.
-
-  --img                compress images and if possible maintain the format. otherwise its converted to png.
-
-DESCRIPTION
-  ...
-  Uses Webpack to minify your html/css/js files, compress your pictures and more.
-```
-
-_See code: [src/commands/optimize.js](https://github.com/arjan-tools/cli/blob/v0.3.4/src/commands/optimize.js)_
-
-## `arjan start`
-
-Describe the command here
-
-```
-USAGE
-  $ arjan start
-
-OPTIONS
-  -i, --index=index  [default: index.html] index document. usually index.html
-  -p, --port=port    [default: 8080] number of the desired port
-
-DESCRIPTION
-  ...
-  Extra documentation goes here
-```
-
-_See code: [src/commands/start.js](https://github.com/arjan-tools/cli/blob/v0.3.4/src/commands/start.js)_
-
-## `arjan upload DOMAIN [FILES]`
-
-Describe the command here
-
-```
-USAGE
-  $ arjan upload DOMAIN [FILES]
-
-ARGUMENTS
-  DOMAIN  root domain of your site
-
-  FILES   path of the file/s you want to upload. Providing none or / will upload all the files in your current
-          directory.
-
-OPTIONS
-  -d, --dir=dir  path of a directory you want to upload to your site
-
-DESCRIPTION
-  ...
-  Extra documentation goes here
-```
-
-_See code: [src/commands/upload.js](https://github.com/arjan-tools/cli/blob/v0.3.4/src/commands/upload.js)_
+_See code: [src/commands/stack.js](https://github.com/torus-tools/cli/blob/v0.0.1/src/commands/stack.js)_
 <!-- commandsstop -->

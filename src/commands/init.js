@@ -1,33 +1,8 @@
 const {Command, flags} = require('@oclif/command')
-const {createDir, createFile} = require('arjan-build')
 const {cli} = require('cli-ux');
 const open = require('open')
-
-const regionSet = [
-  "us-east-2",
-  "us-east-1",
-  "us-west-1",
-  "us-west-2",
-  "af-south-1",
-  "ap-east-1",
-  "ap-south-1",
-  "ap-northeast-2",
-  "ap-southeast-1",
-  "ap-southeast-2",
-  "ap-northeast-1",
-  "ca-central-1",
-  "cn-north-1",
-  "cn-northwest-1",
-  "eu-central-1",
-  "eu-west-1",
-  "eu-west-2",
-  "eu-west-3",
-  "eu-north-1",
-  "me-south-1",
-  "sa-east-1",
-  "us-gov-east-1",
-  "us-gov-west-1"
-];
+const Config = require('@torus-tools/config')
+const colors = require('colors')
 
 const ignorePaths = {
   '.env':true,
@@ -37,66 +12,84 @@ const ignorePaths = {
   'package.json':true,
   'package-lock.json':true,
   'node_modules':true,
-  'dep_pack':true,
-  'arjan_config':true,
-  "README.md":true,
-  'forms':true,
-}
-//for local usage with ./bin/run
-/* 'lib':true,
-'test':true,
-'.yo-repository':true,
-'bin':true,
-'src':true,
-'webpack.dev.js': true,
-'webpack.plugins.dev.js': true,
-'webpack.plugins.prod.js': true,
-'webpack.prod.js': true, */
-
-function initBuild(profile, region){
-  return new Promise((resolve, reject) => {
-    let env_file = `ROOT=${process.cwd()}\n`;
-    if(profile){
-      if(/^[+=,.@_\-a-zA-Z0-9]*$/.test(profile)) env_file += `AWS_PROFILE=${profile}`;
-      else reject("AWS Profile invalid. Only alphanumeric characters accepted. No spaces.");
-    }
-    if(region){
-      if(regionSet.includes(region)) env_file += `\nAWS_REGION=${region}`;
-      else reject("Invalid AWS region code");
-    }
-    createDir('arjan_config');
-    createFile('./.env', env_file).catch(err => reject(err));
-    createFile('./.gitignore', '.env').then(() => resolve('done')).catch(err => reject(err));
-  })
 }
 
-function createIamUser(iamUserName, awsRegion) {
-  return new Promise((resolve, reject) => {
-    if(/^[+=,.@_\-a-zA-Z0-9]*$/.test(iamUserName)){
-      var url = `https://console.aws.amazon.com/iam/home?region=${awsRegion}#/users$new?step=review&accessKey&userNames=${iamUserName}&permissionType=policies&policies=arn:aws:iam::aws:policy%2FAdministratorAccess`;
-      if(awsRegion){
-        if(regionSet.includes(awsRegion)) resolve(url);
-        else reject('Invalid AWS region code')
-      }
-    }
-    else reject('Invalid IAM user name. Only alphanumeric strings with the following special characters: plus (+), equal (=), comma (,), period (.), at (@), underscore (_), and hyphen (-).')
-  })
+var global_defaults = 
+`[default_providers]
+registrar=other
+bucket=aws
+dns=aws
+cdn=aws
+ssl=aws
+
+[default_options]
+index=index.html
+error=error.html`
+
+var config = {
+  options:{
+    index:'index.html',
+    error:'error.html'
+  },
+  providers: {
+    registrar: 'other',
+    bucket: 'aws',
+    cdn: 'aws',
+    dns: 'aws',
+    ssl: 'aws'
+  }
 }
+
+const emptyTemplate = {
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Resources": {}    
+}
+
 
 class InitCommand extends Command {
   async run() {
     const {flags, args} = this.parse(InitCommand)
-    cli.action.start('Setting up')
     if(flags.global) {
-      let url = await createIamUser(args.profile, args.region)
-      await open(url)
-      cli.action.stop()
-      console.log('Finish setting up your IAM user in the AWS console then update your local profile with the keys displayed. For more info see https://arjan.tools/en/docs.html')
+      if(flags.providers && flags.providers.length >0){
+        let setups = {}
+          for(let p of flags.providers){
+            let prov = await Config.getProviderSetup[p]()
+            setups[p] = prov
+            global_defaults+='\n\n'+prov.config
+          }
+          let gc = await Config.createGlobalConfig(global_defaults)
+          await open(gc.path)
+          let i=0;
+          for(let p=0; p < flags.providers.length; p++){
+            if(i>=p){
+              let title = colors.underline.yellow(`${flags.providers[i]} setup\n`.toUpperCase())
+              this.log(title+setups[flags.providers[i]].setup+'\n'+colors.yellow(setups[flags.providers[i]].config))
+              await open(setups[flags.providers[i]].url)
+              const res = await cli.prompt(`Finished setting up ${flags.providers[i]}?`)
+              if(res === 'y' || res === 'Y' || res === 'yes' || res === 'Yes') i+=1
+              this.log('\n')
+            }
+          }
+        }
+      else this.error('Please add atleast one provider with the -p flag. valid providers include:\naws\ngodaddy')
     }
     else {
-      let build = await initBuild(args.profile, args.region).catch(err=> console.log(err))
-      let file = await createFile('arjan_config/arjan_ignore.json', JSON.stringify(ignorePaths)).catch(err=>console.log(err))
-      if(build && file) cli.action.stop()
+      if(!flags.domain) this.error('Please provide a valid domain with the -d flag')
+      else {
+        let torusignore = ''
+        for(let i in ignorePaths) if(ignorePaths[i]) torusignore+=i
+        let global_config = await Config.readGlobalConfig()
+        let obj = await Config.parseConfig(global_config)
+        config.domain = flags.domain
+        for(let p in config.providers) config.providers[p] = obj.default_providers[p]
+        for(let o in obj.default_options) config.options[o] = obj.default_options[o]
+        await Config.createDir('./torus')
+        await Config.createFile('./.env', '')
+        await Config.createFile('./.torusignore', torusignore)
+        await Config.createFile('./torus/template.json', JSON.stringify(emptyTemplate))
+        await Config.createDir('./torus/changesets')
+        await Config.createFile('./torus/config.json', JSON.stringify(config))
+      }
     }
   }
 }
@@ -106,25 +99,34 @@ InitCommand.description = `Describe the command here
 Extra documentation goes here
 `
 
-InitCommand.args = [
-  {
-    name: 'profile',
-    required: false,
-    description: 'AWS Profile',
-    default: 'default'
-  },
-  {
-    name: 'region',
-    required: false,
-    description: 'AWS Region',
-    default: 'us-east-1'
-  }
-]
+InitCommand.args = []
 
 InitCommand.flags = {
   global: flags.boolean({
     char: 'g',                    
-    description: 'Guides you through your first time setup. Including AWS IAM user creation.',        
+    description: 'Global setup should by run atleast once after the first installation of torus',        
+  }),
+  providers: flags.string({
+    char: 'p',                    
+    description: 'desired cloud providers',
+    options: ['aws', 'godaddy'],
+    multiple: true,
+    dependsOn: ['global']       
+  }),
+  domain: flags.string({
+    char: 'd',                    
+    description: 'Valid domain for your project',    
+  }),
+  region: flags.string({
+    char: 'r',                   
+    description: 'Desired AWS region',
+    options: Config.awsRegions,
+    default: 'us-east-1'     
+  }),
+  user: flags.string({
+    char: 'u',                    
+    description: 'Desired name for the AWS IAM user',
+    default: 'torus_admin'       
   }),
 }
 

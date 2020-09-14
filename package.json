@@ -1,56 +1,31 @@
 {
-  "name": "arjan-cli",
-  "description": "Mutli CLI for arjan tools",
-  "version": "0.3.4",
+  "name": "@torus-tools/cli",
+  "description": "Mutli CLI for torus tools",
+  "version": "0.0.1",
   "author": "Gabriel Kardonski @gkpty",
   "bin": {
-    "arjan": "./bin/run"
+    "torus": "./bin/run"
   },
-  "bugs": "https://github.com/arjan-tools/cli/issues",
+  "bugs": "https://github.com/torus-tools/cli/issues",
   "dependencies": {
-    "@babel/core": "^7.10.2",
-    "@babel/preset-env": "^7.10.2",
     "@oclif/command": "^1.6.1",
     "@oclif/config": "^1.15.1",
     "@oclif/plugin-help": "^3.0.0",
-    "arjan-audit": "^0.5.2",
-    "arjan-build": "^0.1.0",
-    "arjan-deploy": "^0.8.0",
-    "arjan-localize": "^1.1.8",
-    "arjan-optimize": "^0.6.6",
-    "babel-loader": "^8.1.0",
-    "chai": "^4.2.0",
-    "clean-webpack-plugin": "^3.0.0",
+    "@torus-tools/config": "0.0.11",
+    "@torus-tools/content": "0.0.2",
+    "@torus-tools/domains": "0.0.14",
+    "@torus-tools/stack": "0.0.11",
     "cli-ux": "^5.4.6",
-    "copy-webpack-plugin": "^6.0.2",
-    "css-loader": "^3.6.0",
     "dotenv": "^8.2.0",
-    "file-loader": "^6.0.0",
-    "html-webpack-plugin": "^4.3.0",
-    "http-server": "^0.12.3",
-    "imagemin": "^7.0.1",
-    "imagemin-gifsicle": "^7.0.0",
-    "imagemin-mozjpeg": "^9.0.0",
-    "imagemin-pngquant": "^9.0.0",
-    "imagemin-svgo": "^8.0.0",
-    "imagemin-webp-webpack-plugin": "^3.3.2",
-    "imagemin-webpack-plugin": "^2.4.2",
-    "mini-css-extract-plugin": "^0.9.0",
+    "node-notifier": "^8.0.0",
     "open": "^7.0.4",
-    "optimize-css-assets-webpack-plugin": "^5.0.3",
-    "path": "^0.12.7",
-    "style-loader": "^1.2.1",
-    "terser": "^4.7.0",
-    "terser-webpack-plugin": "^3.0.5",
-    "webpack": "^4.43.0",
-    "webpack-cli": "^3.3.11",
-    "webpack-dev-server": "^3.11.0"
+    "path": "^0.12.7"
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1.22.2",
     "@oclif/test": "^1.2.5",
     "mocha": "^8.0.1",
-    "nyc": "^14.1.1"
+    "nyc": "^15.1.0"
   },
   "engines": {
     "node": ">=8.0.0"
@@ -61,7 +36,7 @@
     "/oclif.manifest.json",
     "/src"
   ],
-  "homepage": "https://github.com/arjan-tools/cli",
+  "homepage": "https://github.com/torus-tools/cli",
   "keywords": [
     "oclif"
   ],
@@ -69,18 +44,16 @@
   "main": "src/index.js",
   "oclif": {
     "commands": "./src/commands",
-    "bin": "arjan",
+    "bin": "torus",
     "plugins": [
       "@oclif/plugin-help"
     ]
   },
-  "repository": "arjan-tools/cli",
+  "repository": "torus-tools/cli",
   "scripts": {
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "oclif-dev manifest && oclif-dev readme",
     "test": "nyc mocha --forbid-only \"test/**/*.test.js\"",
-    "version": "oclif-dev readme && git add README.md",
-    "start:dev": "webpack-dev-server --config src/webpack_config/webpack.dev.js --mode development --open --host 0.0.0.0 --port 3000",
-    "build": "webpack --config webpack.prod.js --mode production"
+    "version": "oclif-dev readme && git add README.md"
   }
 }
