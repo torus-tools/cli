@@ -1,5 +1,5 @@
-//const globalEnv = readEnv()
-//initEnv(globalEnv)
+require('@torus-tools/config').setEnv()
+
 require('dotenv').config()
 const {Command, flags} = require('@oclif/command');
 const AWS = require('aws-sdk');
@@ -13,6 +13,7 @@ const domains = require('@torus-tools/domains')
 const Stack = require('@torus-tools/stack');
 const fs = require('fs');
 const colors = require('colors')
+const {readProjectConfig} = require('@torus-tools/config')
 
 const torus_config = {
   domain:'loclaizehtml.com',
@@ -79,7 +80,10 @@ class StackCommand extends Command {
     var stack = {}
     let stackName = args.domain.split('.').join('') + 'Stack'
     //torus config should read from the file at torus/config.json. if the file doesnt exist it should create the file by reading from globalConfig and building it
-    var config = torus_config
+    
+    var config = await readProjectConfig().catch(err=> this.error(err))
+    if(!flags.domain) config.domain? config.domain: this.error('Please provide a valid domain for your site by using the -d flag i.e. -d=yoursite.com')
+
     if(args.setup === 'dev') stack['bucket'] = true;
     else if(args.setup === 'test') {
       stack['bucket'] = true;
@@ -101,6 +105,7 @@ class StackCommand extends Command {
         if(supported_providers[f].includes(flags[f])) config.providers[f] = flags[f]
       }
     }
+
     if(args.action === 'pull'){
       cli.action.start('Updating torus/template.json')
       let template = await cloudformation.getTemplate({StackName: stackName}).promise().catch(err=>this.error(err))
@@ -125,6 +130,9 @@ class StackCommand extends Command {
     else {
       // CREATE/UPDATE/IMPORT STACKS
       console.time('Elapsed Time')
+      //create/overwrite the project config. Perhaps it would also be good to add the stack in the config
+      //would also be goood to save the template in torus/template.json file after the import, partialStack, and fullStack executions
+      fs.promises.writeFile('./torus/config.json', JSON.stringify(config)).catch(err=>this.error(err))
       cli.action.start('setting up')
       let template = null
       let partialStack = {

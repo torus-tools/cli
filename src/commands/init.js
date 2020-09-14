@@ -26,25 +26,10 @@ ssl=aws
 index=index.html
 error=error.html`
 
-var config = {
-  options:{
-    index:'index.html',
-    error:'error.html'
-  },
-  providers: {
-    registrar: 'other',
-    bucket: 'aws',
-    cdn: 'aws',
-    dns: 'aws',
-    ssl: 'aws'
-  }
-}
-
 const emptyTemplate = {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Resources": {}    
 }
-
 
 class InitCommand extends Command {
   async run() {
@@ -57,6 +42,7 @@ class InitCommand extends Command {
             setups[p] = prov
             global_defaults+='\n\n'+prov.config
           }
+          //the createGlobal config should actually try to read the global config; if it exists it should parse the global config and add new providers to the existing config then convert the object back to toml and save.
           let gc = await Config.createGlobalConfig(global_defaults)
           await open(gc.path)
           let i=0;
@@ -78,11 +64,8 @@ class InitCommand extends Command {
       else {
         let torusignore = ''
         for(let i in ignorePaths) if(ignorePaths[i]) torusignore+=i
-        let global_config = await Config.readGlobalConfig()
-        let obj = await Config.parseConfig(global_config)
+        let config = await Config.getGlobalConfig().catch(err=>this.error(err))
         config.domain = flags.domain
-        for(let p in config.providers) config.providers[p] = obj.default_providers[p]
-        for(let o in obj.default_options) config.options[o] = obj.default_options[o]
         await Config.createDir('./torus')
         await Config.createFile('./.env', '')
         await Config.createFile('./.torusignore', torusignore)
@@ -104,18 +87,18 @@ InitCommand.args = []
 InitCommand.flags = {
   global: flags.boolean({
     char: 'g',                    
-    description: 'Global setup should by run atleast once after the first installation of torus',        
+    description: 'Create a global torus configuration file. You should run the init command with the -g flag atleast once before using the torus CLI.',        
   }),
   providers: flags.string({
     char: 'p',                    
-    description: 'desired cloud providers',
+    description: 'Desired cloud/domain providers to be used with torus. You must have an existing account in all of the providers you choose.',
     options: ['aws', 'godaddy'],
     multiple: true,
     dependsOn: ['global']       
   }),
   domain: flags.string({
     char: 'd',                    
-    description: 'Valid domain for your project',    
+    description: 'The valid desired/existing domain of your site i.e. yoursite.com',    
   }),
   region: flags.string({
     char: 'r',                   
