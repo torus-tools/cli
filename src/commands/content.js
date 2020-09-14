@@ -1,33 +1,13 @@
-require('@torus-tools/config').setEnv()
+const Config = require('@torus-tools/config')
+Config.setGlobalEnv()
+Config.setDotEnv()
 
 const {Command, flags} = require('@oclif/command')
 const {createFile} = require('@torus-tools/config')
 const {cli} = require('cli-ux');
-const fs = require('fs');
 const Content = require('@torus-tools/content');
 const Report = require('../report')
 const colors = require('colors')
-
-/* var ignorePaths = fs.existsSync('./arjan_config/arjan_ignore.json')?JSON.parse(fs.readFileSync('./arjan_config/arjan_ignore.json')):{};
-
-function scanFiles(dir){
-  let arrs = [];
-  return new Promise(async (resolve, reject) => {
-    scanDir(dir, (filePath, stat) => arrs.push(filePath))
-    resolve(arrs)
-  })
-}
-function scanDir(currentDirPath, callback) {
-  fs.readdirSync(currentDirPath).forEach((name)=>{
-    var filePath = path.join(currentDirPath, name);
-    var stat = fs.statSync(filePath);
-    if(!ignorePaths[filePath]) {
-      if (stat.isFile()) callback(filePath, stat);
-      else if (stat.isDirectory()) scanDir(filePath, callback)
-    }
-  });
-}
- */
 
 class ContentCommand extends Command {
   static strict = false

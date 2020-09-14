@@ -64,7 +64,7 @@ class InitCommand extends Command {
       else {
         let torusignore = ''
         for(let i in ignorePaths) if(ignorePaths[i]) torusignore+=i
-        let config = await Config.getGlobalConfig().catch(err=>this.error(err))
+        let config = await Config.getGlobalSettings().catch(err=>this.error(err))
         config.domain = flags.domain
         await Config.createDir('./torus')
         await Config.createFile('./.env', '')
@@ -77,9 +77,9 @@ class InitCommand extends Command {
   }
 }
 
-InitCommand.description = `Describe the command here
+InitCommand.description = `Configure torus globally in your machine, or on a per-project basis
 ...
-Extra documentation goes here
+The init command helps you configure torus in your site/project. Providing the -g (--global) flag helps you configure torus globally (for all of your projects). When using the torus CLI, you can always overwrite global settings by including a project config file. You can also overwrite global environment variables by including a .env file. If you are using the init command without the -g flag make sure to run it from the root of your project.  
 `
 
 InitCommand.args = []
@@ -87,7 +87,7 @@ InitCommand.args = []
 InitCommand.flags = {
   global: flags.boolean({
     char: 'g',                    
-    description: 'Create a global torus configuration file. You should run the init command with the -g flag atleast once before using the torus CLI.',        
+    description: 'Create a global torus configuration file. The command will guide you through the steps to generate the required API keys for each of your desired providers, set up your global environment variables and your deisred default settings.',        
   }),
   providers: flags.string({
     char: 'p',                    

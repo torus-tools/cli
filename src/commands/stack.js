@@ -1,19 +1,20 @@
-require('@torus-tools/config').setEnv()
+const Config = require('@torus-tools/config')
+Config.setGlobalEnv()
+Config.setDotEnv()
 
-require('dotenv').config()
 const {Command, flags} = require('@oclif/command');
+const {cli} = require('cli-ux');
+const notifier = require('node-notifier')
+const fs = require('fs');
+const path = require('path');
+const colors = require('colors')
+
 const AWS = require('aws-sdk');
 const cloudformation = new AWS.CloudFormation({apiVersion: '2010-05-15'});
-const {cli, config} = require('cli-ux');
-const notifier = require('node-notifier')
-const path = require('path');
-const open = require('open');
+
 const {deleteContent} = require('@torus-tools/content');
 const domains = require('@torus-tools/domains')
 const Stack = require('@torus-tools/stack');
-const fs = require('fs');
-const colors = require('colors')
-const {readProjectConfig} = require('@torus-tools/config')
 
 const torus_config = {
   domain:'loclaizehtml.com',
@@ -81,7 +82,7 @@ class StackCommand extends Command {
     let stackName = args.domain.split('.').join('') + 'Stack'
     //torus config should read from the file at torus/config.json. if the file doesnt exist it should create the file by reading from globalConfig and building it
     
-    var config = await readProjectConfig().catch(err=> this.error(err))
+    var config = await Config.getProjectConfig().catch(err=> this.error(err))
     if(!flags.domain) config.domain? config.domain: this.error('Please provide a valid domain for your site by using the -d flag i.e. -d=yoursite.com')
 
     if(args.setup === 'dev') stack['bucket'] = true;
@@ -179,7 +180,7 @@ class StackCommand extends Command {
           })
           let url = stack.cdn?args.domain: parts
           this.log('URL ', url)
-          await open(url)
+          cli.open(url)
         }
       }
     }
