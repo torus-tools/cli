@@ -1,12 +1,12 @@
-arjancli
+toruscli
 ========
 
-Mutli CLI for arjan tools
+Mutli CLI for torus tools
 
 [![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
-[![Version](https://img.shields.io/npm/v/arjancli.svg)](https://npmjs.org/package/arjancli)
-[![Downloads/week](https://img.shields.io/npm/dw/arjancli.svg)](https://npmjs.org/package/arjancli)
-[![License](https://img.shields.io/npm/l/arjancli.svg)](https://github.com/arjan-tools/cli/blob/master/package.json)
+[![Version](https://img.shields.io/npm/v/toruscli.svg)](https://npmjs.org/package/toruscli)
+[![Downloads/week](https://img.shields.io/npm/dw/@torus-tools/cli.svg)](https://npmjs.org/package/@torus-tools/cli)
+[![License](https://img.shields.io/npm/l/@torus-tools/cli.svg)](https://github.com/torus-tools/cli/blob/master/package.json)
 
 <!-- toc -->
 * [Usage](#usage)
@@ -19,7 +19,7 @@ $ npm install -g @torus-tools/cli
 $ torus COMMAND
 running command...
 $ torus (-v|--version|version)
-@torus-tools/cli/0.0.1 linux-x64 node-v14.4.0
+@torus-tools/cli/0.0.11 linux-x64 node-v14.4.0
 $ torus --help [COMMAND]
 USAGE
   $ torus COMMAND
@@ -31,7 +31,7 @@ USAGE
 * [`torus content ACTION [FILES]`](#torus-content-action-files)
 * [`torus help [COMMAND]`](#torus-help-command)
 * [`torus init`](#torus-init)
-* [`torus stack ACTION DOMAIN [SETUP]`](#torus-stack-action-domain-setup)
+* [`torus stack ACTION [SETUP]`](#torus-stack-action-setup)
 
 ## `torus content ACTION [FILES]`
 
@@ -44,8 +44,10 @@ USAGE
 ARGUMENTS
   ACTION  (list|download|upload|delete) given action to carry out with the content of your site
 
-  FILES   path/s of the files/directories you want to upload. Providing none will select all files in your current
-          working directory.
+  FILES   local paths or object keys of the files/directories you want to upload/download to/from your bucket. For
+          example suppose theres a directory img inside the cwd the path of image1.jpg would be img/image1.jpg. For
+          local files the root is the current working directory unless specifiecd otherwise with the -i flag. By
+          default, if no paths are provided all files/dirs in the root will be used.
 
 OPTIONS
   -a, --all            Upload all files. By default only updated files are uploaded.
@@ -61,7 +63,7 @@ DESCRIPTION
   in cloudfront for the given files add the --reset flag.
 ```
 
-_See code: [src/commands/content.js](https://github.com/torus-tools/cli/blob/v0.0.1/src/commands/content.js)_
+_See code: [src/commands/content.js](https://github.com/torus-tools/cli/blob/v0.0.11/src/commands/content.js)_
 
 ## `torus help [COMMAND]`
 
@@ -82,7 +84,7 @@ _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.2.0
 
 ## `torus init`
 
-Describe the command here
+Configure torus globally in your machine, or on a per-project basis
 
 ```
 USAGE
@@ -90,13 +92,15 @@ USAGE
 
 OPTIONS
   -d, --domain=domain
-      Valid domain for your project
+      The valid desired/existing domain of your site i.e. yoursite.com
 
   -g, --global
-      Global setup should by run atleast once after the first installation of torus
+      Create a global torus configuration file. The command will guide you through the steps to generate the required API 
+      keys for each of your desired providers, set up your global environment variables and your deisred default settings.
 
   -p, --providers=aws|godaddy
-      desired cloud providers
+      Desired cloud/domain providers to be used with torus. You must have an existing account in all of the providers you 
+      choose.
 
   -r, 
   --region=us-east-2|us-east-1|us-west-1|us-west-2|af-south-1|ap-east-1|ap-south-1|ap-northeast-2|ap-southeast-1|ap-sout
@@ -109,53 +113,65 @@ OPTIONS
 
 DESCRIPTION
   ...
-  Extra documentation goes here
+  The init command helps you configure torus in your site/project. Providing the -g (--global) flag helps you configure 
+  torus globally (for all of your projects). When using the torus CLI, you can always overwrite global settings by 
+  including a project config file. You can also overwrite global environment variables by including a .env file. If you 
+  are using the init command without the -g flag make sure to run it from the root of your project.
 ```
 
-_See code: [src/commands/init.js](https://github.com/torus-tools/cli/blob/v0.0.1/src/commands/init.js)_
+_See code: [src/commands/init.js](https://github.com/torus-tools/cli/blob/v0.0.11/src/commands/init.js)_
 
-## `torus stack ACTION DOMAIN [SETUP]`
+## `torus stack ACTION [SETUP]`
 
 Deploy static sites to AWS
 
 ```
 USAGE
-  $ torus stack ACTION DOMAIN [SETUP]
+  $ torus stack ACTION [SETUP]
 
 ARGUMENTS
   ACTION  (create|update|import|delete|pull|push) choose an action to perform. you can create, update, import your stack
           or upload files to your bucket.
 
-  DOMAIN  name of the site i.e. yoursite.com
-
   SETUP   (dev|test|prod|custom) [default: dev] setup for the site - dev, test, production or custom
 
 OPTIONS
-  -b, --bucket=bucket  creates an s3 bucket with a public policy
-  -c, --cdn=cdn        creates a CloudFront distribution for your site.
+  -b, --bucket=aws|true                   Enables a cloud storage bucket to be used as the websites origin. You can
+                                          provide this flag without the =string to use aws s3.
 
-  -d, --dns=dns        creates a Hosted Zone in route 53. Have your current DNS provider page open and ready to add a
-                       custom DNS.
+  -c, --cdn=aws|true                      Add a CDN to your site. CDNs enable faster website load times by caching your
+                                          content around the globe (the edge). You can provide this flag without the
+                                          =string to use aws Cloudfront.
 
-  -e, --error=error    name of the error document
+  -d, --domain=domain                     The domain of your site i.e. yoursite.com
 
-  -h, --https=https    creates and validates a TLS certificate for your site. If you arent using a route53 DNS you must
-                       create a CNAME record manually in your DNS.
+  -e, --error=error                       name of the error document. Default is error.html
 
-  -i, --index=index    name of the index document. default is index.html
+  -i, --index=index                       name of the index document. Default is index.html
 
-  -o, --overwrite      overwrite all existing resources with newly generated resources
+  -o, --overwrite                         By default, torus always reads your template in the cloud and only adds
+                                          changes (updated resources or additional resources). If you want to eliminate
+                                          the resources that arent prvoided in the CLI flags you can add this flag.
 
-  -p, --publish        Publish the sites content
+  -p, --publish                           Publish the sites content
 
-  -r, --domain=domain  change the domain name registrar being used
+  -r, --registrar=aws|godaddy|other|true  The current domain name registrar of your sites domain. Using AWS or godaddy
+                                          enables automatic namserver updates if the DNS provider is different to the
+                                          registrar. Selecting other will require manual nameserver updates. true
+                                          evaluates to other.
 
-  -w, --www=www        creates an s3 bucket with a public policy
+  -s, --ssl=aws|true                      Enables https by creating and validating an SSL certificate for your site. You
+                                          can provide this flag without the =string to use aws certificate manager.
+
+  -w, --www=true                          creates a www reroute bucket.
+
+  --dns=aws|godaddy|other|true            Desired DNS provider for your site. The aws option adds a route53 hosted zone
+                                          to your stack. You can provide this flag without the =string to use aws.
 
 DESCRIPTION
   ...
   Deploy static sites to the AWS Cloud using Cloudformation templates.
 ```
 
-_See code: [src/commands/stack.js](https://github.com/torus-tools/cli/blob/v0.0.1/src/commands/stack.js)_
+_See code: [src/commands/stack.js](https://github.com/torus-tools/cli/blob/v0.0.11/src/commands/stack.js)_
 <!-- commandsstop -->
