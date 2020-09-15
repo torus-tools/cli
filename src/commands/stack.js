@@ -7,7 +7,8 @@ const {cli} = require('cli-ux');
 const notifier = require('node-notifier')
 const fs = require('fs');
 const path = require('path');
-const colors = require('colors')
+const colors = require('colors');
+const open = require('open');
 
 const AWS = require('aws-sdk');
 const cloudformation = new AWS.CloudFormation({apiVersion: '2010-05-15'});
@@ -18,11 +19,13 @@ const Stack = require('@torus-tools/stack');
 
 const torus_config = {
   domain:'loclaizehtml.com',
-  index:'index.html',
-  error:'error.html',
+  options:{
+    index:'index.html',
+    error:'error.html'
+  },
   last_deployment:'',
   providers: {
-    domain: 'other',
+    registrar: 'other',
     bucket: 'aws',
     cdn: 'aws',
     dns: 'aws',
@@ -31,7 +34,7 @@ const torus_config = {
 }
 
 const supported_providers = {
-  domain:['aws', 'godaddy', 'other'],
+  registrar:['aws', 'godaddy', 'other'],
   dns:['aws', 'godaddy'],
   bucket: ['aws'],
   cdn: ['aws'],
@@ -41,54 +44,41 @@ const supported_providers = {
 function deleteObjectsAndRecords(domain, config, cli){
   return new Promise((resolve, reject) => {
     let done = false
-    cli.action.start('Deleting content')
-    deleteContent(domain).then(()=>{
-      cli.action.stop()
-      if(done) resolve('All Done!')
-      else done=true
-    }).catch(err=>reject(err))
-    if(config.providers.dns === 'aws'){
-      cli.action.start('Deleting resource records')
-      domains.aws.deleteAllRecords(domain).then(()=>{
-        cli.action.stop()
-        if(done) resolve('All Done!')
-        else done=true
-      }).catch(err=>reject(err))
-    }
-    else done=true
+    Stack.stackResourceExists(domain).then(stack=>{
+      if(stack.RootBucket){
+        cli.action.start('Deleting content')
+        deleteContent(domain).then(()=>{
+          cli.action.stop()
+          done? resolve('All Done!'): done=true
+        }).catch(err=>reject(err))
+      } else done? resolve('All Done!'): done=true
+      if(config.providers.dns === 'aws' && stack.HostedZone){
+        cli.action.start('Deleting resource records')
+        domains.aws.deleteAllRecords(domain).then(()=>{
+          cli.action.stop()
+          done? resolve('All Done!'): done=true
+        }).catch(err=>reject(err))
+      } else done? resolve('All Done!'): done=true
+    })
   })
 }
-
-/* function DeployParts(domain, stack, config, partialTemplate, partialStack, fullTemplate, importsTemplate, content, cli){
-  deployParts(domain, stack, config, partialTemplate, partialStack, fullTemplate, importsTemplate, content, cli)
-  .then(data => {
-    console.timeEnd('Time Elapsed')
-    notifier.notify({
-      title: 'Deployment Complete',
-      message: `Torus has finished deploying the website for ${args.domain}`,
-      icon: path.join(__dirname, '../../img/arjan_deploy_logo.svg'), // Absolute path (doesn't work on balloons)
-      sound: true, // Only Notification Center or Windows Toasters
-    })
-  }).catch(err=> this.error(new Error(err)))
-} */
-
 
 class StackCommand extends Command {
   async run() {
     console.time('Time Elapsed')
     for(let a in this.argv) if(this.argv[a].startsWith('-') && !this.argv[a].includes('=')) this.argv[a]+='=true'
     const {args, flags} = this.parse(StackCommand)
-    const stackName = args.domain.split('.').join('') + 'Stack'
-    var stack = {}
     var config = await Config.getProjectConfig().catch(err=> this.error(err))
-    if(!flags.domain) config.domain? config.domain: this.error('Please provide a valid domain for your site by using the -d flag i.e. -d=yoursite.com')
-    if(flags.index) config.index = flags.index
-    if(flags.error) config.error = flags.error
+    if(!flags.domain) flags.domain = config.domain? config.domain: this.error('Please provide a valid domain for your site by using the -d flag i.e. -d=yoursite.com')
+    var stack = {}
+    const stackName = flags.domain.split('.').join('') + 'Stack'
+    if(flags.index) config.options.index = flags.index
+    if(flags.error) config.options.error = flags.error
     switch(args.setup){
-      case 'test':
+      case 'dev':
         stack['bucket'] = true;
         break
-      case 'dev':
+      case 'test':
         stack['bucket'] = true;
         stack['www'] = true;
         stack['dns'] = true;
@@ -116,10 +106,10 @@ class StackCommand extends Command {
     }
     else if(args.action === 'delete'){
       cli.action.stop()
-      this.warn(colors.yellow('This will delete all of the contnet, DNS records and resources associated to the stack for '+ args.domain))
-      let answer = await cli.prompt(`To proceed please enter the domain name ${args.domain}`.red)
-      if(answer === args.domain){
-        deleteObjectsAndRecords(args.domain, config, cli).then(() => {
+      this.warn(colors.yellow('This will delete all of the contnet, DNS records and resources associated to the stack for '+ flags.domain))
+      let answer = await cli.prompt(`To proceed please enter the domain name ${flags.domain}`.red)
+      if(answer === flags.domain){
+        deleteObjectsAndRecords(flags.domain, config, cli).then(() => {
           cli.action.start(`Deleting ${stackName}`)
           cloudformation.deleteStack({StackName: stackName}).promise().then(()=> {
             cli.action.stop()
@@ -142,46 +132,41 @@ class StackCommand extends Command {
         www: false,
         dns: false
       }
-      let stackId = await Stack.stackExists(args.domain)
+      let stackId = await Stack.stackExists(flags.domain)
       let templateString = ''
       if(stackId) {
         let temp = await cloudformation.getTemplate({StackName: stackId}).promise().catch(err => console.log(err))
         templateString = temp.TemplateBody
         template = JSON.parse(templateString)
       }
-      //console.log('TEMPLATE ', template)
       for(let key in partialStack) if(stack[key]) partialStack[key] = true
       cli.action.stop()
       cli.action.start('generating templates')
       let partialRecords = stack.cdn? false : true
-      var partTemplate = args.action==='push'? JSON.parse(fs.readFileSync('./torus/template.json', utf8)): await Stack.generateTemplate(args.domain, partialStack, config, template, partialRecords, flags.overwrite).catch(err => {throw new Error(err)})
+      var partTemplate = args.action==='push'? JSON.parse(fs.readFileSync('./torus/template.json', utf8)): await Stack.generateTemplate(flags.domain, partialStack, config, template, partialRecords, flags.overwrite).catch(err => {throw new Error(err)})
       var partialTemplate = JSON.parse(JSON.stringify(partTemplate))
-      var fullTemplate = args.action==='push'? partialTemplate : await Stack.generateTemplate(args.domain, stack, config, template, true, flags.overwrite).catch(err => {throw new Error(err)})
+      var fullTemplate = args.action==='push'? partialTemplate : await Stack.generateTemplate(flags.domain, stack, config, template, true, flags.overwrite).catch(err => {throw new Error(err)})
       cli.action.stop()
-      //console.log(stack)
       if(stackId && JSON.stringify(fullTemplate.template) === templateString) this.error('No changes detected')
       else {
-        //console.log('TEMPLATE 1 ', template)
         let impo = null
         if(!stackId && fullTemplate.existingResources.length > 0){
           cli.action.start('importing resources')
-          impo = await Stack.deployTemplate(args.domain, fullTemplate, true)
+          impo = await Stack.deployTemplate(flags.domain, fullTemplate, true)
           cli.action.stop()
         }
-        //console.log('TEMPLATE 2 ', template)
-        let parts = await Stack.deployParts(args.domain, stack, config, partialTemplate, partialStack, fullTemplate, impo?impo.template:template, flags.publish, cli)
+        let parts = await Stack.deployParts(flags.domain, stack, config, partialTemplate, partialStack, fullTemplate, impo?impo.template:template, flags.publish, cli)
         if(parts){
           //save the cloudformation full Template
           colors.yellow(console.timeEnd('Elapsed Time'))
           notifier.notify({
             title: 'Deployment Complete',
-            message: `Torus has finished deploying the stack for ${args.domain}`,
+            message: `Torus has finished deploying the stack for ${flags.domain}`,
             icon: path.join(__dirname, '../../img/arjan_deploy_logo.svg'), // Absolute path (doesn't work on balloons)
             sound: true, // Only Notification Center or Windows Toasters
           })
-          let url = stack.cdn?args.domain: parts
-          this.log('URL ', url)
-          cli.open(url)
+          let url = stack.cdn?flags.domain: parts
+          await open(url)
         }
       }
     }
@@ -198,11 +183,6 @@ StackCommand.args = [
     required: true,
     description: 'choose an action to perform. you can create, update, import your stack or upload files to your bucket.',
     options: ['create', 'update', 'import', 'delete', 'pull', 'push']
-  },
-  {
-    name: 'domain',
-    required: true,
-    description: 'name of the site i.e. yoursite.com'
   },
   {
     name: 'setup',
