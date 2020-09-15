@@ -1,4 +1,4 @@
-toruscli
+Torus CLI
 ========
 
 Mutli CLI for torus tools
