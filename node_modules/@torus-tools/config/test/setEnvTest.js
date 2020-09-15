@@ -1,7 +1,7 @@
-const createGlobalConfig = require('../lib/createGlobalConfig')
-const setEnv = require('../lib/setEnv')
+const {globalEnv, dotEnv} = require('../lib/setEnv')
 
-createGlobalConfig.then(()=>{
-  setEnv().then(()=> resolve('all done'))
-  .catch(err=>console.log(err))
-}).ctach(err=>console.log(err))
+globalEnv()
+dotEnv()
+
+console.log(process.env)
+
