@@ -165,7 +165,7 @@ class StackCommand extends Command {
             icon: path.join(__dirname, '../../img/arjan_deploy_logo.svg'), // Absolute path (doesn't work on balloons)
             sound: true, // Only Notification Center or Windows Toasters
           })
-          let url = stack.cdn?flags.domain: parts
+          let url = stack.cdn?`http://${flags.domain}`: parts
           await open(url)
         }
       }
