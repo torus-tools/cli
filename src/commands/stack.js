@@ -66,6 +66,7 @@ function deleteObjectsAndRecords(domain, config, cli){
 class StackCommand extends Command {
   async run() {
     console.time('Time Elapsed')
+    await Config.createDir('./torus')
     for(let a in this.argv) if(this.argv[a].startsWith('-') && !this.argv[a].includes('=')) this.argv[a]+='=true'
     const {args, flags} = this.parse(StackCommand)
     var config = await Config.getProjectConfig().catch(err=> this.error(err))
