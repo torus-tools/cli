@@ -73,6 +73,7 @@ class StackCommand extends Command {
     if(!flags.domain) flags.domain = config.domain? config.domain: this.error('Please provide a valid domain for your site by using the -d flag i.e. -d=yoursite.com')
     var stack = {}
     const stackName = flags.domain.split('.').join('') + 'Stack'
+    const s3url = `http://${flags.domain}.s3-website-${process.env.AWS_REGION}.amazonaws.com`;
     if(flags.index) config.options.index = flags.index
     if(flags.error) config.options.error = flags.error
     switch(args.setup){
@@ -166,7 +167,7 @@ class StackCommand extends Command {
             icon: path.join(__dirname, '../../img/arjan_deploy_logo.svg'), // Absolute path (doesn't work on balloons)
             sound: true, // Only Notification Center or Windows Toasters
           })
-          let url = stack.cdn?`http://${flags.domain}`: parts
+          let url = stack.cdn?`http://${flags.domain}`: s3url
           await open(url)
         }
       }
