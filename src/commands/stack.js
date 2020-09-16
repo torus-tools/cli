@@ -145,9 +145,9 @@ class StackCommand extends Command {
       cli.action.stop()
       cli.action.start('generating templates')
       let partialRecords = stack.cdn? false : true
-      var partTemplate = args.action==='push'? JSON.parse(fs.readFileSync('./torus/template.json', utf8)): await Stack.generateTemplate(flags.domain, partialStack, config, template, partialRecords, flags.overwrite).catch(err => {throw new Error(err)})
+      var partTemplate = args.action==='push'? await Stack.generateTemplate(flags.domain, partialStack, config, JSON.parse(fs.readFileSync('./torus/template.json', 'utf8')), partialRecords, flags.overwrite).catch(err => {throw new Error(err)}): await Stack.generateTemplate(flags.domain, partialStack, config, template, partialRecords, flags.overwrite).catch(err => {throw new Error(err)})
       var partialTemplate = JSON.parse(JSON.stringify(partTemplate))
-      var fullTemplate = args.action==='push'? partialTemplate : await Stack.generateTemplate(flags.domain, stack, config, template, true, flags.overwrite).catch(err => {throw new Error(err)})
+      var fullTemplate = args.action==='push'? {template:JSON.parse(fs.readFileSync('./torus/template.json', 'utf8'))} : await Stack.generateTemplate(flags.domain, stack, config, template, true, flags.overwrite).catch(err => {throw new Error(err)})
       cli.action.stop()
       if(stackId && JSON.stringify(fullTemplate.template) === templateString) this.error('No changes detected')
       else {
