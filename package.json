@@ -1,7 +1,7 @@
 {
   "name": "@torus-tools/cli",
   "description": "Mutli CLI for torus tools",
-  "version": "0.0.12",
+  "version": "0.0.121",
   "author": "Gabriel Kardonski @gkpty",
   "bin": {
     "torus": "./bin/run"
