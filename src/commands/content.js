@@ -27,8 +27,8 @@ class ContentCommand extends Command {
     await createFile('.torusignore', '').catch(err=>{throw new Error(err)})
     const {args, flags} = this.parse(ContentCommand)
     
-    var config = await readProjectConfig().catch(err=> this.error(err))
-    if(!flags.domain) config.domain? config.domain: this.error('Please provide a valid domain for your site by using the -d flag i.e. -d=yoursite.com')
+    var config = await Config.getProjectConfig().catch(err=> this.error(err))
+    if(!flags.domain) flags.domain = config.domain? config.domain: this.error('Please provide a valid domain for your site by using the -d flag i.e. -d=yoursite.com')
     
     let filesArr = []
     for(let a=1; a<this.argv.length; a++) if(!this.argv[a].startsWith('-')) filesArr.push(this.argv[a]) 
