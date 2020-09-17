@@ -73,6 +73,7 @@ class StackCommand extends Command {
     if(!flags.domain) flags.domain = config.domain? config.domain: this.error('Please provide a valid domain for your site by using the -d flag i.e. -d=yoursite.com')
     var stack = {}
     const stackName = flags.domain.split('.').join('') + 'Stack'
+    const s3url = `http://${flags.domain}.s3-website-${process.env.AWS_REGION}.amazonaws.com`;
     if(flags.index) config.options.index = flags.index
     if(flags.error) config.options.error = flags.error
     switch(args.setup){
@@ -144,9 +145,9 @@ class StackCommand extends Command {
       cli.action.stop()
       cli.action.start('generating templates')
       let partialRecords = stack.cdn? false : true
-      var partTemplate = args.action==='push'? JSON.parse(fs.readFileSync('./torus/template.json', utf8)): await Stack.generateTemplate(flags.domain, partialStack, config, template, partialRecords, flags.overwrite).catch(err => {throw new Error(err)})
+      var partTemplate = args.action==='push'? await Stack.generateTemplate(flags.domain, partialStack, config, JSON.parse(fs.readFileSync('./torus/template.json', 'utf8')), partialRecords, flags.overwrite).catch(err => {throw new Error(err)}): await Stack.generateTemplate(flags.domain, partialStack, config, template, partialRecords, flags.overwrite).catch(err => {throw new Error(err)})
       var partialTemplate = JSON.parse(JSON.stringify(partTemplate))
-      var fullTemplate = args.action==='push'? partialTemplate : await Stack.generateTemplate(flags.domain, stack, config, template, true, flags.overwrite).catch(err => {throw new Error(err)})
+      var fullTemplate = args.action==='push'? {template:JSON.parse(fs.readFileSync('./torus/template.json', 'utf8'))} : await Stack.generateTemplate(flags.domain, stack, config, template, true, flags.overwrite).catch(err => {throw new Error(err)})
       cli.action.stop()
       if(stackId && JSON.stringify(fullTemplate.template) === templateString) this.error('No changes detected')
       else {
@@ -166,7 +167,7 @@ class StackCommand extends Command {
             icon: path.join(__dirname, '../../img/arjan_deploy_logo.svg'), // Absolute path (doesn't work on balloons)
             sound: true, // Only Notification Center or Windows Toasters
           })
-          let url = stack.cdn?`http://${flags.domain}`: parts
+          let url = stack.cdn? `http://${flags.domain}`: s3url
           await open(url)
         }
       }
