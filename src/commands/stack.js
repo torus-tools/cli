@@ -163,7 +163,7 @@ class StackCommand extends Command {
           notifier.notify({
             title: 'Deployment Complete',
             message: `Torus has finished deploying the stack for ${flags.domain}`,
-            icon: path.join(__dirname, '../img/torus_logo.svg'), // Absolute path (doesn't work on balloons)
+            icon: path.join(__dirname, '../../img/torus_logo.svg'), // Absolute path (doesn't work on balloons)
             sound: true, // Only Notification Center or Windows Toasters
           })
           let url = stack.cdn?`http://${flags.domain}`: parts
