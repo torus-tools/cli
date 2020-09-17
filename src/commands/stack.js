@@ -73,7 +73,7 @@ class StackCommand extends Command {
     if(!flags.domain) flags.domain = config.domain? config.domain: this.error('Please provide a valid domain for your site by using the -d flag i.e. -d=yoursite.com')
     var stack = {}
     const stackName = flags.domain.split('.').join('') + 'Stack'
-    const s3url = `http://${flags.domain}.s3-website-${process.env.AWS_REGION}.amazonaws.com`;
+    const sthreeurl = `http://${flags.domain}.s3-website-${process.env.AWS_REGION}.amazonaws.com`;
     if(flags.index) config.options.index = flags.index
     if(flags.error) config.options.error = flags.error
     switch(args.setup){
@@ -157,19 +157,20 @@ class StackCommand extends Command {
           impo = await Stack.deployTemplate(flags.domain, fullTemplate, true)
           cli.action.stop()
         }
-        let parts = await Stack.deployParts(flags.domain, stack, config, partialTemplate, partialStack, fullTemplate, impo?impo.template:template, flags.publish, cli)
-        if(parts){
+        let stackcomplete = await Stack.deployParts(flags.domain, stack, config, partialTemplate, partialStack, fullTemplate, impo?impo.template:template, flags.publish, cli).then(data=>{
           //save the cloudformation full Template
-          colors.yellow(console.timeEnd('Elapsed Time'))
+          console.timeEnd('Elapsed Time')
           notifier.notify({
             title: 'Deployment Complete',
             message: `Torus has finished deploying the stack for ${flags.domain}`,
             icon: path.join(__dirname, '../../img/torus_logo.svg'), // Absolute path (doesn't work on balloons)
             sound: true, // Only Notification Center or Windows Toasters
           })
-          let url = stack.cdn? `http://${flags.domain}`: s3url
-          await open(url)
-        }
+          let url = stack.cdn? `http://${flags.domain}`: sthreeurl
+          this.log('Your site url is: ',url)
+          open(url)
+        }).catch(err=>this.error(err))
+        if(stackcomplete) console.log('Stack completeee')
       }
     }
   }
