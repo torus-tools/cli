@@ -65,7 +65,7 @@ function deleteObjectsAndRecords(domain, config, cli){
 
 class StackCommand extends Command {
   async run() {
-    console.time('Time Elapsed')
+    console.time('Elapsed Time'.green)
     await Config.createDir('./torus')
     for(let a in this.argv) if(this.argv[a].startsWith('-') && !this.argv[a].includes('=')) this.argv[a]+='=true'
     const {args, flags} = this.parse(StackCommand)
@@ -73,7 +73,7 @@ class StackCommand extends Command {
     if(!flags.domain) flags.domain = config.domain? config.domain: this.error('Please provide a valid domain for your site by using the -d flag i.e. -d=yoursite.com')
     var stack = {}
     const stackName = flags.domain.split('.').join('') + 'Stack'
-    const sthreeurl = `http://${flags.domain}.s3-website-${process.env.AWS_REGION}.amazonaws.com`;
+    const s3url = `http://${flags.domain}.s3-website-${process.env.AWS_REGION}.amazonaws.com`;
     if(flags.index) config.options.index = flags.index
     if(flags.error) config.options.error = flags.error
     switch(args.setup){
@@ -115,7 +115,7 @@ class StackCommand extends Command {
           cli.action.start(`Deleting ${stackName}`)
           cloudformation.deleteStack({StackName: stackName}).promise().then(()=> {
             cli.action.stop()
-            this.log(colors.cyan('Stack deletion initiated'))
+            this.log(colors.green('Stack deletion initiated'))
           }).catch(err => this.error(err))
         }).catch(err => this.error(err))
       }
@@ -123,7 +123,6 @@ class StackCommand extends Command {
     }
     else {
       // CREATE/UPDATE/IMPORT STACKS
-      console.time('Elapsed Time')
       //create/overwrite the project config. Perhaps it would also be good to add the stack in the config
       //would also be goood to save the template in torus/template.json file after the import, partialStack, and fullStack executions
       fs.promises.writeFile('./torus/config.json', JSON.stringify(config)).catch(err=>this.error(err))
@@ -157,20 +156,20 @@ class StackCommand extends Command {
           impo = await Stack.deployTemplate(flags.domain, fullTemplate, true)
           cli.action.stop()
         }
-        let stackcomplete = await Stack.deployParts(flags.domain, stack, config, partialTemplate, partialStack, fullTemplate, impo?impo.template:template, flags.publish, cli).then(data=>{
+        let deployment = await Stack.deployParts(flags.domain, stack, config, partialTemplate, partialStack, fullTemplate, impo?impo.template:template, flags.publish, cli)
+        if(deployment){
           //save the cloudformation full Template
-          console.timeEnd('Elapsed Time')
+          console.timeEnd('Elapsed Time'.green)
           notifier.notify({
             title: 'Deployment Complete',
             message: `Torus has finished deploying the stack for ${flags.domain}`,
             icon: path.join(__dirname, '../../img/torus_logo.svg'), // Absolute path (doesn't work on balloons)
             sound: true, // Only Notification Center or Windows Toasters
           })
-          let url = stack.cdn? `http://${flags.domain}`: sthreeurl
+          let url = stack.cdn? `http://${flags.domain}`: s3url
           this.log('Your site url is: ',url)
-          open(url)
-        }).catch(err=>this.error(err))
-        if(stackcomplete) console.log('Stack completeee')
+          await open(url)
+        }
       }
     }
   }
