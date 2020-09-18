@@ -65,7 +65,6 @@ function deleteObjectsAndRecords(domain, config, cli){
 
 class StackCommand extends Command {
   async run() {
-    console.time('Elapsed Time'.green)
     await Config.createDir('./torus')
     for(let a in this.argv) if(this.argv[a].startsWith('-') && !this.argv[a].includes('=')) this.argv[a]+='=true'
     const {args, flags} = this.parse(StackCommand)
@@ -125,6 +124,7 @@ class StackCommand extends Command {
       // CREATE/UPDATE/IMPORT STACKS
       //create/overwrite the project config. Perhaps it would also be good to add the stack in the config
       //would also be goood to save the template in torus/template.json file after the import, partialStack, and fullStack executions
+      console.time('Elapsed Time'.green)
       fs.promises.writeFile('./torus/config.json', JSON.stringify(config)).catch(err=>this.error(err))
       cli.action.start('setting up')
       let template = null
