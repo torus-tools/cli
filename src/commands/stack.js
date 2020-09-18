@@ -65,7 +65,6 @@ function deleteObjectsAndRecords(domain, config, cli){
 
 class StackCommand extends Command {
   async run() {
-    console.time('Time Elapsed')
     await Config.createDir('./torus')
     for(let a in this.argv) if(this.argv[a].startsWith('-') && !this.argv[a].includes('=')) this.argv[a]+='=true'
     const {args, flags} = this.parse(StackCommand)
@@ -115,7 +114,7 @@ class StackCommand extends Command {
           cli.action.start(`Deleting ${stackName}`)
           cloudformation.deleteStack({StackName: stackName}).promise().then(()=> {
             cli.action.stop()
-            this.log(colors.cyan('Stack deletion initiated'))
+            this.log(colors.green('Stack deletion initiated'))
           }).catch(err => this.error(err))
         }).catch(err => this.error(err))
       }
@@ -123,9 +122,9 @@ class StackCommand extends Command {
     }
     else {
       // CREATE/UPDATE/IMPORT STACKS
-      console.time('Elapsed Time')
       //create/overwrite the project config. Perhaps it would also be good to add the stack in the config
       //would also be goood to save the template in torus/template.json file after the import, partialStack, and fullStack executions
+      console.time('Elapsed Time'.green)
       fs.promises.writeFile('./torus/config.json', JSON.stringify(config)).catch(err=>this.error(err))
       cli.action.start('setting up')
       let template = null
@@ -157,10 +156,10 @@ class StackCommand extends Command {
           impo = await Stack.deployTemplate(flags.domain, fullTemplate, true)
           cli.action.stop()
         }
-        let parts = await Stack.deployParts(flags.domain, stack, config, partialTemplate, partialStack, fullTemplate, impo?impo.template:template, flags.publish, cli)
-        if(parts){
+        let deployment = await Stack.deployParts(flags.domain, stack, config, partialTemplate, partialStack, fullTemplate, impo?impo.template:template, flags.publish, cli)
+        if(deployment){
           //save the cloudformation full Template
-          colors.yellow(console.timeEnd('Elapsed Time'))
+          console.timeEnd('Elapsed Time'.green)
           notifier.notify({
             title: 'Deployment Complete',
             message: `Torus has finished deploying the stack for ${flags.domain}`,
@@ -168,6 +167,7 @@ class StackCommand extends Command {
             sound: true, // Only Notification Center or Windows Toasters
           })
           let url = stack.cdn? `http://${flags.domain}`: s3url
+          this.log('Your site url is: ',url)
           await open(url)
         }
       }
