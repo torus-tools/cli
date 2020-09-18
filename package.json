@@ -1,7 +1,7 @@
 {
   "name": "@torus-tools/cli",
   "description": "Mutli CLI for torus tools",
-  "version": "0.0.124",
+  "version": "0.0.125",
   "author": "Gabriel Kardonski @gkpty",
   "bin": {
     "torus": "./bin/run"
@@ -14,7 +14,7 @@
     "@torus-tools/config": "0.0.123",
     "@torus-tools/content": "0.0.22",
     "@torus-tools/domains": "0.0.14",
-    "@torus-tools/stack": "0.0.124",
+    "@torus-tools/stack": "0.0.125",
     "cli-ux": "^5.4.6",
     "dotenv": "^8.2.0",
     "node-notifier": "^8.0.0",
