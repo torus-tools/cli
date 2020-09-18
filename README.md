@@ -19,7 +19,7 @@ $ npm install -g @torus-tools/cli
 $ torus COMMAND
 running command...
 $ torus (-v|--version|version)
-@torus-tools/cli/0.0.122 linux-x64 node-v14.4.0
+@torus-tools/cli/0.0.123 linux-x64 node-v14.4.0
 $ torus --help [COMMAND]
 USAGE
   $ torus COMMAND
@@ -63,7 +63,7 @@ DESCRIPTION
   in cloudfront for the given files add the --reset flag.
 ```
 
-_See code: [src/commands/content.js](https://github.com/torus-tools/cli/blob/v0.0.122/src/commands/content.js)_
+_See code: [src/commands/content.js](https://github.com/torus-tools/cli/blob/v0.0.123/src/commands/content.js)_
 
 ## `torus help [COMMAND]`
 
@@ -119,7 +119,7 @@ DESCRIPTION
   are using the init command without the -g flag make sure to run it from the root of your project.
 ```
 
-_See code: [src/commands/init.js](https://github.com/torus-tools/cli/blob/v0.0.122/src/commands/init.js)_
+_See code: [src/commands/init.js](https://github.com/torus-tools/cli/blob/v0.0.123/src/commands/init.js)_
 
 ## `torus stack ACTION [SETUP]`
 
@@ -173,5 +173,5 @@ DESCRIPTION
   Deploy static sites to the AWS Cloud using Cloudformation templates.
 ```
 
-_See code: [src/commands/stack.js](https://github.com/torus-tools/cli/blob/v0.0.122/src/commands/stack.js)_
+_See code: [src/commands/stack.js](https://github.com/torus-tools/cli/blob/v0.0.123/src/commands/stack.js)_
 <!-- commandsstop -->

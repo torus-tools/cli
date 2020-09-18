@@ -11,7 +11,8 @@ const ignorePaths = {
   '.gitignore':true,
   'package.json':true,
   'package-lock.json':true,
-  'node_modules':true,
+  'torus':true,
+  '.torusignore': true
 }
 
 var global_defaults = 
@@ -63,7 +64,7 @@ class InitCommand extends Command {
       if(!flags.domain) this.error('Please provide a valid domain with the -d flag')
       else {
         let torusignore = ''
-        for(let i in ignorePaths) if(ignorePaths[i]) torusignore+=i
+        for(let i in ignorePaths) if(ignorePaths[i]) torusignore+=i+'\n'
         let config = await Config.getGlobalSettings().catch(err=>this.error(err))
         config.domain = flags.domain
         await Config.createDir('./torus')
